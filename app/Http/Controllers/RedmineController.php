@@ -66,12 +66,14 @@ class RedmineController extends Controller
    */
   function show(TogglReport $report, Request $request)
   {
-		#$request->session()->forget('redmine.report');
+		$request->session()->forget('redmine.report');
 
 		// Only enter if no session exists for redmine.report
 		// It'll be reset elsewhere
 		if (!$request->session()->has('redmine.report.'.$report->id))
 		{
+			set_time_limit(0);
+
 			// Connect into Redmine
 			$redmine = $this->connect();
 

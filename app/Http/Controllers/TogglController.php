@@ -19,8 +19,6 @@ use AJT\Toggl\TogglClient;
 use AJT\Toggl\ReportsClient;
 use App\Setting;
 
-set_time_limit(0);
-
 class TogglController extends Controller
 {
 	/**

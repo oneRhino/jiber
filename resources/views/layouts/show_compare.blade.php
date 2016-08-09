@@ -32,7 +32,7 @@
 														<?php $_difference = round($_entries['third_total'] - $_entries['toggl_total'], 2) ?>
 
 														<div class="panel-heading">
-															<h4 class="panel-title"><a data-toggle="collapse" href="#collapse-{{ date('mdy', strtotime($_date)) }}-{{ $_redmine_task_id }}">#{{ $_redmine_task_id }} - {{ $_entries['toggl_entries'][0]->jira }} <span class="fa fa-angle-down"></span></a></h4>
+															<h4 class="panel-title"><a data-toggle="collapse" href="#collapse-{{ date('mdy', strtotime($_date)) }}-{{ $_redmine_task_id }}">@yield('task_title') <span class="fa fa-angle-down"></span></a></h4>
 															Difference: {{ $_difference }} h
 														</div>
 

@@ -56,8 +56,6 @@ class TogglWorkspaceController extends TogglController
 
 				$workspace->name = $_workspace['name'];
 				$workspace->save();
-
-				sleep(1); // Toggl only allows 1 request per second
       }
 
       $request->session()->flash('alert-success', 'All workspaces have been successfully imported!');

@@ -30,7 +30,7 @@
 					<tbody>
 						@foreach ($tasks as $_task)
 							<tr class="{{ $_task->exceeded }}">
-								<td>{{ $_task->project->name }}</td>
+								<td>{{ $_task->project_name }}</td>
 								<td>{{ $_task->name }}</td>
 								<td class="text-center">{{ $_task->active ? 'Yes' : 'No' }}</td>
 								<td class="text-center">{{ $_task->estimated or '-' }}</td>

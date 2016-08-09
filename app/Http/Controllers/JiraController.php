@@ -110,6 +110,8 @@ class JiraController extends Controller
 		// It'll be reset elsewhere
 		if (!$request->session()->has('jira.report.'.$report->id))
 		{
+			set_time_limit(0);
+
 			// Connect into Jira
 			$jira = $this->connect($request);
 

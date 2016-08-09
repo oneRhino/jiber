@@ -63,10 +63,10 @@ class TogglProjectController extends TogglController
 					$project->active       = $_project['active'];
 					$project->name         = $_project['name'];
 					$project->save();
-
-					sleep(1); // Toggl only allows 1 request per second
 				}
 			}
+
+			sleep(1); // Toggl only allows 1 request per second
     }
 
 		$request->session()->flash('alert-success', 'All projects have been successfully imported!');

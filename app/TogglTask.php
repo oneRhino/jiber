@@ -23,6 +23,19 @@ class TogglTask extends Toggl
 	}
 
 	/**
+	 * Get records based on User ID
+	 */
+	public static function getAllByUserID($user_id, $orderBy = 'name', $sort = 'ASC')
+	{
+		return self::where(array('toggl_tasks.user_id'  => $user_id))
+			->leftJoin('toggl_projects', 'project_id', '=', 'toggl_projects.id')
+			->select(array('toggl_tasks.id','toggl_tasks.name','toggl_tasks.active','toggl_tasks.estimated','toggl_tasks.tracked','toggl_projects.name as project_name'))
+			->orderBy('project_name')
+			->orderBy('name')
+			->get();
+	}
+
+	/**
 	 * Format Estimated attribute - H:M:S
 	 */
 	public function getEstimatedAttribute($seconds)

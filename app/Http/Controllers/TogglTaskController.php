@@ -69,10 +69,10 @@ class TogglTaskController extends TogglController
 						$task->tracked    = $_task['tracked_seconds'];
 					$task->name         = $_task['name'];
 					$task->save();
-
-					sleep(1); // Toggl only allows 1 request per second
 				}
 			}
+
+			sleep(1); // Toggl only allows 1 request per second
     }
 
 		$request->session()->flash('alert-success', 'All tasks have been successfully imported!');

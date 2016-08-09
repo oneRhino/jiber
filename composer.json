@@ -10,7 +10,8 @@
         "ajt/guzzle-toggl": "^0.10.0",
         "kbsali/redmine-api": "^1.5",
         "doctrine/dbal": "^2.5",
-        "chobie/jira-api-restclient": "2.0.x-dev"
+        "chobie/jira-api-restclient": "2.0.x-dev",
+        "barryvdh/laravel-debugbar": "^2.2"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

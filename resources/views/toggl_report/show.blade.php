@@ -10,9 +10,9 @@
         <dt>End Date:</dt>
         <dd>{{ date('m/d/Y', strtotime($report->end_date))   }}</dd>
         <dt>Clients:</dt>
-        <dd>{{ $report->clients  ? $report->clients  : 'All' }}</dd>
+        <dd>{{ $report->client_ids  ? $report->clients  : 'All' }}</dd>
         <dt>Projects:</dt>
-        <dd>{{ $report->projects ? $report->projects : 'All' }}</dd>
+        <dd>{{ $report->project_ids ? $report->projects : 'All' }}</dd>
       </dl>
 
       <a href="{{ action('RedmineController@show', ['report' => $report->id]) }}" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Depending on the amount of records, this might take a while to load."><i class="aui-icon redmine"></i> Compare entries to Redmine</a>
@@ -39,8 +39,8 @@
 					<tbody>
 						@foreach ($report->entries as $_entry)
 							<tr>
-								<td>{{ $_entry->project ? $_entry->project->name : '' }}</td>
-								<td>{{ $_entry->task ? $_entry->task->name : '' }}</td>
+								<td>{{ $_entry->project_id ? $_entry->project_name : '' }}</td>
+								<td>{{ $_entry->task_id ? $_entry->task_name : '' }}</td>
 								<td>{{ $_entry->description }}</td>
 								<td>{{ date('d/m/Y', strtotime($_entry->date)) }}</td>
 								<td>{{ $_entry->round_duration }} ({{ $_entry->duration }})</td>

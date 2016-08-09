@@ -14,11 +14,12 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 
-use App\TogglReport;
-use App\TogglTimeEntry;
-use App\TogglWorkspace;
 use App\TogglClient;
 use App\TogglProject;
+use App\TogglReport;
+use App\TogglTask;
+use App\TogglTimeEntry;
+use App\TogglWorkspace;
 
 class TogglReportController extends TogglController
 {
@@ -43,6 +44,8 @@ class TogglReportController extends TogglController
 	 */
   function save(Request $request)
   {
+		set_time_limit(0);
+
     $toggl_client = $this->toggl_connect($request);
 
     if (!$request->date)
@@ -103,6 +106,7 @@ class TogglReportController extends TogglController
 			{
 				$client  =  TogglClient::getByName($_data['client'] , $request->user()->id);
 				$project = TogglProject::getByName($_data['project'], $request->user()->id);
+				$task    =    TogglTask::getByTogglID($_data['tid'] , $request->user()->id);
 
 				// Create Toggl Time Entry
 				$entry = new TogglTimeEntry;
@@ -111,7 +115,7 @@ class TogglReportController extends TogglController
 				$entry->report_id   = $report->id;
 				$entry->client_id   = $client->id;
 				$entry->project_id  = $project->id;
-				$entry->task_id     = $_data['tid'];
+				$entry->task_id     = ($task ? $task->id : null);
 				$entry->date        = date('Y-m-d', strtotime($_data['start']));
 				$entry->time        = $_data['start'];
 				$entry->duration    = $_data['dur'];

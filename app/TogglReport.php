@@ -12,7 +12,19 @@ class TogglReport extends Toggl
 	 */
   public function entries()
   {
-    return $this->hasMany('App\TogglTimeEntry', 'report_id');
+    return $this->hasMany('App\TogglTimeEntry', 'report_id')
+			->select(array('toggl_time_entries.id','toggl_time_entries.project_id','toggl_time_entries.task_id','toggl_time_entries.description','toggl_time_entries.date','toggl_time_entries.duration','toggl_time_entries.redmine','toggl_time_entries.jira','toggl_projects.name as project_name','toggl_tasks.name as task_name'))
+			->leftJoin('toggl_projects', 'project_id', '=', 'toggl_projects.id')
+			->leftJoin('toggl_tasks', 'task_id', '=', 'toggl_tasks.id')
+			->orderBy('date')
+			->orderBy('project_name')
+			->orderBy('description');
+	}
+
+	public function getTimeEntries()
+	{
+		return $this->entries()
+			->get();
   }
 
 	/**
@@ -24,20 +36,22 @@ class TogglReport extends Toggl
 	}
 
 	/**
-	 * Create an array with TogglClient names
+	 * Create a string with TogglClient names
 	 * based on client_ids field
 	 */
   public function getClientsAttribute()
   {
+		if (!$this->client_ids) return false;
+
     $clients = explode(',', $this->client_ids);
+
+		$clients = TogglClient::whereIn('toggl_id', $clients)->where('user_id', $this->user_id)->distinct()->get();
 
     $return = array();
 
-    foreach ($clients as $_id)
+    foreach ($clients as $_client)
     {
-      $_client = TogglClient::getByTogglID($_id, $this->user_id);
-      if ($_client)
-        $return[] = $_client->name;
+			$return[] = $_client->name;
     }
 
     return implode(', ', $return);
@@ -49,15 +63,17 @@ class TogglReport extends Toggl
 	 */
   public function getProjectsAttribute()
   {
+		if (!$this->project_ids) return false;
+
     $projects = explode(',', $this->project_ids);
+
+		$projects = TogglProject::whereIn('toggl_id', $projects)->where('user_id', $this->user_id)->distinct()->get();
 
     $return = array();
 
-    foreach ($projects as $_id)
+    foreach ($projects as $_project)
     {
-      $_project = TogglProject::getByTogglID($_id, $this->user_id);
-      if ($_project)
-        $return[] = $_project->name;
+			$return[] = $_project->name;
     }
 
     return implode(', ', $return);

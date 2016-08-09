@@ -28,4 +28,16 @@ class TogglClient extends Toggl
   {
 		return $this->belongsTo('App\TogglWorkspace');
   }
+
+	/**
+	 * Get records based on User ID
+	 */
+	public static function getAllByUserID($user_id, $orderBy = 'name', $sort = 'ASC')
+	{
+		return self::where(array('toggl_clients.user_id'  => $user_id))
+			->leftJoin('toggl_workspaces', 'workspace_id', '=', 'toggl_workspaces.id')
+			->select(array('toggl_clients.id','toggl_clients.name','toggl_workspaces.name as workspace_name'))
+			->orderBy('name')
+			->get();
+	}
 }

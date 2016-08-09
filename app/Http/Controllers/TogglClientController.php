@@ -58,8 +58,6 @@ class TogglClientController extends TogglController
 				$client->workspace_id = TogglWorkspace::getByTogglID($_client['wid'], $request->user()->id)->id;
 				$client->name         = $_client['name'];
 				$client->save();
-
-				sleep(1); // Toggl only allows 1 request per second
       }
 
       $request->session()->flash('alert-success', 'All clients have been successfully imported!');

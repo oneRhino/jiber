@@ -28,8 +28,8 @@
 					<tbody>
 						@foreach ($projects as $_project)
 							<tr>
-								<td>{{ $_project->workspace->name }}</td>
-								<td>{{ $_project->client ? $_project->client->name : '' }}</td>
+								<td>{{ $_project->workspace_name }}</td>
+								<td>{{ $_project->client_name }}</td>
 								<td>{{ $_project->name }}</td>
 								<td class="text-center">{{ $_project->active ? 'Yes' : 'No' }}</td>
 							</tr>

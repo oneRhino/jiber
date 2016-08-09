@@ -24,7 +24,7 @@
 					<tbody>
 						@foreach ($clients as $_client)
 							<tr>
-								<td>{{ $_client->workspace->name }}</td>
+								<td>{{ $_client->workspace_name }}</td>
 								<td>{{ $_client->name }}</td>
 							</tr>
 						@endforeach

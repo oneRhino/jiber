@@ -81,8 +81,8 @@
                   <tr>
                     <td>{{ date('d/m/Y', strtotime($_report->start_date)) }}</td>
                     <td>{{ date('d/m/Y', strtotime($_report->end_date)) }}</td>
-                    <td>{{ $_report->clients ? $_report->clients : 'All' }}</td>
-                    <td>{{ $_report->projects ? $_report->projects : 'All' }}</td>
+                    <td>{{ $_report->client_ids ? $_report->clients : 'All' }}</td>
+                    <td>{{ $_report->project_ids ? $_report->projects : 'All' }}</td>
                     <td>
                       <a href="{{ action('TogglReportController@show', ['report' => $_report->id]) }}" class="btn btn-default"><i class="fa fa-folder-open"></i></a>
                       <form action="{{ action('TogglReportController@delete', ['report' => $_report->id]) }}" method="POST" onsubmit="return confirm('Are you sure?')" style="display:inline">
