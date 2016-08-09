@@ -8,8 +8,6 @@
  * @version 0.1
  */
 
-set_time_limit(0);
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -20,6 +18,8 @@ use Illuminate\Support\Facades\Config;
 use AJT\Toggl\TogglClient;
 use AJT\Toggl\ReportsClient;
 use App\Setting;
+
+set_time_limit(0);
 
 class TogglController extends Controller
 {
