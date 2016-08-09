@@ -8,6 +8,8 @@
  * @version 0.1
  */
 
+set_time_limit(0);
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
