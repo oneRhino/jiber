@@ -1,0 +1,215 @@
+<?php
+
+/**
+ * Connect into Redmine, using Redmine Client,
+ * get and send information using its API
+ *
+ * @author Thaissa Mendes <thaissa.mendes@gmail.com>
+ * @since July 28, 2016
+ * @version 0.1
+ */
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
+
+use App\Http\Requests;
+use App\RedmineSent;
+use App\Setting;
+use App\TogglReport;
+use App\TogglClient;
+
+use Redmine\Client as RedmineClient;
+
+class RedmineController extends Controller
+{
+  /**
+	 * Connect into Redmine API
+	 */
+  function connect()
+  {
+		$request  = app('Illuminate\Http\Request');
+		$redirect = app('Illuminate\Routing\Redirector');
+		$setting  = Setting::find($request->user()->id);
+
+		if (!$setting || !$setting->redmine)
+		{
+			$request->session()->flash('alert-warning', 'Please set your Redmine API Token before importing data.');
+			$redirect->to('/settings')->send();
+		}
+
+    $url    = Config::get('redmine.url');
+    $token  = $setting->redmine;
+    $client = new RedmineClient($url, $token);
+
+    return $client;
+  }
+
+	/**
+	 * Test Redmine connection
+	 */
+	function test(Request $request)
+	{
+		$connection = $this->connect($request);
+
+		$user = $connection->api('user')->getCurrentUser();
+
+		if ($user && is_array($user)) return true;
+
+		return false;
+	}
+
+  /**
+   * Show Redmine's time entries grouped by date and Redmine's task ID
+	 * *Only OneRhino tasks*
+   */
+  function show(TogglReport $report, Request $request)
+  {
+		#$request->session()->forget('redmine.report');
+
+		// Only enter if no session exists for redmine.report
+		// It'll be reset elsewhere
+		if (!$request->session()->has('redmine.report.'.$report->id))
+		{
+			// Connect into Redmine
+			$redmine = $this->connect();
+
+			// Get all Redmine's entries for this user, on these dates
+			$args = array(
+				'user_id'  => 'me',
+				'spent_on' => "><{$report->start_date}|{$report->end_date}",
+				'limit'    => 100
+			);
+			$redmine_entries = $redmine->time_entry->all($args);
+
+			// Redmine has a 100 entries per page limit, so, we need to paginate
+			$pages = ceil($redmine_entries['total_count'] / $redmine_entries['limit']);
+			if ($pages > 1)
+			{
+				for ($page=1; $page<$pages; $page++)
+				{
+					$args['offset'] = $page * $args['limit'];
+					$_results = $redmine->time_entry->all($args);
+					$redmine_entries['time_entries'] = array_merge($redmine_entries['time_entries'], $_results['time_entries']);
+				}
+			}
+
+			// Get all time entries from Report, but only those
+			// that have Redmine field filled
+			$toggl_entries = $report->getAllRedmine($request->user()->id);
+			$entries       = array();
+
+			// First create arrays and fill with Toggl information
+			foreach ($toggl_entries as $_entry)
+			{
+				// Create default arrays
+				if (!isset($entries[$_entry->date]))
+				{
+					$entries[$_entry->date] = array(
+						'toggl_total'   => 0,
+						'third_total' => 0
+					);
+				}
+
+				if (!isset($entries[$_entry->date][$_entry->redmine]))
+				{
+					$entries[$_entry->date][$_entry->redmine] = array(
+						'toggl_entries' => array(),
+						'toggl_total'   => 0,
+						'third_total'   => 0,
+						'third_entries' => array(),
+					);
+				}
+
+				// Fill arrays
+				$entries[$_entry->date][$_entry->redmine]['toggl_entries'][] = $_entry;
+				$entries[$_entry->date][$_entry->redmine]['toggl_total']    += $_entry->round_duration;
+				$entries[$_entry->date]['toggl_total']                      += $_entry->round_duration;
+			}
+
+			// Then, through all Toggl's entries, add Redmine's entries
+			foreach ($entries as $_date => $_entries)
+			{
+				foreach ($_entries as $_issue_id => $__entries)
+				{
+					// Skip *_total keys
+					if (in_array($_issue_id, array('toggl_total','third_total'))) continue;
+
+					// Get Redmine time entries
+					foreach ($redmine_entries['time_entries'] as $_redmine)
+					{
+						// Ignore issues that are different than current,
+						// and with date different than current
+						if ($_redmine['spent_on']    != $_date)     continue;
+						if ($_redmine['issue']['id'] != $_issue_id) continue;
+
+						$_redmine['description'] = $_redmine['activity']['name'];
+						$_redmine['time']        = $_redmine['hours'];
+
+						$entries[$_date][$_issue_id]['third_entries'][] = $_redmine;
+						$entries[$_date][$_issue_id]['third_total']    += $_redmine['hours'];
+						$entries[$_date]['third_total']                += $_redmine['hours'];
+					}
+				}
+			}
+
+			// Sort entries based on first key (date), ascending
+			ksort($entries);
+
+			$request->session()->put('redmine.report.'.$report->id, $entries);
+		}
+		else
+			$entries = $request->session()->get('redmine.report.'.$report->id);
+
+		return view('redmine.show', [
+			'entries'   => $entries,
+			'report_id' => $report->id
+		]);
+  }
+
+	/**
+	 * Send time to Redmine
+	 */
+	public function send(Request $request)
+	{
+		if ($request->isMethod('post'))
+		{
+			// Connect into Redmine
+			$redmine = $this->connect($request);
+
+			foreach ($request->task as $_date => $_task)
+			{
+				foreach ($_task as $_task_id => $_durations)
+				{
+					foreach ($_durations as $_duration)
+					{
+						$data = array(
+							'issue_id' => $_task_id,
+							'spent_on' => $_date,
+							'hours'    => $_duration,
+						);
+						$create = $redmine->time_entry->create($data);
+
+						if ($create)
+						{
+							// Create a RedmineSent (log)
+							$sent = new RedmineSent;
+							$sent->report_id = $request->report_id;
+							$sent->date      = $_date;
+							$sent->task      = $_task_id;
+							$sent->duration  = $_duration;
+							$sent->save();
+						}
+					}
+				}
+			}
+
+			// Remove report from session, so when we show previous page again, it's updated
+			$request->session()->forget('redmine.report.'.$request->report_id);
+      $request->session()->flash('alert-success', 'All tasks have been sent successfully to Redmine!');
+		}
+
+    return back()->withInput();
+	}
+}
