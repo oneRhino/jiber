@@ -114,7 +114,7 @@ class TogglReportController extends TogglController
 				$entry->user_id     = $request->user()->id;
 				$entry->report_id   = $report->id;
 				$entry->client_id   = $client->id;
-				$entry->project_id  = $project->id;
+				$entry->project_id  = ($project ? $project->id : null);
 				$entry->task_id     = ($task ? $task->id : null);
 				$entry->date        = date('Y-m-d', strtotime($_data['start']));
 				$entry->time        = $_data['start'];
