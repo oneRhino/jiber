@@ -2,7 +2,7 @@
 
 [http://jiber.tmisoft.com/](http://jiber.tmisoft.com/)
 
-Imports time entries (and everything else needed) from Toggl, and send them to Redmine, Jira and Basecamp.
+Imports time entries (and everything else needed) from Toggl, and send them to Redmine and Jira.
 
 ## First utilization
 
