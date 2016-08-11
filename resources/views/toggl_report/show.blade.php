@@ -19,16 +19,18 @@
       <a href="{{ action('JiraController@show', ['report' => $report->id]) }}" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Depending on the amount of records, this might take a while to load."><i class="aui-icon aui-icon-small aui-iconfont-jira"></i> Compare entries to Jira</a>
 
 			@if ($report->entries)
-				<table class="table table-striped task-table">
+				<table class="table table-striped table-hover task-table">
 					<colgroup>
+						<col width="10"/>
 						<col width="120"/>
 						<col width="100"/>
 						<col/>
 						<col width="100"/>
-						<col width="110"/>
+						<col width="120"/>
 					</colgroup>
 
 					<thead>
+						<th></th>
 						<th>Project</th>
 						<th>Task</th>
 						<th>Description</th>
@@ -37,10 +39,11 @@
 					</thead>
 
 					<tbody>
-						<?php $total = 0 ?>
+						<?php $total = 0; $i = 0 ?>
 						@foreach ($report->entries as $_entry)
-							<?php $total += $_entry->round_duration ?>
+							<?php $total += $_entry->round_duration; $i++ ?>
 							<tr>
+								<td class="disabled"><small>{{ $i }}</small></td>
 								<td>{{ $_entry->project_id ? $_entry->project_name : '' }}</td>
 								<td>{{ $_entry->task_id ? $_entry->task_name : '' }}</td>
 								<td>{{ $_entry->description }}</td>
@@ -52,7 +55,8 @@
 
 					<tfoot>
 						<tr>
-							<th colspan="4">Total</th>
+							<th colspan="4"></th>
+							<th>Total</th>
 							<th>{{ $total }} h</td>
 						</tr>
 					</tfoot>
