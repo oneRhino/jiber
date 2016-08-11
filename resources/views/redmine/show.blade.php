@@ -81,6 +81,7 @@
 												</div>
 											</div>
 										</div>
+										<br/>
 									@endforeach
 								</div>
 							</div>

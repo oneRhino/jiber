@@ -97,6 +97,8 @@
             </table>
           </div>
         </div>
+			@else
+				<p>Please import Toggl data to generate reports.</p>
       @endif
     </div>
   </div>
