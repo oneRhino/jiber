@@ -28,7 +28,7 @@ class TogglTimeEntry extends Toggl
 	 */
 	public function getRoundDurationAttribute()
 	{
-		$round_to = 5;
+		$round_to = 5 * 60;
 
 		$milliseconds = $this->attributes['duration'];
 
@@ -39,13 +39,13 @@ class TogglTimeEntry extends Toggl
 		$seconds      = $seconds % 60;
 		$minutes      = $minutes % 60;
 
-		if ($minutes % $round_to != 0)
-			$minutes = $minutes + ($round_to - ($minutes % $round_to));
+		$seconds = $minutes * 60 + $seconds;
 
-		#$format = '%u:%02u';
-		#$time   = sprintf($format, $hours, $minutes);
+		if ($seconds % $round_to != 0)
+			$seconds = $seconds + ($round_to - ($seconds % $round_to));
 
-		$time = number_format(round($hours + ($minutes/60), 2), 2);
+		$time = $hours + ($seconds / 3600);
+		$time = round($time, 2);
 
 		return $time;
 	}
