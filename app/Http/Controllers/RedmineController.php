@@ -201,6 +201,7 @@ class RedmineController extends Controller
 							$sent->date      = $_date;
 							$sent->task      = $_task_id;
 							$sent->duration  = $_duration;
+							$sent->user_id   = $request->user()->id;
 							$sent->save();
 						}
 					}

@@ -239,6 +239,7 @@ class JiraController extends Controller
 							$sent->task      = $_jira;
 							$sent->date      = $_date;
 							$sent->duration  = $_time;
+							$sent->user_id   = $request->user()->id;
 							$sent->save();
 						}
 					}
