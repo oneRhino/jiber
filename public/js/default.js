@@ -1,3 +1,6 @@
 jQuery(document).ready(function($){
-	$('[data-toggle="tooltip"]').tooltip();
+	if ($('[data-toggle="tooltip"]').length > 0)
+	{
+		$('[data-toggle="tooltip"]').tooltip();
+	}
 });

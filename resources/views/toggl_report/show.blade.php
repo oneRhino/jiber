@@ -41,14 +41,14 @@
 					<tbody>
 						<?php $total = 0; $i = 0 ?>
 						@foreach ($report->entries as $_entry)
-							<?php $total += $_entry->round_duration; $i++ ?>
+							<?php $total += $_entry->round_decimal_duration; $i++ ?>
 							<tr>
 								<td class="disabled"><small>{{ $i }}</small></td>
 								<td>{{ $_entry->project_id ? $_entry->project_name : '' }}</td>
 								<td>{{ $_entry->task_id ? $_entry->task_name : '' }}</td>
 								<td>{{ $_entry->description }}</td>
 								<td>{{ date('d/m/Y', strtotime($_entry->date)) }}</td>
-								<td>{{ $_entry->round_duration }} h ({{ $_entry->duration }})</td>
+								<td>{{ $_entry->round_decimal_duration }} h ({{ $_entry->hour_duration }})</td>
 							</tr>
 						@endforeach
 					</tbody>

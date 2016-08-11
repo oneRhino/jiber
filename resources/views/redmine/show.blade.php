@@ -4,10 +4,16 @@
   <div class="container">
     <div class="col-sm-offset-2 col-sm-8">
       @if (count($entries) > 0)
+        <h2>Time Entries</h2>
+
         <div class="panel panel-default">
           <div class="panel-heading">
-            Time Entries
-						[ <a href="javascript:void(0)" id="invert-all">invert all</a> ]
+						<button type="button" class="btn btn-default btn-xs" id="send-all">Set all as to be sent</button>
+						<button type="button" class="btn btn-default btn-xs" id="ignore-all">Set all as to be ignored</button>
+						<button type="button" class="btn btn-default btn-xs" id="invert-all">Invert all</button>
+						<button type="button" class="btn btn-default btn-xs" id="close-all">Close all</button>
+						<button type="button" class="btn btn-default btn-xs" id="open-all">Open all</button>
+						<button type="button" class="btn btn-default btn-xs" id="close-settled">Close all settled</button>
           </div>
 
           <div class="panel-body">
@@ -24,7 +30,7 @@
 											Difference: {{ $difference }} h
 										</div>
 
-										<div id="collapse-{{ date('mdy', strtotime($_date)) }}" class="panel-collapse collapse in">
+										<div id="collapse-{{ date('mdy', strtotime($_date)) }}" class="panel-collapse collapse in" rel="{{ $difference }}">
 											<div class="panel-group">
 												<div class="panel panel-default">
 													@foreach ($_all_entries as $_redmine_task_id => $_entries)
@@ -36,7 +42,7 @@
 															Difference: {{ $_difference }} h
 														</div>
 
-														<div id="collapse-{{ date('mdy', strtotime($_date)) }}-{{ $_redmine_task_id }}" class="panel-collapse collapse in">
+														<div id="collapse-{{ date('mdy', strtotime($_date)) }}-{{ $_redmine_task_id }}" class="panel-collapse collapse in" rel="{{ $_difference }}">
 															<table class="table table-striped table-hover task-table">
 																<colgroup>
 																	<col width="120"/>
@@ -46,8 +52,8 @@
 																@foreach ($_entries['toggl_entries'] as $_entry)
 																	<tr class="disabled active">
 																		<td></td>
-																		<td><input type="checkbox" name="task[{{ $_entry->date }}][{{ $_entry->redmine }}][]" value="{{ $_entry->round_duration }}" class="switch"></td>
-																		<td>{{ $_entry->round_duration }} h ({{ $_entry->duration }})</td>
+																		<td><input type="checkbox" name="task[]" value="{{ $_entry->id }}" class="switch"></td>
+																		<td>{{ $_entry->round_decimal_duration }} h ({{ $_entry->hour_duration }})</td>
 																	</tr>
 																@endforeach
 
@@ -98,29 +104,5 @@
 @section('scripts')
 <link href="/css/bootstrap-switch.min.css" rel="stylesheet">
 <script src="/js/bootstrap-switch.min.js"></script>
-<script>
-$(document).ready(function($) {
-	$('input.switch[type=checkbox]').bootstrapSwitch({
-		size   : 'mini',
-		onText : 'send',
-		offText: 'ignore',
-		onSwitchChange: function(event, state){
-			if (state)
-				$(this).parents('tr').removeClass('disabled');
-			else
-				$(this).parents('tr').addClass('disabled');
-		}
-	});
-
-	$('#invert-all').click(function(){
-		$('input.switch').each(function(){
-			$(this).attr('checked', !$(this).attr('checked')).bootstrapSwitch('toggleState');
-		});
-	});
-
-	$('.panel-title a').click(function(){
-		$('span', this).toggleClass('fa-angle-down').toggleClass('fa-angle-up');
-	});
-});
-</script>
+<script src="/js/show-compare.js"></script>
 @endsection

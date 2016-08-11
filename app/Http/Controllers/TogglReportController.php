@@ -176,6 +176,12 @@ class TogglReportController extends TogglController
 		if ($report->user_id != $request->user()->id)
 			abort(403, 'Unauthorized action.');
 
+		if (!$report->canDelete())
+		{
+    	$request->session()->flash('alert-danger', 'This report cannot be deleted.');
+			return back()->withInput();
+		}
+
 		$report->delete();
     $request->session()->flash('alert-success', 'Report has been successfully deleted!');
 		return back()->withInput();

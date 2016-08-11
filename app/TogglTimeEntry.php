@@ -24,38 +24,38 @@ class TogglTimeEntry extends Toggl
 
 	/**
 	 * Return duration, rounded up to 5 minutes
-	 * Format: H.MM
+	 * Format: H.MMMMMMMM
 	 */
-	public function getRoundDurationAttribute()
+	public function getDecimalDurationAttribute()
 	{
 		$round_to = 5 * 60;
-
 		$milliseconds = $this->attributes['duration'];
-
 		$seconds      = floor($milliseconds / 1000);
-		$minutes      = floor($seconds / 60);
-		$hours        = floor($minutes / 60);
-		$milliseconds = $milliseconds % 1000;
-		$seconds      = $seconds % 60;
-		$minutes      = $minutes % 60;
-
-		$seconds = $minutes * 60 + $seconds;
 
 		if ($seconds % $round_to != 0)
 			$seconds = $seconds + ($round_to - ($seconds % $round_to));
 
-		$time = $hours + ($seconds / 3600);
-		$time = round($time, 2);
-
-		return $time;
+		return $seconds / 3600;
 	}
 
 	/**
-	 * Return duration in different format
+	 * Return duration, rounded up to 5 minutes, and 2 digits after decimal point
+	 * Format: H.MM
+	 */
+	public function getRoundDecimalDurationAttribute()
+	{
+		$time = $this->getDecimalDurationAttribute();
+
+		return round($time, 2);
+	}
+
+	/**
+	 * Return duration in hour:minutes:seconds format
 	 * Format: H:MM:SS
 	 */
-	public function getDurationAttribute($milliseconds)
+	public function getHourDurationAttribute()
 	{
+		$milliseconds = $this->attributes['duration'];
 		$seconds      = floor($milliseconds / 1000);
 		$minutes      = floor($seconds / 60);
 		$hours        = floor($minutes / 60);

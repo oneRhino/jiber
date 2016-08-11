@@ -85,11 +85,13 @@
                     <td>{{ $_report->project_ids ? $_report->projects : 'All' }}</td>
                     <td>
                       <a href="{{ action('TogglReportController@show', ['report' => $_report->id]) }}" class="btn btn-default"><i class="fa fa-folder-open"></i></a>
-                      <form action="{{ action('TogglReportController@delete', ['report' => $_report->id]) }}" method="POST" onsubmit="return confirm('Are you sure?')" style="display:inline">
-                        {{ csrf_field() }}
-                        {{ method_field('DELETE') }}
-                        <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
-                      </form>
+											@if ($_report->canDelete())
+	                      <form action="{{ action('TogglReportController@delete', ['report' => $_report->id]) }}" method="POST" onsubmit="return confirm('Are you sure?')" style="display:inline">
+  	                      {{ csrf_field() }}
+    	                    {{ method_field('DELETE') }}
+      	                  <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
+        	              </form>
+											@endif
                     </td>
                   </tr>
                 @endforeach

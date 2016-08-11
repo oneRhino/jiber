@@ -4,6 +4,8 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use App\TogglClient;
+use App\JiraSent;
+use App\RedmineSent;
 
 class TogglReport extends Toggl
 {
@@ -13,12 +15,27 @@ class TogglReport extends Toggl
   public function entries()
   {
     return $this->hasMany('App\TogglTimeEntry', 'report_id')
-			->select(array('toggl_time_entries.id','toggl_time_entries.project_id','toggl_time_entries.task_id','toggl_time_entries.description','toggl_time_entries.date','toggl_time_entries.duration','toggl_time_entries.redmine','toggl_time_entries.jira','toggl_projects.name as project_name','toggl_tasks.name as task_name'))
+			->select(array('toggl_time_entries.id','toggl_time_entries.project_id','toggl_time_entries.task_id','toggl_time_entries.description','toggl_time_entries.date','toggl_time_entries.time','toggl_time_entries.duration','toggl_time_entries.redmine','toggl_time_entries.jira','toggl_projects.name as project_name','toggl_tasks.name as task_name'))
 			->leftJoin('toggl_projects', 'project_id', '=', 'toggl_projects.id')
 			->leftJoin('toggl_tasks', 'task_id', '=', 'toggl_tasks.id')
 			->orderBy('date')
 			->orderBy('project_name')
 			->orderBy('description');
+	}
+
+	/**
+	 * Check if report has been sent to Jira or Redmine,
+	 * if so, it shouldn't be deleted
+	 */
+	public function canDelete()
+	{
+		$count = RedmineSent::where('report_id', $this->id)->count();
+		if ($count > 0) return false;
+
+		$count = JiraSent::where('report_id', $this->id)->count();
+		if ($count > 0) return false;
+
+		return true;
 	}
 
 	public function getTimeEntries()

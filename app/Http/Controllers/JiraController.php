@@ -17,6 +17,7 @@ use App\Http\Requests;
 use App\JiraSent;
 use App\Setting;
 use App\TogglReport;
+use App\TogglTimeEntry;
 
 use chobie\Jira\Api;
 use chobie\Jira\Api\Authentication\Basic;
@@ -158,8 +159,8 @@ class JiraController extends Controller
 
 				// Fill arrays
 				$entries[$_entry->date][$_entry->redmine]['toggl_entries'][] = $_entry;
-				$entries[$_entry->date][$_entry->redmine]['toggl_total']    += $_entry->round_duration;
-				$entries[$_entry->date]['toggl_total']                      += $_entry->round_duration;
+				$entries[$_entry->date][$_entry->redmine]['toggl_total']    += $_entry->round_decimal_duration;
+				$entries[$_entry->date]['toggl_total']                      += $_entry->round_decimal_duration;
 			}
 
 			// Then, through all Toggl's entries, get Jira's worklog
@@ -183,11 +184,11 @@ class JiraController extends Controller
 						if (strtotime($_date) != strtotime(date('Y-m-d', strtotime($_time['started'])))) continue;
 
 						$_time['description'] = ($_time['comment'] ? $_time['comment'] : '<No comment>');
-						$_time['time']        = $_time['timeSpentSeconds'] / 3600;
+						$_time['time']        = round(($_time['timeSpentSeconds'] / 3600), 2);
 
 						$entries[$_date][$_redmine]['third_entries'][] = $_time;
-						$entries[$_date][$_redmine]['third_total']    += ($_time['timeSpentSeconds'] / 3600);
-						$entries[$_date]['third_total']               += ($_time['timeSpentSeconds'] / 3600);
+						$entries[$_date][$_redmine]['third_total']    += round(($_time['timeSpentSeconds'] / 3600), 2);
+						$entries[$_date]['third_total']               += round(($_time['timeSpentSeconds'] / 3600), 2);
 					}
 				}
 			}
@@ -213,39 +214,44 @@ class JiraController extends Controller
 	{
 		if ($request->isMethod('post'))
 		{
+			if (!$request->task)
+			{
+      	$request->session()->flash('alert-success', 'No tasks sent - nothing to do.');
+				return back();
+			}
+
 			// Connect into Jira
 			$jira = $this->connect($request);
 
-			foreach ($request->task as $_date => $_entries)
+			foreach ($request->task as $_entry_id)
 			{
+				$_entry = TogglTimeEntry::find($_entry_id);
+
+				if (!$_entry || $_entry->user_id != $request->user()->id) continue;
+
 				// Transforming date into Jira's format
 				// removing ':' from timezone and adding '.000' after seconds
-				$_date = preg_replace('/([-+][0-9]{2}):([0-9]{2})$/', '.000${1}${2}', $_date);
+				$_date = preg_replace('/([-+][0-9]{2}):([0-9]{2})$/', '.000${1}${2}', $_entry->time);
 
-				foreach ($_entries as $_jira => $_hours)
+				$_data = array(
+					'timeSpentSeconds' => $_entry->decimal_duration * 3600,
+					'started'          => $_date,
+					'comment'          => $_entry->description,
+					'issueId'          => $_entry->jira,
+				);
+
+				$response = $jira->addWorklog($_entry->jira, $_data);
+
+				if ($response)
 				{
-					foreach ($_hours as $_time => $_comment)
-					{
-						$data = array(
-								'timeSpentSeconds' => $_time * 3600,
-								'started'          => $_date,
-								'comment'          => $_comment,
-								'issueId'          => $_jira,
-						);
-						$response = $jira->addWorklog($_jira, $data);
-
-						if ($response)
-						{
-							// Create a JiraSent (log)
-							$sent = new JiraSent;
-							$sent->report_id = $request->report_id;
-							$sent->task      = $_jira;
-							$sent->date      = $_date;
-							$sent->duration  = $_time;
-							$sent->user_id   = $request->user()->id;
-							$sent->save();
-						}
-					}
+					// Create a JiraSent (log)
+					$sent = new JiraSent;
+					$sent->report_id = $request->report_id;
+					$sent->task      = $_entry->jira;
+					$sent->date      = $_date;
+					$sent->duration  = $_entry->decimal_duration;
+					$sent->user_id   = $request->user()->id;
+					$sent->save();
 				}
 			}
 

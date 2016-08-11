@@ -17,8 +17,9 @@ use Illuminate\Support\Facades\Config;
 use App\Http\Requests;
 use App\RedmineSent;
 use App\Setting;
-use App\TogglReport;
 use App\TogglClient;
+use App\TogglReport;
+use App\TogglTimeEntry;
 
 use Redmine\Client as RedmineClient;
 
@@ -129,8 +130,8 @@ class RedmineController extends Controller
 
 				// Fill arrays
 				$entries[$_entry->date][$_entry->redmine]['toggl_entries'][] = $_entry;
-				$entries[$_entry->date][$_entry->redmine]['toggl_total']    += $_entry->round_duration;
-				$entries[$_entry->date]['toggl_total']                      += $_entry->round_duration;
+				$entries[$_entry->date][$_entry->redmine]['toggl_total']    += $_entry->round_decimal_duration;
+				$entries[$_entry->date]['toggl_total']                      += $_entry->round_decimal_duration;
 			}
 
 			// Then, through all Toggl's entries, add Redmine's entries
@@ -180,34 +181,40 @@ class RedmineController extends Controller
 	{
 		if ($request->isMethod('post'))
 		{
+			if (!$request->task)
+			{
+      	$request->session()->flash('alert-success', 'No tasks sent - nothing to do.');
+				return back();
+			}
+
 			// Connect into Redmine
 			$redmine = $this->connect($request);
 
-			foreach ($request->task as $_date => $_task)
+			foreach ($request->task as $_entry_id)
 			{
-				foreach ($_task as $_task_id => $_durations)
-				{
-					foreach ($_durations as $_duration)
-					{
-						$data = array(
-							'issue_id' => $_task_id,
-							'spent_on' => $_date,
-							'hours'    => $_duration,
-						);
-						$create = $redmine->time_entry->create($data);
+				$_entry = TogglTimeEntry::find($_entry_id);
 
-						if ($create)
-						{
-							// Create a RedmineSent (log)
-							$sent = new RedmineSent;
-							$sent->report_id = $request->report_id;
-							$sent->date      = $_date;
-							$sent->task      = $_task_id;
-							$sent->duration  = $_duration;
-							$sent->user_id   = $request->user()->id;
-							$sent->save();
-						}
-					}
+				if (!$_entry || $_entry->user_id != $request->user()->id) continue;
+
+				$_data = array(
+					'issue_id' => $_entry->redmine,
+					'spent_on' => $_entry->date,
+					'hours'    => $_entry->round_decimal_duration,
+					'comments' => $_entry->description
+				);
+
+				$_create = $redmine->time_entry->create($_data);
+
+				if ($_create)
+				{
+					// Create a RedmineSent (log)
+					$_sent = new RedmineSent;
+					$_sent->report_id = $request->report_id;
+					$_sent->date      = $_entry->date;
+					$_sent->task      = $_entry->redmine;
+					$_sent->duration  = $_entry->round_decimal_duration;
+					$_sent->user_id   = $request->user()->id;
+					$_sent->save();
 				}
 			}
 
