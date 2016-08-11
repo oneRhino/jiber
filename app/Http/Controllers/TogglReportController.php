@@ -153,6 +153,9 @@ class TogglReportController extends TogglController
 	 */
   public function show(TogglReport $report, Request $request)
   {
+		if ($report->user_id != $request->user()->id)
+			abort(403, 'Unauthorized action.');
+
 		// Empty Redmine and Jira report from session
 		if ($request->session()->has('redmine.report.'.$report->id))
 			$request->session()->forget('redmine.report.'.$report->id);
@@ -170,6 +173,9 @@ class TogglReportController extends TogglController
 	 */
 	public function delete(TogglReport $report, Request $request)
 	{
+		if ($report->user_id != $request->user()->id)
+			abort(403, 'Unauthorized action.');
+
 		$report->delete();
     $request->session()->flash('alert-success', 'Report has been successfully deleted!');
 		return back()->withInput();

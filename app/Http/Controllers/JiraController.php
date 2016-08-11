@@ -104,6 +104,9 @@ class JiraController extends Controller
 	 */
 	public function show(TogglReport $report, Request $request)
 	{
+		if ($report->user_id != $request->user()->id)
+			abort(403, 'Unauthorized action.');
+
 		#$request->session()->forget('jira.report');
 
 		// Only enter if no session exists for jira.report

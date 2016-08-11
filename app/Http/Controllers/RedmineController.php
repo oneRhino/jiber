@@ -66,6 +66,9 @@ class RedmineController extends Controller
    */
   function show(TogglReport $report, Request $request)
   {
+		if ($report->user_id != $request->user()->id)
+			abort(403, 'Unauthorized action.');
+
 		$request->session()->forget('redmine.report');
 
 		// Only enter if no session exists for redmine.report
