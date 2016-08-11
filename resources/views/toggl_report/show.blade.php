@@ -37,16 +37,25 @@
 					</thead>
 
 					<tbody>
+						<?php $total = 0 ?>
 						@foreach ($report->entries as $_entry)
+							<?php $total += $_entry->round_duration ?>
 							<tr>
 								<td>{{ $_entry->project_id ? $_entry->project_name : '' }}</td>
 								<td>{{ $_entry->task_id ? $_entry->task_name : '' }}</td>
 								<td>{{ $_entry->description }}</td>
 								<td>{{ date('d/m/Y', strtotime($_entry->date)) }}</td>
-								<td>{{ $_entry->round_duration }} ({{ $_entry->duration }})</td>
+								<td>{{ $_entry->round_duration }} h ({{ $_entry->duration }})</td>
 							</tr>
 						@endforeach
 					</tbody>
+
+					<tfoot>
+						<tr>
+							<th colspan="4">Total</th>
+							<th>{{ $total }} h</td>
+						</tr>
+					</tfoot>
 				</table>
 			@else
 				<p>No results matched by your search.</p>
