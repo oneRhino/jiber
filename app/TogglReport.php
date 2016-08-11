@@ -20,7 +20,8 @@ class TogglReport extends Toggl
 			->leftJoin('toggl_tasks', 'task_id', '=', 'toggl_tasks.id')
 			->orderBy('date')
 			->orderBy('project_name')
-			->orderBy('description');
+			->orderBy('redmine')
+			->orderBy('duration');
 	}
 
 	/**
@@ -49,7 +50,7 @@ class TogglReport extends Toggl
 	 */
 	public function getAllRedmine($user_id)
 	{
-		return $this->entries()->whereNotNull('redmine')->orderBy('redmine')->orderBy('duration')->get();
+		return $this->entries()->whereNotNull('redmine')->get();
 	}
 
 	/**

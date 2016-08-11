@@ -45,14 +45,14 @@
 														<div id="collapse-{{ date('mdy', strtotime($_date)) }}-{{ $_redmine_task_id }}" class="panel-collapse collapse in" rel="{{ $_difference }}">
 															<table class="table table-striped table-hover task-table">
 																<colgroup>
-																	<col width="120"/>
-																	<col width="200"/>
+																	<col width="100"/>
 																	<col/>
+																	<col width="100"/>
 																</colgroup>
 																@foreach ($_entries['toggl_entries'] as $_entry)
 																	<tr class="disabled active">
-																		<td></td>
 																		<td><input type="checkbox" name="task[]" value="{{ $_entry->id }}" class="switch"></td>
+																		<td>{{ $_entry->description }}</td>
 																		<td>{{ $_entry->round_decimal_duration }} h ({{ $_entry->hour_duration }})</td>
 																	</tr>
 																@endforeach
@@ -65,22 +65,24 @@
 																<tr class="danger total">
 																	<th></th>
 																	<th>Jira</th>
-																	<th></th>
+																	<th>@unless ($_entries['third_entries']) 0 h @endunless</th>
 																</tr>
 
-																@foreach ($_entries['third_entries'] as $_entry)
-																	<tr class="danger">
-																		<td></td>
-																		<td>{{ $_entry['description'] }}</td>
-																		<td>{{ $_entry['time'] }} h</td>
+																@if ($_entries['third_entries'])
+																	@foreach ($_entries['third_entries'] as $_entry)
+																		<tr class="danger">
+																			<td></td>
+																			<td>{{ $_entry['description'] }}</td>
+																			<td>{{ $_entry['time'] }} h</td>
+																		</tr>
+																	@endforeach
+
+																	<tr class="danger total">
+																		<th></th>
+																		<th>Total</th>
+																		<th>{{ $_entries['third_total'] }} h</th>
 																	</tr>
-																@endforeach
-
-																<tr class="danger total">
-																	<th></th>
-																	<th>Total</th>
-																	<th>{{ $_entries['third_total'] }} h</th>
-																</tr>
+																@endif
 															</table>
 														</div>
 													@endforeach

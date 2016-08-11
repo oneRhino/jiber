@@ -85,7 +85,8 @@ class RedmineController extends Controller
 			$args = array(
 				'user_id'  => 'me',
 				'spent_on' => "><{$report->start_date}|{$report->end_date}",
-				'limit'    => 100
+				'limit'    => 100,
+				'sort'     => 'hours',
 			);
 			$redmine_entries = $redmine->time_entry->all($args);
 
@@ -113,7 +114,7 @@ class RedmineController extends Controller
 				if (!isset($entries[$_entry->date]))
 				{
 					$entries[$_entry->date] = array(
-						'toggl_total'   => 0,
+						'toggl_total' => 0,
 						'third_total' => 0
 					);
 				}
@@ -150,7 +151,7 @@ class RedmineController extends Controller
 						if ($_redmine['spent_on']    != $_date)     continue;
 						if ($_redmine['issue']['id'] != $_issue_id) continue;
 
-						$_redmine['description'] = $_redmine['activity']['name'];
+						$_redmine['description'] = (isset($_redmine['comments']) ? $_redmine['comments'] : $_redmine['activity']['name']);
 						$_redmine['time']        = $_redmine['hours'];
 
 						$entries[$_date][$_issue_id]['third_entries'][] = $_redmine;

@@ -127,7 +127,7 @@ class JiraController extends Controller
 			$entries = array();
 
 			// Get all report's entries that have a Jira Task ID set
-			$jira_entries = $report->entries()->whereNotNull('jira')->orderBy('redmine')->orderBy('duration')->get();
+			$jira_entries = $report->entries()->whereNotNull('jira')->get();
 
 			if (!$jira_entries->count())
 			{
