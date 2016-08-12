@@ -3,6 +3,8 @@
 @section('content')
   <div class="container">
     <div class="col-sm-offset-2 col-sm-8">
+			<h1>Reports</h1>
+
       @if (count($workspaces) > 0)
         <div class="panel panel-default">
           <div class="panel-body">
@@ -60,9 +62,9 @@
           </div>
 
           <div class="panel-body">
-            <table class="table table-striped task-table">
+            <table class="table table-striped task-table datatable">
               <colgroup>
-                <col width="100"/>
+                <col width="110"/>
                 <col width="100"/>
                 <col/>
                 <col/>
@@ -73,7 +75,7 @@
                 <th>End Date</th>
                 <th>Clients</th>
                 <th>Projects</th>
-                <th></th>
+                <th class="no-sort"></th>
               </thead>
 
               <tbody>
@@ -108,9 +110,11 @@
 
 @section('scripts')
 <link rel="stylesheet" type="text/css" href="/css/daterangepicker.css"/>
-<script src="/js/moment.min.js"></script>
-<script src="/js/daterangepicker.js"></script>
-<script>
+
+<script type="text/javascript" src="/js/moment.min.js"></script>
+<script type="text/javascript" src="/js/daterangepicker.js"></script>
+
+<script type="text/javascript">
 jQuery(document).ready(function($){
 	$('input.daterange').daterangepicker({
 		'startDate': '{{ date('m/d/Y', strtotime('-6 days')) }}',

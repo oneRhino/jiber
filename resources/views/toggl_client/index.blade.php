@@ -4,14 +4,12 @@
 @section('import_button_label', 'Clients')
 
 @section('table')
+	<h1>Toggl Clients</h1>
+
 	@if (count($clients) > 0)
 		<div class="panel panel-default">
-			<div class="panel-heading">
-				Clients
-			</div>
-
 			<div class="panel-body">
-				<table class="table table-striped table-hover task-table">
+				<table class="table table-striped table-hover task-table datatable" data-order="[[ 1, &quot;asc&quot; ]]">
 					<colgroup>
 						<col width="120"/>
 						<col/>

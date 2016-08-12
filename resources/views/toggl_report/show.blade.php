@@ -4,6 +4,7 @@
   <div class="container">
     <div class="col-sm-offset-2 col-sm-8">
       <h1>Report</h1>
+
       <dl class="dl-horizontal">
         <dt>Start Date:</dt>
         <dd>{{ date('m/d/Y', strtotime($report->start_date)) }}</dd>
@@ -15,13 +16,14 @@
         <dd>{{ $report->project_ids ? $report->projects : 'All' }}</dd>
       </dl>
 
-      <a href="{{ action('RedmineController@show', ['report' => $report->id]) }}" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Depending on the amount of records, this might take a while to load."><i class="aui-icon redmine"></i> Compare entries to Redmine</a>
-      <a href="{{ action('JiraController@show', ['report' => $report->id]) }}" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Depending on the amount of records, this might take a while to load."><i class="aui-icon aui-icon-small aui-iconfont-jira"></i> Compare entries to Jira</a>
+			<div class="text-center" style="margin-bottom:10px">
+	      <a href="{{ action('RedmineController@show', ['report' => $report->id]) }}" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Depending on the amount of records, this might take a while to load."><i class="aui-icon redmine"></i> Compare entries to Redmine</a>
+  	    <a href="{{ action('JiraController@show', ['report' => $report->id]) }}" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Depending on the amount of records, this might take a while to load."><i class="aui-icon aui-icon-small aui-iconfont-jira"></i> Compare entries to Jira</a>
+			</div>
 
 			@if ($report->entries)
-				<table class="table table-striped table-hover task-table">
+				<table class="table table-striped table-hover task-table datatable">
 					<colgroup>
-						<col width="10"/>
 						<col width="120"/>
 						<col width="100"/>
 						<col/>
@@ -30,7 +32,6 @@
 					</colgroup>
 
 					<thead>
-						<th></th>
 						<th>Project</th>
 						<th>Task</th>
 						<th>Description</th>
@@ -39,11 +40,10 @@
 					</thead>
 
 					<tbody>
-						<?php $total = 0; $i = 0 ?>
+						<?php $total = 0 ?>
 						@foreach ($report->entries as $_entry)
-							<?php $total += $_entry->round_decimal_duration; $i++ ?>
+							<?php $total += $_entry->round_decimal_duration ?>
 							<tr>
-								<td class="disabled"><small>{{ $i }}</small></td>
 								<td>{{ $_entry->project_id ? $_entry->project_name : '' }}</td>
 								<td>{{ $_entry->task_id ? $_entry->task_name : '' }}</td>
 								<td>{{ $_entry->description }}</td>
@@ -55,7 +55,7 @@
 
 					<tfoot>
 						<tr>
-							<th colspan="4"></th>
+							<th colspan="3"></th>
 							<th>Total</th>
 							<th>{{ $total }} h</td>
 						</tr>

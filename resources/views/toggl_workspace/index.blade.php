@@ -4,14 +4,12 @@
 @section('import_button_label', 'Workspaces')
 
 @section('table')
+	<h1>Toggl Workspaces</h1>
+
 	@if (count($workspaces) > 0)
 		<div class="panel panel-default">
-			<div class="panel-heading">
-				Workspaces
-			</div>
-
 			<div class="panel-body">
-				<table class="table table-striped table-hover task-table">
+				<table class="table table-striped table-hover task-table datatable">
 					<colgroup>
 						<col/>
 					</colgroup>
