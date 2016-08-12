@@ -94,7 +94,7 @@ class TogglReportController extends TogglController
 
 		// Toggl's arguments array
     $args = array(
-      'user_agent'   => 'thaissa.mendes@gmail.com',
+      'user_agent'   => 'Jiber <thaissa.mendes@gmail.com>',
       'workspace_id' => (int)$request->workspace,
       'user_ids'     => $current_user['id'],
     );
