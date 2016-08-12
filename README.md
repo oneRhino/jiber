@@ -31,3 +31,7 @@ Imports time entries (and everything else needed) from Toggl, and send them to R
 	3. Change "ignore" to "send" (or check the checkbox, if not viewing the toggle field) beside each entry, to make that entry be sent to Jira;
 	4. After selecting all entries you want to be sent to Jira, click "Send" at the end of the table. This will send all selected time entries to Jira;
 	5. After sending, system will show the Jira Compare page again, updated.
+
+## Contact
+
+For any questions, suggestions and complainings, please contact Thaissa Mendes at <thaissa.mendes@gmail.com>.
