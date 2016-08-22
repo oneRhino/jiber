@@ -32,54 +32,49 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\TogglWorkspace;
 
-use App\Http\Requests;
-
 class TogglWorkspaceController extends TogglController
 {
-	/**
-	 * List workspaces saved on system
-	 */
-  function index(Request $request)
-  {
-    $workspaces = TogglWorkspace::getAllByUserID($request->user()->id);
-
-    return view('toggl_workspace.index', [
-      'workspaces' => $workspaces
-    ]);
-  }
-
-	/**
-	 * Import workspaces from Toggl
-	 */
-  function import(Request $request)
-  {
-    $toggl_client = $this->toggl_connect($request);
-
-    $workspaces = $toggl_client->getWorkspaces(array());
-
-    if ($workspaces)
+    /**
+     * List workspaces saved on system
+     */
+    public function index(Request $request)
     {
-      foreach ($workspaces as $_workspace)
-      {
-				$workspace = TogglWorkspace::where(array(
-					'toggl_id' => $_workspace['id'], 
-					'user_id'  => $request->user()->id
-				))->get()->first();
+        $workspaces = TogglWorkspace::getAllByUserID($request->user()->id);
 
-				if (!$workspace)
-				{
-	        $workspace = new TogglWorkspace;
-  	      $workspace->user_id  = $request->user()->id;
-  	      $workspace->toggl_id = $_workspace['id'];
-				}
-
-				$workspace->name = $_workspace['name'];
-				$workspace->save();
-      }
-
-      $request->session()->flash('alert-success', 'All workspaces have been successfully imported!');
+        return view('toggl_workspace.index', [
+            'workspaces' => $workspaces,
+        ]);
     }
 
-    return back()->withInput();
-  }
+    /**
+     * Import workspaces from Toggl
+     */
+    public function import(Request $request)
+    {
+        $toggl_client = $this->toggl_connect($request);
+
+        $workspaces = $toggl_client->getWorkspaces(array());
+
+        if ($workspaces) {
+            foreach ($workspaces as $_workspace) {
+                $workspace = TogglWorkspace::where(array(
+                    'toggl_id' => $_workspace['id'], 
+                    'user_id'  => $request->user()->id,
+                ))->get()->first();
+
+                if (!$workspace) {
+                    $workspace           = new TogglWorkspace();
+                    $workspace->user_id  = $request->user()->id;
+                    $workspace->toggl_id = $_workspace['id'];
+                }
+
+                $workspace->name = $_workspace['name'];
+                $workspace->save();
+            }
+
+            $request->session()->flash('alert-success', 'All workspaces have been successfully imported!');
+        }
+
+        return back()->withInput();
+    }
 }
