@@ -1,10 +1,9 @@
 <?php
 $alert = $sign = '';
 
-switch ($boolean)
-{
-	case '0': $alert = 'alert-danger';  $sign = '<i class="fa fa-exclamation-circle"></i>'; break;
-	case '1': $alert = 'alert-success'; $sign = '<i class="fa fa-check-circle"></i>'; break;
+switch ($boolean) {
+    case '0': $alert = 'alert-danger';  $sign = '<i class="fa fa-exclamation-circle"></i>'; break;
+    case '1': $alert = 'alert-success'; $sign = '<i class="fa fa-check-circle"></i>'; break;
 }
 ?>
 <div class="form-group {{ $alert }}">
