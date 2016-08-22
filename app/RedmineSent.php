@@ -25,5 +25,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class RedmineSent extends Model
 {
-	protected $table = 'redmine_sent';
+    protected $table = 'redmine_sent';
 }
