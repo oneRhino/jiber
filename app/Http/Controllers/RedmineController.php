@@ -34,7 +34,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use App\RedmineSent;
 use App\Setting;
-use App\TogglReport;
+use App\Report;
 use App\TogglTimeEntry;
 use Redmine\Client as RedmineClient;
 
@@ -79,9 +79,8 @@ class RedmineController extends Controller
 
     /**
      * Show Redmine's time entries grouped by date and Redmine's task ID
-     * *Only OneRhino tasks*
      */
-    public function show(TogglReport $report, Request $request)
+    public function show(Report $report, Request $request)
     {
         if ($report->user_id != $request->user()->id) {
             abort(403, 'Unauthorized action.');
@@ -94,27 +93,7 @@ class RedmineController extends Controller
         if (!$request->session()->has('redmine.report.' . $report->id)) {
             set_time_limit(0);
 
-            // Connect into Redmine
-            $redmine = $this->connect();
-
-            // Get all Redmine's entries for this user, on these dates
-            $args = array(
-                'user_id'  => 'me',
-                'spent_on' => "><{$report->start_date}|{$report->end_date}",
-                'limit'    => 100,
-                'sort'     => 'hours',
-            );
-            $redmine_entries = $redmine->time_entry->all($args);
-
-            // Redmine has a 100 entries per page limit, so, we need to paginate
-            $pages = ceil($redmine_entries['total_count'] / $redmine_entries['limit']);
-            if ($pages > 1) {
-                for ($page=1; $page<$pages; $page++) {
-                    $args['offset']                  = $page * $args['limit'];
-                    $_results                        = $redmine->time_entry->all($args);
-                    $redmine_entries['time_entries'] = array_merge($redmine_entries['time_entries'], $_results['time_entries']);
-                }
-            }
+            $redmine_entries = $this->getRedmineEntries($report->start_date, $report->end_date);
 
             // Get all time entries from Report, but only those
             // that have Redmine field filled
@@ -131,8 +110,8 @@ class RedmineController extends Controller
                     );
                 }
 
-                if (!isset($entries[$_entry->date][$_entry->redmine])) {
-                    $entries[$_entry->date][$_entry->redmine] = array(
+                if (!isset($entries[$_entry->date][$_entry->redmine_issue_id])) {
+                    $entries[$_entry->date][$_entry->redmine_issue_id] = array(
                         'toggl_entries' => array(),
                         'toggl_total'   => 0,
                         'third_total'   => 0,
@@ -141,9 +120,9 @@ class RedmineController extends Controller
                 }
 
                 // Fill arrays
-                $entries[$_entry->date][$_entry->redmine]['toggl_entries'][] = $_entry;
-                $entries[$_entry->date][$_entry->redmine]['toggl_total']    += $_entry->round_decimal_duration;
-                $entries[$_entry->date]['toggl_total']                      += $_entry->round_decimal_duration;
+                $entries[$_entry->date][$_entry->redmine_issue_id]['toggl_entries'][] = $_entry;
+                $entries[$_entry->date][$_entry->redmine_issue_id]['toggl_total']    += $_entry->round_decimal_duration;
+                $entries[$_entry->date]['toggl_total']                               += $_entry->round_decimal_duration;
             }
 
             // Then, through all Toggl's entries, add Redmine's entries
@@ -238,5 +217,32 @@ class RedmineController extends Controller
         }
 
         return back()->withInput();
+    }
+
+    protected function getRedmineEntries($start_date, $end_date)
+    {
+        // Connect into Redmine
+        $redmine = $this->connect();
+
+        // Get all Redmine's entries for this user, on these dates
+        $args = array(
+            'user_id'  => 'me',
+            'spent_on' => "><{$start_date}|{$end_date}",
+            'limit'    => 100,
+            'sort'     => 'hours',
+        );
+        $redmine_entries = $redmine->time_entry->all($args);
+
+        // Redmine has a 100 entries per page limit, so, we need to paginate
+        $pages = ceil($redmine_entries['total_count'] / $redmine_entries['limit']);
+        if ($pages > 1) {
+            for ($page=1; $page<$pages; $page++) {
+                $args['offset']                  = $page * $args['limit'];
+                $_results                        = $redmine->time_entry->all($args);
+                $redmine_entries['time_entries'] = array_merge($redmine_entries['time_entries'], $_results['time_entries']);
+            }
+        }
+
+        return $redmine_entries;
     }
 }

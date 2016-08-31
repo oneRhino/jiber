@@ -21,7 +21,7 @@
 
 namespace App;
 
-class RedmineSent extends MainModel
+class RedmineTimeEntry extends TimeEntry
 {
-    protected $table = 'redmine_sent';
+    public $timestamps = false;
 }

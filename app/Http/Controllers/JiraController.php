@@ -32,9 +32,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use App\JiraSent;
+use App\Report;
 use App\Setting;
-use App\TogglReport;
-use App\TogglTimeEntry;
+use App\TimeEntry;
 use chobie\Jira\Api;
 use chobie\Jira\Api\Authentication\Basic;
 
@@ -45,10 +45,10 @@ class JiraController extends Controller
      */
     public function connect(Request $request)
     {
-        $redirect     = app('Illuminate\Routing\Redirector');
-        $url          = Config::get('jira.url');
-        $username     = Setting::find($request->user()->id)->jira;
-        $password     = $request->session()->get('jira.password');
+        $redirect = app('Illuminate\Routing\Redirector');
+        $url      = Config::get('jira.url');
+        $username = Setting::find($request->user()->id)->jira;
+        $password = $request->session()->get('jira.password');
 
         if (!$password) {
             $request->session()->flash('alert-warning', 'Please set your Jira Password (it will be stored only for this session).');
@@ -113,7 +113,7 @@ class JiraController extends Controller
     /**
      * Show Jira's time entries grouped by date and Redmine's task ID
      */
-    public function show(TogglReport $report, Request $request)
+    public function show(Report $report, Request $request)
     {
         if ($report->user_id != $request->user()->id) {
             abort(403, 'Unauthorized action.');
@@ -137,7 +137,7 @@ class JiraController extends Controller
             $entries = array();
 
             // Get all report's entries that have a Jira Task ID set
-            $jira_entries = $report->entries()->whereNotNull('jira')->get();
+            $jira_entries = $report->entries()->whereNotNull('jira_issue_id')->get();
 
             if (!$jira_entries->count()) {
                 $request->session()->flash('alert-warning', 'No Jira tasks have been found in the period.');
@@ -145,41 +145,41 @@ class JiraController extends Controller
                 return back()->withInput();
             }
 
-            // First create arrays and fill with Toggl information
+            // First create arrays and fill with entry information
             foreach ($jira_entries as $_entry) {
                 // Create default arrays
                 if (!isset($entries[$_entry->date])) {
                     $entries[$_entry->date] = array(
-                        'toggl_total' => 0,
+                        'entry_total' => 0,
                         'third_total' => 0,
                     );
                 }
 
-                if (!isset($entries[$_entry->date][$_entry->redmine])) {
-                    $entries[$_entry->date][$_entry->redmine] = array(
-                        'toggl_entries' => array(),
-                        'toggl_total'   => 0,
+                if (!isset($entries[$_entry->date][$_entry->redmine_issue_id])) {
+                    $entries[$_entry->date][$_entry->redmine_issue_id] = array(
+                        'entry_entries' => array(),
+                        'entry_total'   => 0,
                         'third_total'   => 0,
                         'third_entries' => array(),
                     );
                 }
 
                 // Fill arrays
-                $entries[$_entry->date][$_entry->redmine]['toggl_entries'][] = $_entry;
-                $entries[$_entry->date][$_entry->redmine]['toggl_total']    += $_entry->round_decimal_duration;
-                $entries[$_entry->date]['toggl_total']                      += $_entry->round_decimal_duration;
+                $entries[$_entry->date][$_entry->redmine_issue_id]['entry_entries'][] = $_entry;
+                $entries[$_entry->date][$_entry->redmine_issue_id]['entry_total']    += $_entry->round_decimal_duration;
+                $entries[$_entry->date]['entry_total']                               += $_entry->round_decimal_duration;
             }
 
-            // Then, through all Toggl's entries, get Jira's worklog
+            // Then, through all entries, get Jira's worklog
             foreach ($entries as $_date => $_entries) {
                 foreach ($_entries as $_redmine => $__entries) {
                     // Skip *_total keys
-                    if (in_array($_redmine, array('toggl_total', 'third_total'))) {
+                    if (in_array($_redmine, array('entry_total', 'third_total'))) {
                         continue;
                     }
 
                     // Get Jira worklog for this task
-                    $worklog = $jira->getWorklogs($__entries['toggl_entries'][0]->jira, array());
+                    $worklog = $jira->getWorklogs($__entries['entry_entries'][0]->jira_issue_id, array());
                     $results = $worklog->getResult();
 
                     foreach ($results['worklogs'] as $_time) {
@@ -233,7 +233,7 @@ class JiraController extends Controller
             $jira = $this->connect($request);
 
             foreach ($request->task as $_entry_id) {
-                $_entry = TogglTimeEntry::find($_entry_id);
+                $_entry = TimeEntry::find($_entry_id);
 
                 if (!$_entry || $_entry->user_id != $request->user()->id) {
                     continue;
@@ -241,22 +241,22 @@ class JiraController extends Controller
 
                 // Transforming date into Jira's format
                 // removing ':' from timezone and adding '.000' after seconds
-                $_date = preg_replace('/([-+][0-9]{2}):([0-9]{2})$/', '.000${1}${2}', $_entry->time);
+                $_date = preg_replace('/([-+][0-9]{2}):([0-9]{2})$/', '.000${1}${2}', date('c', strtotime($_entry->date_time)));
 
                 $_data = array(
                     'timeSpentSeconds' => $_entry->decimal_duration * 3600,
                     'started'          => $_date,
                     'comment'          => $_entry->description,
-                    'issueId'          => $_entry->jira,
+                    'issueId'          => $_entry->jira_issue_id,
                 );
 
-                $response = $jira->addWorklog($_entry->jira, $_data);
+                $response = $jira->addWorklog($_entry->jira_issue_id, $_data);
 
                 if ($response) {
                     // Create a JiraSent (log)
                     $sent            = new JiraSent();
                     $sent->report_id = $request->report_id;
-                    $sent->task      = $_entry->jira;
+                    $sent->task      = $_entry->jira_issue_id;
                     $sent->date      = $_date;
                     $sent->duration  = $_entry->decimal_duration;
                     $sent->user_id   = $request->user()->id;

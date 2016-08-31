@@ -35,16 +35,22 @@ Route::get('/toggl/projects/import'   , ['middleware' => 'auth', 'uses' => 'Togg
 Route::get('/toggl/tasks'             , ['middleware' => 'auth', 'uses' => 'TogglTaskController@index']);
 Route::get('/toggl/tasks/import'      , ['middleware' => 'auth', 'uses' => 'TogglTaskController@import']);
 
-Route::get('/toggl/reports'           , ['middleware' => 'auth', 'uses' => 'TogglReportController@index']);
-Route::get('/toggl/report/{report}'   , ['middleware' => 'auth', 'uses' => 'TogglReportController@show']);
-Route::post('/toggl/reports/save'     , ['middleware' => 'auth', 'uses' => 'TogglReportController@save']);
+Route::get   ('/toggl/reports'        , ['middleware' => 'auth', 'uses' => 'TogglReportController@index']);
+Route::get   ('/toggl/report/{report}', ['middleware' => 'auth', 'uses' => 'TogglReportController@show']);
+Route::post  ('/toggl/report/save'    , ['middleware' => 'auth', 'uses' => 'TogglReportController@save']);
 Route::delete('/toggl/report/{report}', ['middleware' => 'auth', 'uses' => 'TogglReportController@delete']);
 
 // Redmine routes
-Route::get('/redmine/show/{report}'   , ['middleware' => 'auth', 'uses' => 'RedmineController@show']);
-Route::post('/redmine/send'           , ['middleware' => 'auth', 'uses' => 'RedmineController@send']);
+Route::get   ('/redmine/reports'        , ['middleware' => 'auth', 'uses' => 'RedmineReportController@index']);
+Route::get   ('/redmine/report/{report}', ['middleware' => 'auth', 'uses' => 'RedmineReportController@show']);
+Route::post  ('/redmine/report/save'    , ['middleware' => 'auth', 'uses' => 'RedmineReportController@save']);
+Route::delete('/redmine/report/{report}', ['middleware' => 'auth', 'uses' => 'RedmineReportController@delete']);
+
+Route::get ('/redmine/show/{report}', ['middleware' => 'auth', 'uses' => 'RedmineController@show']);
+Route::post('/redmine/send'         , ['middleware' => 'auth', 'uses' => 'RedmineController@send']);
 
 // Jira routes
 Route::match(['get','post'], '/jira/set-password', ['middleware' => 'auth', 'uses' => 'JiraController@set_password']);
-Route::get('/jira/show/{report}'      , ['middleware' => 'auth', 'uses' => 'JiraController@show']);
-Route::post('/jira/send'              , ['middleware' => 'auth', 'uses' => 'JiraController@send']);
+
+Route::get ('/jira/show/{report}', ['middleware' => 'auth', 'uses' => 'JiraController@show']);
+Route::post('/jira/send'         , ['middleware' => 'auth', 'uses' => 'JiraController@send']);

@@ -21,9 +21,7 @@
 
 namespace App;
 
-use Illuminate\Database\Eloquent\Model;
-
-class JiraSent extends Model
+class JiraSent extends MainModel
 {
     protected $table = 'jira_sent';
 }

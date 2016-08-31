@@ -8,13 +8,13 @@
     <title>Jiber - Toggl/Redmine/Jira Import/Export</title>
 
     <!-- Fonts -->
-    <link rel="stylesheet" href="/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700">
+    <link rel="stylesheet" href="/css/font-awesome.min.css"/>
 
     <!-- Styles -->
-    <link rel="stylesheet" href="/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/css/default.css">
-		<link rel="stylesheet" href="/css/datatables.min.css"/>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/datatables.min.css"/>
+    <link rel="stylesheet" href="/css/default.css"/>
+    @yield('styles')
 </head>
 <body id="app-layout">
     <nav class="navbar navbar-default navbar-static-top">
@@ -36,16 +36,22 @@
             <div class="collapse navbar-collapse" id="app-navbar-collapse">
                 <!-- Left Side Of Navbar -->
                 <ul class="nav navbar-nav">
-										<li><a href="{{ action('TogglReportController@index') }}">Reports</a></li>
                     <li>
-											<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Toggl <span class="caret"></span></a>
-											<ul class="dropdown-menu">
-												<li><a href="{{ action('TogglWorkspaceController@index') }}">Workspaces</a></li>
-												<li><a href="{{ action('TogglClientController@index') }}">Clients</a></li>
-												<li><a href="{{ action('TogglProjectController@index') }}">Projects</a></li>
-												<li><a href="{{ action('TogglTaskController@index') }}">Tasks</a></li>
-											</ul>
-										</li>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Toggl <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{{ action('TogglWorkspaceController@index') }}">Workspaces</a></li>
+                            <li><a href="{{ action('TogglClientController@index') }}">Clients</a></li>
+                            <li><a href="{{ action('TogglProjectController@index') }}">Projects</a></li>
+                            <li><a href="{{ action('TogglTaskController@index') }}">Tasks</a></li>
+                            <li><a href="{{ action('TogglReportController@index') }}">Reports</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Redmine <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{{ action('RedmineReportController@index') }}">Reports</a></li>
+                        </ul>
+                    </li>
                 </ul>
 
                 <!-- Right Side Of Navbar -->
@@ -61,7 +67,7 @@
                             </a>
 
                             <ul class="dropdown-menu" role="menu">
-																<li><a href="{{ url('settings') }}"><i class="fa fa-btn fa-cogs"></i>Settings</a></li>
+                                <li><a href="{{ url('settings') }}"><i class="fa fa-btn fa-cogs"></i>Settings</a></li>
                                 <li><a href="{{ url('/logout') }}"><i class="fa fa-btn fa-sign-out"></i>Logout</a></li>
                             </ul>
                         </li>
@@ -71,7 +77,7 @@
         </div>
     </nav>
 
-		<div class="flash-message">
+    <div class="flash-message">
       @foreach (['danger', 'warning', 'success', 'info'] as $msg)
         @if(Session::has('alert-' . $msg))
 
@@ -83,11 +89,10 @@
     @yield('content')
 
     <!-- JavaScripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js" integrity="sha384-I6F5OKECLVtK/BL+8iSLDEHowSAfUo76ZL9+kGAgTRdiByINKJaqTPH/QVNS1VDb" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
-		<script type="text/javascript" src="/js/datatables.min.js"></script>
-		<script src="/js/default.js"></script>
-
-		@yield('scripts')
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/js/datatables.min.js"></script>
+    <script type="text/javascript" src="/js/default.js"></script>
+    @yield('scripts')
 </body>
 </html>
