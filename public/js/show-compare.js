@@ -39,15 +39,18 @@ jQuery(document).ready(function($){
 	$('#close-all').click(function(e){
 		e.preventDefault();
 		$('.panel-collapse').collapse('hide');
+		$('.panel-title span').removeClass('fa-angle-down').addClass('fa-angle-up');
 	});
 
 	$('#open-all').click(function(e){
 		e.preventDefault();
 		$('.panel-collapse').collapse('show');
+		$('.panel-title span').addClass('fa-angle-down').removeClass('fa-angle-up');
 	});
 
 	$('#close-settled').click(function(e){
 		e.preventDefault();
 		$('.panel-collapse[rel=0]').collapse('hide');
+		$('.collapsed span').removeClass('fa-angle-down').addClass('fa-angle-up');
 	});
 });
