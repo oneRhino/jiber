@@ -17,14 +17,16 @@
             </div>
 
             @if ($report->redmine_entries)
-                <table class="table table-striped table-hover task-table datatable">
+                <table class="table table-striped table-hover task-table datatable" data-order="[[ 2, &quot;asc&quot; ]]">
                     <colgroup>
+                        <col width="100"/>
                         <col/>
                         <col width="100"/>
                         <col width="120"/>
                     </colgroup>
 
                     <thead>
+                        <th>Issue</th>
                         <th>Description</th>
                         <th>Date</th>
                         <th>Duration</th>
@@ -35,6 +37,7 @@
                         @foreach ($report->redmine_entries as $_entry)
                             <?php $total += $_entry->round_decimal_duration ?>
                             <tr>
+                                <td>#{{ $_entry->redmine_issue_id }}</td>
                                 <td>{{ $_entry->description }}</td>
                                 <td>{{ date('d/m/Y', strtotime($_entry->date)) }}</td>
                                 <td>{{ $_entry->round_decimal_duration }} h ({{ $_entry->hour_duration }})</td>
@@ -44,7 +47,7 @@
 
                     <tfoot>
                         <tr>
-                            <th></th>
+                            <th colspan="2"></th>
                             <th>Total</th>
                             <th>{{ $total }} h</td>
                         </tr>
