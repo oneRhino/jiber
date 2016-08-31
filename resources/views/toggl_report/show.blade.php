@@ -11,9 +11,9 @@
                 <dt>End Date:</dt>
                 <dd>{{ date('m/d/Y', strtotime($report->end_date))   }}</dd>
                 <dt>Clients:</dt>
-                <dd>{{ $report->client_ids  ? $report->clients  : 'All' }}</dd>
+                <dd>{{ $report->toggl_report->client_ids  ? $report->toggl_report->clients  : 'All' }}</dd>
                 <dt>Projects:</dt>
-                <dd>{{ $report->project_ids ? $report->projects : 'All' }}</dd>
+                <dd>{{ $report->toggl_report->project_ids ? $report->toggl_report->projects : 'All' }}</dd>
             </dl>
 
             <div class="text-center" style="margin-bottom:10px">

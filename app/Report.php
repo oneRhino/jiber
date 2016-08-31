@@ -121,4 +121,12 @@ class Report extends MainModel
 
         return true;
     }
+
+    /**
+     * Report has one TogglReport
+     */
+    public function toggl_report()
+    {
+        return $this->hasOne('App\TogglReport', 'id');
+    }
 }

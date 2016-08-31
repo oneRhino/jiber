@@ -26,6 +26,14 @@ class TogglReport extends Report
     public $timestamps = false;
 
     /**
+     * TogglReport has one Report
+     */
+    public function report()
+    {
+        return $this->hasOne('App\Report', 'id');
+    }
+
+    /**
      * Create a string with TogglClient names
      * based on client_ids field
      */
@@ -37,7 +45,7 @@ class TogglReport extends Report
 
         $clients = explode(',', $this->client_ids);
 
-        $clients = TogglClient::whereIn('toggl_id', $clients)->where('user_id', $this->user_id)->distinct()->get();
+        $clients = TogglClient::whereIn('toggl_id', $clients)->where('user_id', $this->report->user_id)->distinct()->get();
 
         $return = array();
 
@@ -60,7 +68,7 @@ class TogglReport extends Report
 
         $projects = explode(',', $this->project_ids);
 
-        $projects = TogglProject::whereIn('toggl_id', $projects)->where('user_id', $this->user_id)->distinct()->get();
+        $projects = TogglProject::whereIn('toggl_id', $projects)->where('user_id', $this->report->user_id)->distinct()->get();
 
         $return = array();
 
