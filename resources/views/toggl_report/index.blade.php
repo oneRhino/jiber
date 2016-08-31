@@ -53,6 +53,8 @@
                         </form>
                     </div>
                 </div>
+            @else
+                <p>Please import Toggl data to generate reports.</p>
             @endif
 
             @if (count($reports) > 0)
@@ -101,8 +103,6 @@
                         </table>
                     </div>
                 </div>
-            @else
-                <p>Please import Toggl data to generate reports.</p>
             @endif
         </div>
     </div>
