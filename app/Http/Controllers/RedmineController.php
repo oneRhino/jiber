@@ -35,7 +35,7 @@ use Illuminate\Support\Facades\Config;
 use App\RedmineSent;
 use App\Setting;
 use App\Report;
-use App\TogglTimeEntry;
+use App\TimeEntry;
 use Redmine\Client as RedmineClient;
 
 class RedmineController extends Controller
@@ -184,14 +184,14 @@ class RedmineController extends Controller
             $redmine = $this->connect($request);
 
             foreach ($request->task as $_entry_id) {
-                $_entry = TogglTimeEntry::find($_entry_id);
+                $_entry = TimeEntry::find($_entry_id);
 
                 if (!$_entry || $_entry->user_id != $request->user()->id) {
                     continue;
                 }
 
                 $_data = array(
-                    'issue_id' => $_entry->redmine,
+                    'issue_id' => $_entry->redmine_issue_id,
                     'spent_on' => $_entry->date,
                     'hours'    => $_entry->round_decimal_duration,
                     'comments' => $_entry->description,
@@ -204,7 +204,7 @@ class RedmineController extends Controller
                     $_sent            = new RedmineSent();
                     $_sent->report_id = $request->report_id;
                     $_sent->date      = $_entry->date;
-                    $_sent->task      = $_entry->redmine;
+                    $_sent->task      = $_entry->redmine_issue_id;
                     $_sent->duration  = $_entry->round_decimal_duration;
                     $_sent->user_id   = $request->user()->id;
                     $_sent->save();
