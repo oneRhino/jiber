@@ -4,7 +4,7 @@
   <div class="container">
     <div class="col-sm-offset-2 col-sm-8">
       @if (count($entries) > 0)
-        <h2>Time Entries</h2>
+        <h2>Redmine Time Entries Comparison</h2>
 
         <div class="panel panel-default">
           <div class="panel-heading">
