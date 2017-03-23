@@ -30,6 +30,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\TogglProject;
 use App\TogglWorkspace;
 use App\TogglClient;
@@ -39,9 +40,9 @@ class TogglProjectController extends TogglController
     /**
      * List projects saved on system
      */
-    public function index(Request $request)
+    public function index()
     {
-        $projects = TogglProject::getAllByUserID($request->user()->id);
+        $projects = TogglProject::getAllByUserID(Auth::user()->id);
 
         return view('toggl_project.index', [
             'projects' => $projects,
@@ -53,26 +54,26 @@ class TogglProjectController extends TogglController
      */
     public function import(Request $request)
     {
-        $toggl_client = $this->toggl_connect($request);
+        $toggl_client = $this->toggl_connect();
 
-        $workspaces = TogglWorkspace::getAllByUserID($request->user()->id);
+        $workspaces = TogglWorkspace::getAllByUserID(Auth::user()->id);
 
         foreach ($workspaces as $_workspace) {
             $projects = $toggl_client->GetWorkspaceProjects(array('id' => (int)$_workspace->toggl_id, 'active' => 'both'));
 
             if ($projects) {
                 foreach ($projects as $_project) {
-                    $project = TogglProject::getByTogglID($_project['id'], $request->user()->id);
+                    $project = TogglProject::getByTogglID($_project['id'], Auth::user()->id);
 
                     if (!$project) {
                         $project           = new TogglProject();
-                        $project->user_id  = $request->user()->id;
+                        $project->user_id  = Auth::user()->id;
                         $project->toggl_id = $_project['id'];
                     }
 
-                    $project->workspace_id = TogglWorkspace::getByTogglID($_project['wid'], $request->user()->id)->id;
+                    $project->workspace_id = TogglWorkspace::getByTogglID($_project['wid'], Auth::user()->id)->id;
                     if (isset($_project['cid'])) {
-                        $project->client_id = TogglClient::getByTogglID($_project['cid'], $request->user()->id)->id;
+                        $project->client_id = TogglClient::getByTogglID($_project['cid'], Auth::user()->id)->id;
                     }
                     $project->active = $_project['active'];
                     $project->name   = $_project['name'];

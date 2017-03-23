@@ -33,6 +33,8 @@ class Handler extends ExceptionHandler
      */
     public function report(Exception $e)
     {
+        app('sneaker')->captureException($e);
+
         parent::report($e);
     }
 

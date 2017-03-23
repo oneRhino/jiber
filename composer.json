@@ -11,7 +11,8 @@
         "kbsali/redmine-api": "^1.5",
         "doctrine/dbal": "^2.5",
         "chobie/jira-api-restclient": "2.0.x-dev",
-        "barryvdh/laravel-debugbar": "^2.2"
+        "barryvdh/laravel-debugbar": "^2.2",
+        "squareboat/sneaker": "^1.0"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

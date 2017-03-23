@@ -30,6 +30,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\TogglWorkspace;
 
 class TogglWorkspaceController extends TogglController
@@ -37,9 +38,9 @@ class TogglWorkspaceController extends TogglController
     /**
      * List workspaces saved on system
      */
-    public function index(Request $request)
+    public function index()
     {
-        $workspaces = TogglWorkspace::getAllByUserID($request->user()->id);
+        $workspaces = TogglWorkspace::getAllByUserID(Auth::user()->id);
 
         return view('toggl_workspace.index', [
             'workspaces' => $workspaces,
@@ -51,7 +52,7 @@ class TogglWorkspaceController extends TogglController
      */
     public function import(Request $request)
     {
-        $toggl_client = $this->toggl_connect($request);
+        $toggl_client = $this->toggl_connect();
 
         $workspaces = $toggl_client->getWorkspaces(array());
 
@@ -59,12 +60,12 @@ class TogglWorkspaceController extends TogglController
             foreach ($workspaces as $_workspace) {
                 $workspace = TogglWorkspace::where(array(
                     'toggl_id' => $_workspace['id'], 
-                    'user_id'  => $request->user()->id,
+                    'user_id'  => Auth::user()->id,
                 ))->get()->first();
 
                 if (!$workspace) {
                     $workspace           = new TogglWorkspace();
-                    $workspace->user_id  = $request->user()->id;
+                    $workspace->user_id  = Auth::user()->id;
                     $workspace->toggl_id = $_workspace['id'];
                 }
 

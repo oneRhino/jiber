@@ -30,6 +30,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\TogglClient;
 use App\TogglWorkspace;
 
@@ -38,9 +39,9 @@ class TogglClientController extends TogglController
     /**
      * List clients saved on system
      */
-    public function index(Request $request)
+    public function index()
     {
-        $clients = TogglClient::getAllByUserID($request->user()->id);
+        $clients = TogglClient::getAllByUserID(Auth::user()->id);
 
         return view('toggl_client.index', [
             'clients' => $clients,
@@ -53,7 +54,7 @@ class TogglClientController extends TogglController
     public function import(Request $request)
     {
         // Connect into Toggl
-        $toggl_client = $this->toggl_connect($request);
+        $toggl_client = $this->toggl_connect();
 
         // Get all clients from Toggl
         $clients = $toggl_client->getClients(array());
@@ -61,15 +62,15 @@ class TogglClientController extends TogglController
         if ($clients) {
             foreach ($clients as $_client) {
                 // Check if client already exists - if so, only update information
-                $client = TogglClient::getByTogglID($_client['id'], $request->user()->id);
+                $client = TogglClient::getByTogglID($_client['id'], Auth::user()->id);
 
                 if (!$client) {
                     $client           = new TogglClient();
                     $client->toggl_id = $_client['id'];
-                    $client->user_id  = $request->user()->id;
+                    $client->user_id  = Auth::user()->id;
                 }
 
-                $client->workspace_id = TogglWorkspace::getByTogglID($_client['wid'], $request->user()->id)->id;
+                $client->workspace_id = TogglWorkspace::getByTogglID($_client['wid'], Auth::user()->id)->id;
                 $client->name         = $_client['name'];
                 $client->save();
             }

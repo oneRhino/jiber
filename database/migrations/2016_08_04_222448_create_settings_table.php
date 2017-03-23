@@ -14,10 +14,10 @@ class CreateSettingsTable extends Migration
     {
         Schema::create('settings', function (Blueprint $table) {
             $table->increments('id');
-						$table->string('toggl'   , 200)->nullable();
-						$table->string('redmine' , 200)->nullable();
-						$table->string('basecamp', 200)->nullable();
-						$table->string('jira'    , 200)->nullable();
+            $table->string('toggl'   , 200)->nullable();
+            $table->string('redmine' , 200)->nullable();
+            $table->string('basecamp', 200)->nullable();
+            $table->string('jira'    , 200)->nullable();
             $table->timestamps();
         });
     }

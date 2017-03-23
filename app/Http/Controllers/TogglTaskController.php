@@ -30,6 +30,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\TogglTask;
 use App\TogglWorkspace;
 use App\TogglProject;
@@ -39,9 +40,9 @@ class TogglTaskController extends TogglController
     /**
      * List tasks saved on system
      */
-    public function index(Request $request)
+    public function index()
     {
-        $tasks = TogglTask::getAllByUserID($request->user()->id, 'project_id');
+        $tasks = TogglTask::getAllByUserID(Auth::user()->id, 'project_id');
 
         return view('toggl_task.index', [
             'tasks' => $tasks,
@@ -53,18 +54,18 @@ class TogglTaskController extends TogglController
      */
     public function import(Request $request)
     {
-        $toggl_client = $this->toggl_connect($request);
+        $toggl_client = $this->toggl_connect();
 
-        $workspaces = TogglWorkspace::getAllByUserID($request->user()->id);
+        $workspaces = TogglWorkspace::getAllByUserID(Auth::user()->id);
 
         foreach ($workspaces as $_workspace) {
             $tasks = $toggl_client->GetWorkspaceTasks(array('id' => (int)$_workspace->toggl_id, 'active' => 'both'));
 
             if ($tasks) {
                 foreach ($tasks as $_task) {
-                    $task      =      TogglTask::getByTogglID($_task['id'] , $request->user()->id);
-                    $workspace = TogglWorkspace::getByTogglID($_task['wid'], $request->user()->id);
-                    $project   =   TogglProject::getByTogglID($_task['pid'], $request->user()->id);
+                    $task      =      TogglTask::getByTogglID($_task['id'] , Auth::user()->id);
+                    $workspace = TogglWorkspace::getByTogglID($_task['wid'], Auth::user()->id);
+                    $project   =   TogglProject::getByTogglID($_task['pid'], Auth::user()->id);
 
                     if (!$workspace || !$project) {
                         continue;
@@ -72,7 +73,7 @@ class TogglTaskController extends TogglController
 
                     if (!$task) {
                         $task           = new TogglTask();
-                        $task->user_id  = $request->user()->id;
+                        $task->user_id  = Auth::user()->id;
                         $task->toggl_id = $_task['id'];
                     }
 

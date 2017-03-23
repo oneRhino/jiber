@@ -31,6 +31,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use App\RedmineSent;
 use App\Setting;
@@ -47,7 +48,7 @@ class RedmineController extends Controller
     {
         $request  = app('Illuminate\Http\Request');
         $redirect = app('Illuminate\Routing\Redirector');
-        $setting  = Setting::find($request->user()->id);
+        $setting  = Setting::find(Auth::user()->id);
 
         if (!$setting || !$setting->redmine) {
             $request->session()->flash('alert-warning', 'Please set your Redmine API Token before importing data.');
@@ -82,7 +83,7 @@ class RedmineController extends Controller
      */
     public function show(Report $report, Request $request)
     {
-        if ($report->user_id != $request->user()->id) {
+        if ($report->user_id != Auth::user()->id) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -97,7 +98,7 @@ class RedmineController extends Controller
 
             // Get all time entries from Report, but only those
             // that have Redmine field filled
-            $toggl_entries = $report->getAllRedmine($request->user()->id);
+            $toggl_entries = $report->getAllRedmine(Auth::user()->id);
             $entries       = array();
 
             // First create arrays and fill with Toggl information
@@ -186,7 +187,7 @@ class RedmineController extends Controller
             foreach ($request->task as $_entry_id) {
                 $_entry = TimeEntry::find($_entry_id);
 
-                if (!$_entry || $_entry->user_id != $request->user()->id) {
+                if (!$_entry || $_entry->user_id != Auth::user()->id) {
                     continue;
                 }
 
@@ -194,7 +195,7 @@ class RedmineController extends Controller
                     'issue_id' => $_entry->redmine_issue_id,
                     'spent_on' => $_entry->date,
                     'hours'    => $_entry->round_decimal_duration,
-                    'comments' => $_entry->description,
+                    'comments' => htmlentities($_entry->description),
                 );
 
                 $_create = $redmine->time_entry->create($_data);
@@ -206,7 +207,7 @@ class RedmineController extends Controller
                     $_sent->date      = $_entry->date;
                     $_sent->task      = $_entry->redmine_issue_id;
                     $_sent->duration  = $_entry->round_decimal_duration;
-                    $_sent->user_id   = $request->user()->id;
+                    $_sent->user_id   = Auth::user()->id;
                     $_sent->save();
                 }
             }

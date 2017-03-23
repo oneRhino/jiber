@@ -64,7 +64,7 @@
                     </div>
 
                     <div class="panel-body">
-                        <table class="table table-striped task-table datatable">
+                        <table class="table table-striped task-table datatable" data-order="[[ 0, &quot;desc&quot; ]]">
                             <colgroup>
                                 <col width="110"/>
                                 <col width="100"/>
@@ -83,8 +83,8 @@
                             <tbody>
                                 @foreach ($reports as $_report)
                                     <tr>
-                                        <td>{{ date('d/m/Y', strtotime($_report->start_date)) }}</td>
-                                        <td>{{ date('d/m/Y', strtotime($_report->end_date)) }}</td>
+                                        <td>{{ date('Y/m/d', strtotime($_report->start_date)) }}</td>
+                                        <td>{{ date('Y/m/d', strtotime($_report->end_date)) }}</td>
                                         <td>{{ $_report->client_ids ? $_report->clients : 'All' }}</td>
                                         <td>{{ $_report->project_ids ? $_report->projects : 'All' }}</td>
                                         <td>

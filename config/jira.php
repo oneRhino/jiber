@@ -1,5 +1,5 @@
 <?php
 
 return [
-  'url' => 'https://onlinemarketinggrp.atlassian.net/',
+  'url' => 'https://flypilot.atlassian.net/',
 ];

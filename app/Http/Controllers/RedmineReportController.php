@@ -31,7 +31,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
 use App\Http\Requests;
 use App\Report;
 use App\RedmineReport;
@@ -45,7 +45,7 @@ class RedmineReportController extends RedmineController
      */
     public function index(Request $request)
     {
-        $reports = RedmineReport::getAllByUserID($request->user()->id, 'redmine_reports.id', 'DESC');
+        $reports = RedmineReport::getAllByUserID(Auth::user()->id, 'redmine_reports.id', 'DESC');
 
         return view('redmine_report.index',[
             'reports' => $reports,
@@ -64,7 +64,7 @@ class RedmineReportController extends RedmineController
 
         // Save Report
         $report             = new Report();
-        $report->user_id    = $request->user()->id;
+        $report->user_id    = Auth::user()->id;
         $report->start_date = $start_date;
         $report->end_date   = $end_date;
         $report->save();
@@ -79,7 +79,7 @@ class RedmineReportController extends RedmineController
             if (!$description) $description = $_entry['activity']['name'];
 
             $time_entry = new TimeEntry();
-            $time_entry->user_id           = $request->user()->id;
+            $time_entry->user_id           = Auth::user()->id;
             $time_entry->report_id         = $report->id;
             $time_entry->description       = $description;
             $time_entry->date_time         = $_entry['spent_on'] . ' ' . date('H:i:s', strtotime($_entry['created_on']));
@@ -104,7 +104,7 @@ class RedmineReportController extends RedmineController
      */
     public function show(Report $report, Request $request)
     {
-        if ($report->user_id != $request->user()->id) {
+        if ($report->user_id != Auth::user()->id) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -118,7 +118,7 @@ class RedmineReportController extends RedmineController
      */
     public function delete(Report $report, Request $request)
     {
-        if ($report->user_id != $request->user()->id) {
+        if ($report->user_id != Auth::user()->id) {
             abort(403, 'Unauthorized action.');
         }
 

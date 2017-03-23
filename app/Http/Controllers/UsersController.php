@@ -31,6 +31,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Setting;
 
 class UsersController extends Controller
@@ -42,16 +43,16 @@ class UsersController extends Controller
      */
     public function settings(Request $request)
     {
-        $setting = Setting::find($request->user()->id);
+        $setting = Setting::find(Auth::user()->id);
 
         if (!$setting) {
             $setting     = new Setting();
-            $setting->id = $request->user()->id;
+            $setting->id = Auth::user()->id;
             $setting->save();
         }
 
         if ($request->isMethod('post')) {
-            $setting->id       = $request->user()->id;
+            $setting->id       = Auth::user()->id;
             $setting->toggl    = $request->toggl;
             $setting->redmine  = $request->redmine;
             $setting->jira     = $request->jira;

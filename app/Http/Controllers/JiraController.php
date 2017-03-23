@@ -30,6 +30,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use App\JiraSent;
 use App\Report;
@@ -47,7 +48,7 @@ class JiraController extends Controller
     {
         $redirect = app('Illuminate\Routing\Redirector');
         $url      = Config::get('jira.url');
-        $username = Setting::find($request->user()->id)->jira;
+        $username = Setting::find(Auth::user()->id)->jira;
         $password = $request->session()->get('jira.password');
 
         if (!$password) {
@@ -71,7 +72,7 @@ class JiraController extends Controller
     {
         $redirect = app('Illuminate\Routing\Redirector');
 
-        if (!Setting::find($request->user()->id)->jira) {
+        if (!Setting::find(Auth::user()->id)->jira) {
             $request->session()->flash('alert-warning', 'Please set your Jira Username.');
             $request->session()->put('back', $request->path());
             $redirect->to('/settings')->send();
@@ -115,7 +116,7 @@ class JiraController extends Controller
      */
     public function show(Report $report, Request $request)
     {
-        if ($report->user_id != $request->user()->id) {
+        if ($report->user_id != Auth::user()->id) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -130,7 +131,7 @@ class JiraController extends Controller
             $jira = $this->connect($request);
 
             // Get Jira current username
-            $setting       = Setting::find($request->user()->id);
+            $setting       = Setting::find(Auth::user()->id);
             $jira_username = $setting->jira;
 
             // Entries array - that will contain all Toggl's and Jira's entries to display
@@ -182,23 +183,25 @@ class JiraController extends Controller
                     $worklog = $jira->getWorklogs($__entries['entry_entries'][0]->jira_issue_id, array());
                     $results = $worklog->getResult();
 
-                    foreach ($results['worklogs'] as $_time) {
-                        // Worklog author isn't current jira user? Continue!
-                        if ($_time['author']['name'] != $jira_username) {
-                            continue;
+                    if ($results['worklogs']) {
+                        foreach ($results['worklogs'] as $_time) {
+                            // Worklog author isn't current jira user? Continue!
+                            if ($_time['author']['name'] != $jira_username) {
+                                continue;
+                            }
+
+                            // Only add worklog for this specific date
+                            if (strtotime($_date) != strtotime(date('Y-m-d', strtotime($_time['started'])))) {
+                                continue;
+                            }
+
+                            $_time['description'] = ($_time['comment'] ? $_time['comment'] : '<No comment>');
+                            $_time['time']        = round(($_time['timeSpentSeconds'] / 3600), 2);
+
+                            $entries[$_date][$_redmine]['third_entries'][] = $_time;
+                            $entries[$_date][$_redmine]['third_total']    += round(($_time['timeSpentSeconds'] / 3600), 2);
+                            $entries[$_date]['third_total']               += round(($_time['timeSpentSeconds'] / 3600), 2);
                         }
-
-                        // Only add worklog for this specific date
-                        if (strtotime($_date) != strtotime(date('Y-m-d', strtotime($_time['started'])))) {
-                            continue;
-                        }
-
-                        $_time['description'] = ($_time['comment'] ? $_time['comment'] : '<No comment>');
-                        $_time['time']        = round(($_time['timeSpentSeconds'] / 3600), 2);
-
-                        $entries[$_date][$_redmine]['third_entries'][] = $_time;
-                        $entries[$_date][$_redmine]['third_total']    += round(($_time['timeSpentSeconds'] / 3600), 2);
-                        $entries[$_date]['third_total']               += round(($_time['timeSpentSeconds'] / 3600), 2);
                     }
                 }
             }
@@ -235,7 +238,7 @@ class JiraController extends Controller
             foreach ($request->task as $_entry_id) {
                 $_entry = TimeEntry::find($_entry_id);
 
-                if (!$_entry || $_entry->user_id != $request->user()->id) {
+                if (!$_entry || $_entry->user_id != Auth::user()->id) {
                     continue;
                 }
 
@@ -246,7 +249,7 @@ class JiraController extends Controller
                 $_data = array(
                     'timeSpentSeconds' => $_entry->decimal_duration * 3600,
                     'started'          => $_date,
-                    'comment'          => $_entry->description,
+                    'comment'          => htmlentities($_entry->description),
                     'issueId'          => $_entry->jira_issue_id,
                 );
 
@@ -259,7 +262,7 @@ class JiraController extends Controller
                     $sent->task      = $_entry->jira_issue_id;
                     $sent->date      = $_date;
                     $sent->duration  = $_entry->decimal_duration;
-                    $sent->user_id   = $request->user()->id;
+                    $sent->user_id   = Auth::user()->id;
                     $sent->save();
                 }
             }

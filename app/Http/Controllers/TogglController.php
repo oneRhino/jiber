@@ -30,6 +30,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Redirector;
 use AJT\Toggl\TogglClient;
 use AJT\Toggl\ReportsClient;
@@ -42,7 +43,7 @@ class TogglController extends Controller
      */
     public function __construct(Request $request, Redirector $redirect)
     {
-        $setting = Setting::find($request->user()->id);
+        $setting = Setting::find(Auth::user()->id);
 
         if (!$setting || !$setting->toggl) {
             $request->session()->flash('alert-warning', 'Please set your Toggl API Token before importing data.');
@@ -53,9 +54,9 @@ class TogglController extends Controller
     /**
      * Connect into Toggl API
      */
-    public function toggl_connect(Request $request)
+    public function toggl_connect()
     {
-        $setting = Setting::find($request->user()->id);
+        $setting = Setting::find(Auth::user()->id);
         $token   = $setting->toggl;
         $client  = TogglClient::factory(array('api_key' => $token));
 
@@ -65,9 +66,9 @@ class TogglController extends Controller
     /**
      * Connect into Reports API
      */
-    public function reports_connect(Request $request)
+    public function reports_connect()
     {
-        $token  = Setting::find($request->user()->id)->toggl;
+        $token  = Setting::find(Auth::user()->id)->toggl;
         $client = ReportsClient::factory(array('api_key' => $token));
 
         return $client;
@@ -76,10 +77,10 @@ class TogglController extends Controller
     /**
      * Test Toggl connection
      */
-    public function test(Request $request)
+    public function test()
     {
         try {
-            $client = $this->toggl_connect($request);
+            $client = $this->toggl_connect();
             $me     = $client->GetCurrentUser();
         } catch (\Exception $e) {
             return false;

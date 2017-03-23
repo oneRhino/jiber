@@ -30,6 +30,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Report;
 use App\TimeEntry;
 use App\TogglClient;
@@ -44,11 +45,11 @@ class TogglReportController extends TogglController
     /**
      * List all reports on system, and show form to create a new report
      */
-    public function index(Request $request)
+    public function index()
     {
-        $reports    =    TogglReport::getAllByUserID($request->user()->id, 'toggl_reports.id', 'DESC');
-        $workspaces = TogglWorkspace::getAllByUserID($request->user()->id);
-        $clients    =    TogglClient::getAllByUserID($request->user()->id);
+        $reports    =    TogglReport::getAllByUserID(Auth::user()->id, 'toggl_reports.id', 'DESC');
+        $workspaces = TogglWorkspace::getAllByUserID(Auth::user()->id);
+        $clients    =    TogglClient::getAllByUserID(Auth::user()->id);
 
         return view('toggl_report.index', [
             'reports'    => $reports,
@@ -64,7 +65,7 @@ class TogglReportController extends TogglController
     {
         set_time_limit(0);
 
-        $toggl_client = $this->toggl_connect($request);
+        $toggl_client = $this->toggl_connect();
 
         if (!$request->date) {
             $request->start_date = date('Y-m-d', strtotime('-6 days'));
@@ -78,7 +79,7 @@ class TogglReportController extends TogglController
 
         // Save Report
         $report              = new Report();
-        $report->user_id     = $request->user()->id;
+        $report->user_id     = Auth::user()->id;
         $report->start_date  = $request->start_date;
         $report->end_date    = $request->end_date;
         $report->save();
@@ -111,7 +112,7 @@ class TogglReportController extends TogglController
             $args['client_ids'] = implode(',', $request->clients);
         }
 
-        $results = $this->getToggle($request, $args);
+        $results = $this->getToggle($args);
 
         // Toggl has a limit of time entries per page
         $pages = ceil($results['total_count'] / $results['per_page']);
@@ -119,17 +120,17 @@ class TogglReportController extends TogglController
         for ($page=1; $page<=$pages; $page++) {
             if ($page > 1) {
                 $args['page'] = $page;
-                $results      = $this->getToggle($request, $args);
+                $results      = $this->getToggle($args);
             }
 
             foreach ($results['data'] as $_data) {
-                $client  =  TogglClient::getByName($_data['client'] , $request->user()->id);
-                $project = TogglProject::getByName($_data['project'], $request->user()->id);
-                $task    =    TogglTask::getByTogglID($_data['tid'] , $request->user()->id);
+                $client  =  TogglClient::getByName($_data['client'] , Auth::user()->id);
+                $project = TogglProject::getByName($_data['project'], Auth::user()->id);
+                $task    =    TogglTask::getByTogglID($_data['tid'] , Auth::user()->id);
 
                 // Create Time Entry
                 $entry              = new TimeEntry();
-                $entry->user_id     = $request->user()->id;
+                $entry->user_id     = Auth::user()->id;
                 $entry->report_id   = $report->id;
                 $entry->date_time   = date('Y-m-d H:i:s', strtotime($_data['start']));
                 $entry->duration    = $_data['dur'];
@@ -163,9 +164,9 @@ class TogglReportController extends TogglController
     /**
      * Get Toggl time entries based on arguments
      */
-    private function getToggle(Request $request, $args)
+    private function getToggle($args)
     {
-        $reports_client = $this->reports_connect($request);
+        $reports_client = $this->reports_connect();
 
         return $reports_client->details($args);
     }
@@ -175,7 +176,7 @@ class TogglReportController extends TogglController
      */
     public function show(Report $report, Request $request)
     {
-        if ($report->user_id != $request->user()->id) {
+        if ($report->user_id != Auth::user()->id) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -198,7 +199,7 @@ class TogglReportController extends TogglController
      */
     public function delete(Report $report, Request $request)
     {
-        if ($report->user_id != $request->user()->id) {
+        if ($report->user_id != Auth::user()->id) {
             abort(403, 'Unauthorized action.');
         }
 
