@@ -162,6 +162,7 @@ return [
          * Third Party Service Providers...
          */
         Barryvdh\Debugbar\ServiceProvider::class,
+        SquareBoat\Sneaker\SneakerServiceProvider::class,
     ],
 
     /*
