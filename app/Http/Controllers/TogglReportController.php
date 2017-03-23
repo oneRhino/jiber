@@ -141,7 +141,7 @@ class TogglReportController extends TogglController
                     $entry->redmine_issue_id = $redmine_issue_id;
 
                     if ($jira_issue_id = $entry->isJira()) {
-                        $entry->jira_issue_id = $jira_issue_id;
+                        $entry->jira_issue_id = trim($jira_issue_id);
                     }
                 }
 

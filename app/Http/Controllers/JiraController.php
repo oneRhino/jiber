@@ -127,7 +127,7 @@ class JiraController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        //$request->session()->forget('jira.report');
+        $request->session()->forget('jira.report');
 
         // Only enter if no session exists for jira.report
         // It'll be reset elsewhere
