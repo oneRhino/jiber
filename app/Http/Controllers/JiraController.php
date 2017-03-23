@@ -235,6 +235,8 @@ class JiraController extends Controller
             foreach ($request->task as $_entry_id) {
                 $_entry = TimeEntry::find($_entry_id);
 
+                $_entry->jira_issue_id = trim($_entry->jira_issue_id);
+
                 if (!$_entry || $_entry->user_id != Auth::user()->id) {
                     continue;
                 }
@@ -247,7 +249,7 @@ class JiraController extends Controller
                     'timeSpentSeconds' => $_entry->decimal_duration * 3600,
                     'started'          => $_date,
                     'comment'          => htmlentities($_entry->description),
-                    'issueId'          => trim($_entry->jira_issue_id),
+                    'issueId'          => $_entry->jira_issue_id,
                 );
 
                 $response = $jira->addWorklog($_entry->jira_issue_id, $_data);
