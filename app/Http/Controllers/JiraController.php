@@ -257,7 +257,7 @@ class JiraController extends Controller
                     'timeSpentSeconds' => $_entry->decimal_duration * 3600,
                     'started'          => $_date,
                     'comment'          => htmlentities($_entry->description),
-                    'issueId'          => $_entry->jira_issue_id,
+                    'issueId'          => trim($_entry->jira_issue_id),
                 );
 
                 $response = $jira->addWorklog($_entry->jira_issue_id, $_data);
