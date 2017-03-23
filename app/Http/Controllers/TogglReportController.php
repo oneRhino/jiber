@@ -180,15 +180,6 @@ class TogglReportController extends TogglController
             abort(403, 'Unauthorized action.');
         }
 
-        // Empty Redmine and Jira report from session
-        if ($request->session()->has('redmine.report.' . $report->id)) {
-            $request->session()->forget('redmine.report.' . $report->id);
-        }
-
-        if ($request->session()->has('jira.report.' . $report->id)) {
-            $request->session()->forget('jira.report.' . $report->id);
-        }
-
         return view('toggl_report.show', [
             'report' => $report,
         ]);

@@ -127,99 +127,89 @@ class JiraController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $request->session()->forget('jira.report');
+        set_time_limit(0);
 
-        // Only enter if no session exists for jira.report
-        // It'll be reset elsewhere
-        if (!$request->session()->has('jira.report.' . $report->id)) {
-            set_time_limit(0);
+        // Connect into Jira
+        $jira = $this->connect($request);
 
-            // Connect into Jira
-            $jira = $this->connect($request);
+        // Get Jira current username
+        $setting       = Setting::find(Auth::user()->id);
+        $jira_username = $setting->jira;
 
-            // Get Jira current username
-            $setting       = Setting::find(Auth::user()->id);
-            $jira_username = $setting->jira;
+        // Entries array - that will contain all Toggl's and Jira's entries to display
+        $entries = array();
 
-            // Entries array - that will contain all Toggl's and Jira's entries to display
-            $entries = array();
+        // Get all report's entries that have a Jira Task ID set
+        $jira_entries = $report->entries()->whereNotNull('jira_issue_id')->get();
 
-            // Get all report's entries that have a Jira Task ID set
-            $jira_entries = $report->entries()->whereNotNull('jira_issue_id')->get();
+        if (!$jira_entries->count()) {
+            $request->session()->flash('alert-warning', 'No Jira tasks have been found in the period.');
 
-            if (!$jira_entries->count()) {
-                $request->session()->flash('alert-warning', 'No Jira tasks have been found in the period.');
-
-                return back()->withInput();
-            }
-
-            // First create arrays and fill with entry information
-            foreach ($jira_entries as $_entry) {
-                // Create default arrays
-                if (!isset($entries[$_entry->date])) {
-                    $entries[$_entry->date] = array(
-                        'entry_total' => 0,
-                        'third_total' => 0,
-                    );
-                }
-
-                if (!isset($entries[$_entry->date][$_entry->redmine_issue_id])) {
-                    $entries[$_entry->date][$_entry->redmine_issue_id] = array(
-                        'entry_entries' => array(),
-                        'entry_total'   => 0,
-                        'third_total'   => 0,
-                        'third_entries' => array(),
-                    );
-                }
-
-                // Fill arrays
-                $entries[$_entry->date][$_entry->redmine_issue_id]['entry_entries'][] = $_entry;
-                $entries[$_entry->date][$_entry->redmine_issue_id]['entry_total']    += $_entry->round_decimal_duration;
-                $entries[$_entry->date]['entry_total']                               += $_entry->round_decimal_duration;
-            }
-
-            // Then, through all entries, get Jira's worklog
-            foreach ($entries as $_date => $_entries) {
-                foreach ($_entries as $_redmine => $__entries) {
-                    // Skip *_total keys
-                    if (in_array($_redmine, array('entry_total', 'third_total'))) {
-                        continue;
-                    }
-
-                    // Get Jira worklog for this task
-                    $worklog = $jira->getWorklogs($__entries['entry_entries'][0]->jira_issue_id, array());
-                    $results = $worklog->getResult();
-
-                    if (isset($results['worklogs'])) {
-                        foreach ($results['worklogs'] as $_time) {
-                            // Worklog author isn't current jira user? Continue!
-                            if ($_time['author']['name'] != $jira_username) {
-                                continue;
-                            }
-
-                            // Only add worklog for this specific date
-                            if (strtotime($_date) != strtotime(date('Y-m-d', strtotime($_time['started'])))) {
-                                continue;
-                            }
-
-                            $_time['description'] = ($_time['comment'] ? $_time['comment'] : '<No comment>');
-                            $_time['time']        = round(($_time['timeSpentSeconds'] / 3600), 2);
-
-                            $entries[$_date][$_redmine]['third_entries'][] = $_time;
-                            $entries[$_date][$_redmine]['third_total']    += round(($_time['timeSpentSeconds'] / 3600), 2);
-                            $entries[$_date]['third_total']               += round(($_time['timeSpentSeconds'] / 3600), 2);
-                        }
-                    }
-                }
-            }
-
-            // Sort entries based on first key (date), ascending
-            ksort($entries);
-
-            $request->session()->put('jira.report.' . $report->id, $entries);
-        } else {
-            $entries = $request->session()->get('jira.report.' . $report->id);
+            return back()->withInput();
         }
+
+        // First create arrays and fill with entry information
+        foreach ($jira_entries as $_entry) {
+            // Create default arrays
+            if (!isset($entries[$_entry->date])) {
+                $entries[$_entry->date] = array(
+                    'entry_total' => 0,
+                    'third_total' => 0,
+                );
+            }
+
+            if (!isset($entries[$_entry->date][$_entry->redmine_issue_id])) {
+                $entries[$_entry->date][$_entry->redmine_issue_id] = array(
+                    'entry_entries' => array(),
+                    'entry_total'   => 0,
+                    'third_total'   => 0,
+                    'third_entries' => array(),
+                );
+            }
+
+            // Fill arrays
+            $entries[$_entry->date][$_entry->redmine_issue_id]['entry_entries'][] = $_entry;
+            $entries[$_entry->date][$_entry->redmine_issue_id]['entry_total']    += $_entry->round_decimal_duration;
+            $entries[$_entry->date]['entry_total']                               += $_entry->round_decimal_duration;
+        }
+
+        // Then, through all entries, get Jira's worklog
+        foreach ($entries as $_date => $_entries) {
+            foreach ($_entries as $_redmine => $__entries) {
+                // Skip *_total keys
+                if (in_array($_redmine, array('entry_total', 'third_total'))) {
+                    continue;
+                }
+
+                // Get Jira worklog for this task
+                $worklog = $jira->getWorklogs($__entries['entry_entries'][0]->jira_issue_id, array());
+                $results = $worklog->getResult();
+
+                if (isset($results['worklogs'])) {
+                    foreach ($results['worklogs'] as $_time) {
+                        // Worklog author isn't current jira user? Continue!
+                        if ($_time['author']['name'] != $jira_username) {
+                            continue;
+                        }
+
+                        // Only add worklog for this specific date
+                        if (strtotime($_date) != strtotime(date('Y-m-d', strtotime($_time['started'])))) {
+                            continue;
+                        }
+
+                        $_time['description'] = ($_time['comment'] ? $_time['comment'] : '<No comment>');
+                        $_time['time']        = round(($_time['timeSpentSeconds'] / 3600), 2);
+
+                        $entries[$_date][$_redmine]['third_entries'][] = $_time;
+                        $entries[$_date][$_redmine]['third_total']    += round(($_time['timeSpentSeconds'] / 3600), 2);
+                        $entries[$_date]['third_total']               += round(($_time['timeSpentSeconds'] / 3600), 2);
+                    }
+                }
+            }
+        }
+
+        // Sort entries based on first key (date), ascending
+        ksort($entries);
 
         return view('jira.show', [
             'entries'   => $entries,
@@ -275,7 +265,6 @@ class JiraController extends Controller
             }
 
             // Remove report from session, so when we show previous page again, it's updated
-            $request->session()->forget('jira.report.' . $request->report_id);
             $request->session()->flash('alert-success', 'All tasks have been sent successfully to Jira!');
         }
 

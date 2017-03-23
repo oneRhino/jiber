@@ -87,81 +87,71 @@ class RedmineController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $request->session()->forget('redmine.report');
+        set_time_limit(0);
 
-        // Only enter if no session exists for redmine.report
-        // It'll be reset elsewhere
-        if (!$request->session()->has('redmine.report.' . $report->id)) {
-            set_time_limit(0);
+        $redmine_entries = $this->getRedmineEntries($report->start_date, $report->end_date);
 
-            $redmine_entries = $this->getRedmineEntries($report->start_date, $report->end_date);
+        // Get all time entries from Report, but only those
+        // that have Redmine field filled
+        $toggl_entries = $report->getAllRedmine(Auth::user()->id);
+        $entries       = array();
 
-            // Get all time entries from Report, but only those
-            // that have Redmine field filled
-            $toggl_entries = $report->getAllRedmine(Auth::user()->id);
-            $entries       = array();
-
-            // First create arrays and fill with Toggl information
-            foreach ($toggl_entries as $_entry) {
-                // Create default arrays
-                if (!isset($entries[$_entry->date])) {
-                    $entries[$_entry->date] = array(
-                        'toggl_total' => 0,
-                        'third_total' => 0,
-                    );
-                }
-
-                if (!isset($entries[$_entry->date][$_entry->redmine_issue_id])) {
-                    $entries[$_entry->date][$_entry->redmine_issue_id] = array(
-                        'toggl_entries' => array(),
-                        'toggl_total'   => 0,
-                        'third_total'   => 0,
-                        'third_entries' => array(),
-                    );
-                }
-
-                // Fill arrays
-                $entries[$_entry->date][$_entry->redmine_issue_id]['toggl_entries'][] = $_entry;
-                $entries[$_entry->date][$_entry->redmine_issue_id]['toggl_total']    += $_entry->round_decimal_duration;
-                $entries[$_entry->date]['toggl_total']                               += $_entry->round_decimal_duration;
+        // First create arrays and fill with Toggl information
+        foreach ($toggl_entries as $_entry) {
+            // Create default arrays
+            if (!isset($entries[$_entry->date])) {
+                $entries[$_entry->date] = array(
+                    'toggl_total' => 0,
+                    'third_total' => 0,
+                );
             }
 
-            // Then, through all Toggl's entries, add Redmine's entries
-            foreach ($entries as $_date => $_entries) {
-                foreach ($_entries as $_issue_id => $__entries) {
-                    // Skip *_total keys
-                    if (in_array($_issue_id, array('toggl_total', 'third_total'))) {
+            if (!isset($entries[$_entry->date][$_entry->redmine_issue_id])) {
+                $entries[$_entry->date][$_entry->redmine_issue_id] = array(
+                    'toggl_entries' => array(),
+                    'toggl_total'   => 0,
+                    'third_total'   => 0,
+                    'third_entries' => array(),
+                );
+            }
+
+            // Fill arrays
+            $entries[$_entry->date][$_entry->redmine_issue_id]['toggl_entries'][] = $_entry;
+            $entries[$_entry->date][$_entry->redmine_issue_id]['toggl_total']    += $_entry->round_decimal_duration;
+            $entries[$_entry->date]['toggl_total']                               += $_entry->round_decimal_duration;
+        }
+
+        // Then, through all Toggl's entries, add Redmine's entries
+        foreach ($entries as $_date => $_entries) {
+            foreach ($_entries as $_issue_id => $__entries) {
+                // Skip *_total keys
+                if (in_array($_issue_id, array('toggl_total', 'third_total'))) {
+                    continue;
+                }
+
+                // Get Redmine time entries
+                foreach ($redmine_entries['time_entries'] as $_redmine) {
+                    // Ignore issues that are different than current,
+                    // and with date different than current
+                    if ($_redmine['spent_on']    != $_date) {
+                        continue;
+                    }
+                    if ($_redmine['issue']['id'] != $_issue_id) {
                         continue;
                     }
 
-                    // Get Redmine time entries
-                    foreach ($redmine_entries['time_entries'] as $_redmine) {
-                        // Ignore issues that are different than current,
-                        // and with date different than current
-                        if ($_redmine['spent_on']    != $_date) {
-                            continue;
-                        }
-                        if ($_redmine['issue']['id'] != $_issue_id) {
-                            continue;
-                        }
+                    $_redmine['description'] = (isset($_redmine['comments']) ? $_redmine['comments'] : $_redmine['activity']['name']);
+                    $_redmine['time']        = $_redmine['hours'];
 
-                        $_redmine['description'] = (isset($_redmine['comments']) ? $_redmine['comments'] : $_redmine['activity']['name']);
-                        $_redmine['time']        = $_redmine['hours'];
-
-                        $entries[$_date][$_issue_id]['third_entries'][] = $_redmine;
-                        $entries[$_date][$_issue_id]['third_total']    += $_redmine['hours'];
-                        $entries[$_date]['third_total']                += $_redmine['hours'];
-                    }
+                    $entries[$_date][$_issue_id]['third_entries'][] = $_redmine;
+                    $entries[$_date][$_issue_id]['third_total']    += $_redmine['hours'];
+                    $entries[$_date]['third_total']                += $_redmine['hours'];
                 }
             }
-
-            // Sort entries based on first key (date), ascending
-            ksort($entries);
-
-            $request->session()->put('redmine.report.' . $report->id, $entries);
-        } else {
-            $entries = $request->session()->get('redmine.report.' . $report->id);
         }
+
+        // Sort entries based on first key (date), ascending
+        ksort($entries);
 
         return view('redmine.show', [
             'entries'   => $entries,
@@ -213,7 +203,6 @@ class RedmineController extends Controller
             }
 
             // Remove report from session, so when we show previous page again, it's updated
-            $request->session()->forget('redmine.report.' . $request->report_id);
             $request->session()->flash('alert-success', 'All tasks have been sent successfully to Redmine!');
         }
 
