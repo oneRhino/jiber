@@ -81,10 +81,17 @@ class JiraController extends Controller
         if ($request->isMethod('post')) {
             $request->session()->put('jira.password', $request->jira_password);
 
-            if ($request->session()->has('back')) {
-                return redirect($request->session()->get('back'));
+            // Test Connection
+            if ($this->test($request)) {
+                $request->session()->flash('alert-success', 'Your Jira password has been successfully set.');
+                if ($request->session()->has('back')) {
+                    return redirect($request->session()->get('back'));
+                } else {
+                    return redirect('/settings');
+                }
             } else {
-                return back()->withInput();
+                $request->session()->flash('alert-warning', 'Connection failed. Please check your Jira password.');
+                return view('jira.set_password');
             }
         } else {
             return view('jira.set_password');
@@ -183,7 +190,7 @@ class JiraController extends Controller
                     $worklog = $jira->getWorklogs($__entries['entry_entries'][0]->jira_issue_id, array());
                     $results = $worklog->getResult();
 
-                    if ($results['worklogs']) {
+                    if (isset($results['worklogs'])) {
                         foreach ($results['worklogs'] as $_time) {
                             // Worklog author isn't current jira user? Continue!
                             if ($_time['author']['name'] != $jira_username) {
