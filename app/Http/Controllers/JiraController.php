@@ -188,7 +188,8 @@ class JiraController extends Controller
                 if (isset($results['worklogs'])) {
                     foreach ($results['worklogs'] as $_time) {
                         // Worklog author isn't current jira user? Continue!
-                        if ($_time['author']['name'] != $jira_username) {
+                        // Unless report isn't filtering out other users
+                        if ($report->filter_user && $_time['author']['name'] != $jira_username) {
                             continue;
                         }
 
@@ -199,6 +200,7 @@ class JiraController extends Controller
 
                         $_time['description'] = ($_time['comment'] ? $_time['comment'] : '<No comment>');
                         $_time['time']        = round(($_time['timeSpentSeconds'] / 3600), 2);
+                        $_time['user']        = $_time['author']['name'];
 
                         $entries[$_date][$_redmine]['third_entries'][] = $_time;
                         $entries[$_date][$_redmine]['third_total']    += round(($_time['timeSpentSeconds'] / 3600), 2);
@@ -211,10 +213,119 @@ class JiraController extends Controller
         // Sort entries based on first key (date), ascending
         ksort($entries);
 
-        return view('jira.show', [
-            'entries'   => $entries,
-            'report_id' => $report->id,
-        ]);
+        if ($report->filter_user) {
+            return view('jira.show', [
+                'entries'   => $entries,
+                'report_id' => $report->id,
+            ]);
+        } else {
+            return view('jira.show_all', [
+                'entries'   => $entries,
+                'report_id' => $report->id,
+            ]);
+        }
+    }
+
+    /**
+     * Export CSV comparing Redmine and Jira
+     */
+    public function csv(Report $report, Request $request)
+    {
+        if ($report->user_id != Auth::user()->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        set_time_limit(0);
+
+        // Connect into Jira
+        $jira = $this->connect($request);
+
+        // Get Jira current username
+        $setting       = Setting::find(Auth::user()->id);
+        $jira_username = $setting->jira;
+
+        // Entries array - that will contain all Toggl's and Jira's entries to display
+        $entries = array();
+        $jira_time_entries = array();
+        $jira_ids = array();
+
+        // Get all report's entries that have a Jira Task ID set
+        $redmine_entries = $report->entries()->whereNotNull('jira_issue_id')->get();
+
+        if (!$redmine_entries->count()) {
+            $request->session()->flash('alert-warning', 'No Jira tasks have been found in the period.');
+
+            return back()->withInput();
+        }
+
+        // First create arrays and fill with entry information
+        foreach ($redmine_entries as $_entry) {
+
+            // Fill arrays
+            $jira_ids[] = $_entry->jira_issue_id;
+
+            $entries[$_entry->date][$_entry->jira_issue_id][$_entry->user]['redmine'][] = array(
+                'jira_id'     => $_entry->jira_issue_id,
+                'user'        => $_entry->user,
+                'description' => $_entry->description,
+                'date'        => $_entry->date,
+                'duration'    => $_entry->round_decimal_duration,
+            );
+        }
+
+        $jira_ids = array_unique($jira_ids);
+        sort($jira_ids);
+
+        // Then, through all entries, get Jira's worklog
+        foreach ($jira_ids as $_jira_id) {
+            // Get Jira worklog for this task
+            $worklog = $jira->getWorklogs($_jira_id, array());
+            $results = $worklog->getResult();
+
+            if (isset($results['worklogs'])) {
+                foreach ($results['worklogs'] as $_time) {
+                    $date = date('Y-m-d', strtotime($_time['started']));
+
+                    if (!isset($entries[$date])) continue;
+
+                    $entries[$date][$_jira_id][$_time['author']['name']]['jira'][] = array(
+                        'user'        => $_time['author']['name'],
+                        'description' => ($_time['comment'] ? $_time['comment'] : '<No comment>'),
+                        'duration'    => round(($_time['timeSpentSeconds'] / 3600), 2),
+                    );
+                }
+            }
+        }
+
+        // Sort entries based on first key (date), ascending
+        ksort($entries);
+
+        $csv = array();
+
+        foreach ($entries as $_date => $_array1) {
+            foreach ($_array1 as $_jira_id => $_array2) {
+                foreach ($_array2 as $_user => $_array3) {
+                    if (isset($_array3['redmine'])) {
+                        foreach ($_array3['redmine'] as $_entry) {
+                            $csv[] = "{$_date},{$_jira_id},{$_user},\"{$_entry['description']}\",Redmine,{$_entry['duration']}";
+                        }
+                    }
+                    if (isset($_array3['jira'])) {
+                        foreach ($_array3['jira'] as $_entry) {
+                            $csv[] = "{$_date},{$_jira_id},{$_user},\"{$_entry['description']}\",Jira,{$_entry['duration']}";
+                        }
+                    }
+                }
+            }
+        }
+
+        header("Content-type: text/csv");
+        header("Content-Disposition: attachment; filename=report-{$report->id}.csv");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+        echo implode("\n",$csv);
+        die;
     }
 
     /**

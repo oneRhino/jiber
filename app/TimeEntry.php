@@ -44,9 +44,9 @@ class TimeEntry extends MainModel
         $milliseconds = $duration;
         $seconds      = floor($milliseconds / 1000);
 
-        if ($seconds % $round_to != 0) {
+        /*if ($seconds % $round_to != 0) {
             $seconds = $seconds + ($round_to - ($seconds % $round_to));
-        }
+        }*/
 
         return $seconds / 3600;
     }

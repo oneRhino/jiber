@@ -89,7 +89,7 @@ class RedmineController extends Controller
 
         set_time_limit(0);
 
-        $redmine_entries = $this->getRedmineEntries($report->start_date, $report->end_date);
+        $redmine_entries = $this->getRedmineEntries($report->start_date, $report->end_date, $report->filter_user);
 
         // Get all time entries from Report, but only those
         // that have Redmine field filled
@@ -209,18 +209,21 @@ class RedmineController extends Controller
         return back()->withInput();
     }
 
-    protected function getRedmineEntries($start_date, $end_date)
+    protected function getRedmineEntries($start_date, $end_date, $filter_user=true)
     {
         // Connect into Redmine
         $redmine = $this->connect();
 
         // Get all Redmine's entries for this user, on these dates
         $args = array(
-            'user_id'  => 'me',
             'spent_on' => "><{$start_date}|{$end_date}",
             'limit'    => 100,
             'sort'     => 'hours',
         );
+
+        if ($filter_user)
+            $args['user_id'] = 'me';
+
         $redmine_entries = $redmine->time_entry->all($args);
 
         // Redmine has a 100 entries per page limit, so, we need to paginate

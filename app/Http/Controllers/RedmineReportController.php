@@ -56,17 +56,19 @@ class RedmineReportController extends RedmineController
     {
         list($start_date, $end_date) = explode(' - ', $request->date);
 
-        $start_date = date('Y-m-d', strtotime($start_date));
-        $end_date   = date('Y-m-d', strtotime($end_date));
+        $start_date  = date('Y-m-d', strtotime($start_date));
+        $end_date    = date('Y-m-d', strtotime($end_date));
+        $filter_user = ($request->filter_user ? true : false);
 
         // Get Redmine Entries
-        $redmine_entries = $this->getRedmineEntries($start_date, $end_date);
+        $redmine_entries = $this->getRedmineEntries($start_date, $end_date, $filter_user);
 
         // Save Report
-        $report             = new Report();
-        $report->user_id    = Auth::user()->id;
-        $report->start_date = $start_date;
-        $report->end_date   = $end_date;
+        $report              = new Report();
+        $report->user_id     = Auth::user()->id;
+        $report->start_date  = $start_date;
+        $report->end_date    = $end_date;
+        $report->filter_user = $filter_user;
         $report->save();
 
         $redmine_report     = new RedmineReport();
@@ -80,6 +82,7 @@ class RedmineReportController extends RedmineController
 
             $time_entry = new TimeEntry();
             $time_entry->user_id           = Auth::user()->id;
+            $time_entry->user              = $_entry['user']['name'];
             $time_entry->report_id         = $report->id;
             $time_entry->description       = $description;
             $time_entry->date_time         = $_entry['spent_on'] . ' ' . date('H:i:s', strtotime($_entry['created_on']));

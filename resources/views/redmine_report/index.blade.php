@@ -15,6 +15,10 @@
                             <input type="text" name="date" id="date" class="form-control daterange">
                         </fieldset>
 
+                        <fieldset class="form-group">
+                            <input type="checkbox" name="filter_user" id="filter_user" value="1" checked="checked" /> <label for="filter_user">Only display my entries</label>
+                        </fieldset>
+
                         <button type="submit" class="btn btn-primary" data-toggle="tooltip" data-placement="right" title="Depending on the amount of records, this might take a while to load.">Save</button>
                     </form>
                 </div>
@@ -27,7 +31,7 @@
                     </div>
 
                     <div class="panel-body">
-                        <table class="table table-striped task-table datatable">
+                        <table class="table table-striped task-table datatable" data-order="[[ 0, &quot;desc&quot; ]]">
                             <colgroup>
                                 <col/>
                                 <col/>
@@ -42,8 +46,8 @@
                             <tbody>
                                 @foreach ($reports as $_report)
                                     <tr>
-                                        <td>{{ date('d/m/Y', strtotime($_report->start_date)) }}</td>
-                                        <td>{{ date('d/m/Y', strtotime($_report->end_date)) }}</td>
+                                        <td>{{ date('Y-m-d', strtotime($_report->start_date)) }}</td>
+                                        <td>{{ date('Y-m-d', strtotime($_report->end_date)) }}</td>
                                         <td>
                                             <a href="{{ action('RedmineReportController@show', ['report' => $_report->id]) }}" class="btn btn-default"><i class="fa fa-folder-open"></i></a>
                                             @if ($_report->canDelete())

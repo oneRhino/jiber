@@ -60,6 +60,7 @@ class Report extends MainModel
         return $this->hasMany('App\TimeEntry', 'report_id')
             ->select(array(
                 'id',
+                'user',
                 'description',
                 'date_time',
                 'duration',
@@ -79,6 +80,7 @@ class Report extends MainModel
         return $this->hasMany('App\TimeEntry', 'report_id')
             ->select(array(
                 'id',
+                'user',
                 'description',
                 'date_time',
                 'duration',

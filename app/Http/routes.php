@@ -53,4 +53,5 @@ Route::post('/redmine/send'         , ['middleware' => 'auth', 'uses' => 'Redmin
 Route::match(['get','post'], '/jira/set-password', ['middleware' => 'auth', 'uses' => 'JiraController@set_password']);
 
 Route::get ('/jira/show/{report}', ['middleware' => 'auth', 'uses' => 'JiraController@show']);
+Route::get ('/jira/csv/{report}' , ['middleware' => 'auth', 'uses' => 'JiraController@csv']);
 Route::post('/jira/send'         , ['middleware' => 'auth', 'uses' => 'JiraController@send']);

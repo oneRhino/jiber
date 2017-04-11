@@ -14,11 +14,15 @@
 
             <div class="text-center" style="margin-bottom:10px">
                 <a href="{{ action('JiraController@show', ['report' => $report->id]) }}" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Depending on the amount of records, this might take a while to load."><i class="aui-icon aui-icon-small aui-iconfont-jira"></i> Compare entries to Jira's</a>
+                <a href="{{ action('JiraController@csv', ['report' => $report->id]) }}" class="btn btn-default" data-toggle="tooltip" data-placement="bottom" title="Depending on the amount of records, this might take a while to load."><i class="aui-icon aui-icon-small aui-iconfont-jira"></i> Compare entries to Jira's as CSV</a>
             </div>
 
             @if ($report->redmine_entries)
                 <table class="table table-striped table-hover task-table datatable" data-order="[[ 2, &quot;asc&quot; ]]">
                     <colgroup>
+                        @if (!$report->filter_user)
+                        <col width="120">
+                        @endif
                         <col width="100"/>
                         <col/>
                         <col width="100"/>
@@ -26,6 +30,9 @@
                     </colgroup>
 
                     <thead>
+                        @if (!$report->filter_user)
+                        <th>User</th>
+                        @endif
                         <th>Issue</th>
                         <th>Description</th>
                         <th>Date</th>
@@ -37,6 +44,9 @@
                         @foreach ($report->redmine_entries as $_entry)
                             <?php $total += $_entry->round_decimal_duration ?>
                             <tr>
+                                @if (!$report->filter_user)
+                                <td>{{ $_entry->user }}</td>
+                                @endif
                                 <td>#{{ $_entry->redmine_issue_id }}</td>
                                 <td>{{ $_entry->description }}</td>
                                 <td>{{ date('d/m/Y', strtotime($_entry->date)) }}</td>
@@ -47,7 +57,11 @@
 
                     <tfoot>
                         <tr>
+                            @if (!$report->filter_user)
+                            <th colspan="3"></th>
+                            @else
                             <th colspan="2"></th>
+                            @endif
                             <th>Total</th>
                             <th>{{ $total }} h</td>
                         </tr>
