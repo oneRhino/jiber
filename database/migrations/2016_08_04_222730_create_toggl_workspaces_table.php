@@ -12,14 +12,14 @@ class CreateTogglWorkspacesTable extends Migration
      */
     public function up()
     {
-        Schema::create('toggl_workspaces', function (Blueprint $table) {
-            $table->increments('id');
-						$table->integer('toggl_id')->unsigned();
-						$table->integer('user_id')->unsigned();
-						$table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
-						$table->string('name', 200);
-            $table->timestamps();
-        });
+       Schema::create('toggl_workspaces', function (Blueprint $table) {
+           $table->increments('id');
+           $table->integer('toggl_id')->unsigned();
+           $table->integer('user_id')->unsigned();
+           $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
+           $table->string('name', 200);
+           $table->timestamps();
+       });
     }
 
     /**
