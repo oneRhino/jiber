@@ -63,7 +63,7 @@
                         </div>
 
                         <div class="checkbox">
-                            <label><input type="checkbox" name="redmine_jira_sync" value="1" @if ($setting->redmine_jira_sync) checked="checked" @endif> Enable Redmine/Jira Daily Sync</label>
+                            <label><input type="checkbox" name="redmine_jira_sync" id="redmine_jira_sync" value="1" @if ($setting->redmine_jira_sync) checked="checked" @endif> Enable Redmine/Jira Daily Sync</label>
                         </div>
 
                         <div id="redmine_jira_sync_div" class="panel-body @unless ($setting->redmine_jira_sync) hidden @endunless">
@@ -93,10 +93,10 @@
 <script>
 jQuery(document).ready(function($){
     $('#toggl_redmine_sync').click(function(){
-        $('#toggl_redmine_sync_div').slideToggle();
+        $('#toggl_redmine_sync_div').toggleClass('hidden');
     });
     $('#redmine_jira_sync').click(function(){
-        $('#redmine_jira_sync_div').slideToggle();
+        $('#redmine_jira_sync_div').toggleClass('hidden');
     });
 });
 </script>
