@@ -11,7 +11,8 @@
 |
 */
 
-Route::get('/', ['middleware' => 'auth', 'uses' => 'TogglReportController@index']);
+Route::get('/'    , ['middleware' => 'auth', 'uses' => 'TogglReportController@index']);
+Route::get('/home', ['middleware' => 'auth', 'uses' => 'TogglReportController@index']);
 
 Route::auth();
 
