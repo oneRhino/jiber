@@ -164,47 +164,46 @@ class RedmineController extends Controller
      */
     public function send(Request $request)
     {
-        if ($request->isMethod('post')) {
-            if (!$request->task) {
-                $request->session()->flash('alert-success', 'No tasks sent - nothing to do.');
+        if (!$request->task) {
+            $request->session()->flash('alert-success', 'No tasks sent - nothing to do.');
 
-                return back();
-            }
-
-            // Connect into Redmine
-            $redmine = $this->connect($request);
-
-            foreach ($request->task as $_entry_id) {
-                $_entry = TimeEntry::find($_entry_id);
-
-                if (!$_entry || $_entry->user_id != Auth::user()->id) {
-                    continue;
-                }
-
-                $_data = array(
-                    'issue_id' => $_entry->redmine_issue_id,
-                    'spent_on' => $_entry->date,
-                    'hours'    => $_entry->round_decimal_duration,
-                    'comments' => htmlentities($_entry->description),
-                );
-
-                $_create = $redmine->time_entry->create($_data);
-
-                if ($_create) {
-                    // Create a RedmineSent (log)
-                    $_sent            = new RedmineSent();
-                    $_sent->report_id = $request->report_id;
-                    $_sent->date      = $_entry->date;
-                    $_sent->task      = $_entry->redmine_issue_id;
-                    $_sent->duration  = $_entry->round_decimal_duration;
-                    $_sent->user_id   = Auth::user()->id;
-                    $_sent->save();
-                }
-            }
-
-            // Remove report from session, so when we show previous page again, it's updated
-            $request->session()->flash('alert-success', 'All tasks have been sent successfully to Redmine!');
+            return back();
         }
+
+        // Connect into Redmine
+        $redmine = $this->connect($request);
+
+        foreach ($request->task as $_entry_id) {
+            $_entry = TimeEntry::find($_entry_id);
+
+            if (!$_entry || $_entry->user_id != Auth::user()->id) {
+                continue;
+            }
+
+            $_data = array(
+                'issue_id' => $_entry->redmine_issue_id,
+                'spent_on' => $_entry->date,
+                'hours'    => $_entry->round_decimal_duration,
+                'comments' => htmlentities($_entry->description),
+            );
+
+            $_create = $redmine->time_entry->create($_data);
+
+            if ($_create) {
+                // Create a RedmineSent (log)
+                $_sent            = new RedmineSent();
+                $_sent->report_id = $request->report_id;
+                $_sent->date      = $_entry->date;
+                $_sent->task      = $_entry->redmine_issue_id;
+                $_sent->duration  = $_entry->round_decimal_duration;
+                $_sent->user_id   = Auth::user()->id;
+                $_sent->save();
+            }
+        }
+
+        // Remove report from session, so when we show previous page again, it's updated
+        if ($request->isMethod('post'))
+            $request->session()->flash('alert-success', 'All tasks have been sent successfully to Redmine!');
 
         return back()->withInput();
     }

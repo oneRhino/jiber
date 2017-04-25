@@ -33,6 +33,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Setting;
+use App\TogglReport;
+use App\TogglWorkspace;
+use App\TogglClient;
 
 class UsersController extends Controller
 {
@@ -52,11 +55,25 @@ class UsersController extends Controller
         }
 
         if ($request->isMethod('post')) {
+            $toggl_redmine_data = null;
+
+            if ($request->toggl_redmine_sync) {
+                $toggl_redmine_data = array(
+                    'workspace' => $request->workspace,
+                    'clients'   => $request->clients,
+                    'projects'  => $request->projects,
+                );
+            }
+
             $setting->id       = Auth::user()->id;
             $setting->toggl    = $request->toggl;
             $setting->redmine  = $request->redmine;
             $setting->jira     = $request->jira;
             $setting->basecamp = $request->basecamp;
+            $setting->toggl_redmine_sync = $request->toggl_redmine_sync;
+            $setting->redmine_jira_sync  = $request->redmine_jira_sync;
+            $setting->toggl_redmine_data = serialize($toggl_redmine_data);
+            $setting->jira_password      = encrypt($request->jira_password);
             $setting->save();
             $request->session()->flash('alert-success', 'Settings successfully saved.');
         }
@@ -79,12 +96,19 @@ class UsersController extends Controller
             $jira    = app('App\Http\Controllers\JiraController')   ->test($request);
         }
 
+        $reports    =    TogglReport::getAllByUserID(Auth::user()->id, 'toggl_reports.id', 'DESC');
+        $workspaces = TogglWorkspace::getAllByUserID(Auth::user()->id);
+        $clients    =    TogglClient::getAllByUserID(Auth::user()->id);
+
         return view('users.settings', [
             'setting'  => $setting,
             'toggl'    => $toggl,
             'redmine'  => $redmine,
             'jira'     => $jira,
             'basecamp' => $basecamp,
+            'reports'    => $reports,
+            'workspaces' => $workspaces,
+            'clients'    => $clients,
         ]);
     }
 }

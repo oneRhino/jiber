@@ -23,4 +23,19 @@ namespace App;
 
 class Setting extends MainModel
 {
+    public function user()
+    {
+        return $this->belongsTo('App\User', 'id');
+    }
+
+    public function equalTo($toggl_section, $value, $return) {
+        $toggl_redmine_data = unserialize($this->toggl_redmine_data);
+
+        if ($toggl_redmine_data && isset($toggl_redmine_data[$toggl_section]) && $toggl_redmine_data[$toggl_section]) {
+            if (is_array($toggl_redmine_data[$toggl_section]))
+                return (in_array($value, $toggl_redmine_data[$toggl_section]) ? $return : false);
+            else
+                return ($value == $toggl_redmine_data[$toggl_section] ? $return : false);
+        }
+    }
 }

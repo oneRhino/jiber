@@ -40,13 +40,8 @@ class TimeEntry extends MainModel
     public function getDecimalDurationAttribute()
     {
         $duration     = $this->attributes['duration'];
-        $round_to     = $this->duration_round * 60;
         $milliseconds = $duration;
         $seconds      = floor($milliseconds / 1000);
-
-        /*if ($seconds % $round_to != 0) {
-            $seconds = $seconds + ($round_to - ($seconds % $round_to));
-        }*/
 
         return $seconds / 3600;
     }
@@ -60,6 +55,20 @@ class TimeEntry extends MainModel
         $time = $this->getDecimalDurationAttribute();
 
         return round($time, 2);
+    }
+
+    /**
+     * Return duration, in seconds
+     * Format: SSSS
+     */
+    public function getDurationInSecondsAttribute()
+    {
+        $duration = $this->getDecimalDurationAttribute();
+
+        // Convert first to minutes, then round, then to seconds
+        $time = round($duration * 60);
+
+        return $time * 60;
     }
 
     /**

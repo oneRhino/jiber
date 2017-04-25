@@ -39,6 +39,7 @@ use App\TogglReport;
 use App\TogglTask;
 use App\TogglTimeEntry;
 use App\TogglWorkspace;
+use App\Http\Controllers\RedmineController;
 
 class TogglReportController extends TogglController
 {
@@ -61,7 +62,7 @@ class TogglReportController extends TogglController
     /**
      * Save report, and all entries
      */
-    public function save(Request $request)
+    public function save(Request $request, $redirect = true)
     {
         set_time_limit(0);
 
@@ -98,6 +99,7 @@ class TogglReportController extends TogglController
             'user_agent'   => 'Jiber <thaissa.mendes@gmail.com>',
             'workspace_id' => (int)$request->workspace,
             'user_ids'     => $current_user['id'],
+            'rounding'     => 'on',
         );
 
         if ($request->start_date) {
@@ -158,13 +160,16 @@ class TogglReportController extends TogglController
             }
         }
 
-        return redirect()->action('TogglReportController@show', [$report->id]);
+        if ($redirect)
+            return redirect()->action('TogglReportController@show', [$report->id]);
+        else
+            return $report->id;
     }
 
     /**
      * Get Toggl time entries based on arguments
      */
-    private function getToggle($args)
+    public function getToggle($args)
     {
         $reports_client = $this->reports_connect();
 
@@ -204,5 +209,28 @@ class TogglReportController extends TogglController
         $request->session()->flash('alert-success', 'Report has been successfully deleted!');
 
         return back()->withInput();
+    }
+
+    public function sendAllToRedmine($report_id) {
+        $report = Report::find($report_id);
+
+        if (!$report)
+            abort(403, 'Report not found.');
+
+        $request            = new Request();
+        $request->task      = array();
+        $request->report_id = $report_id;
+
+        foreach ($report->toggl_entries as $_entry) {
+            $request->task[] = $_entry->id;
+        }
+
+        if ($request->task) {
+            $redmine = new RedmineController();
+            $redmine->send($request);
+            return true;
+        }
+
+        return false;
     }
 }

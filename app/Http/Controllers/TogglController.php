@@ -41,7 +41,7 @@ class TogglController extends Controller
     /**
      * Check if Toggl API Token has been set on Settings
      */
-    public function __construct(Request $request, Redirector $redirect)
+    public function __construct(Request $request=null, Redirector $redirect=null)
     {
         $setting = Setting::find(Auth::user()->id);
 

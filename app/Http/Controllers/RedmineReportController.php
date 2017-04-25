@@ -52,7 +52,7 @@ class RedmineReportController extends RedmineController
         ]);
     }
 
-    public function save(Request $request)
+    public function save(Request $request, $redirect = true)
     {
         list($start_date, $end_date) = explode(' - ', $request->date);
 
@@ -99,7 +99,10 @@ class RedmineReportController extends RedmineController
             $redmine_time_entry->save();
         }
 
-        return redirect()->action('RedmineReportController@show', [$report->id]);
+        if ($redirect)
+            return redirect()->action('RedmineReportController@show', [$report->id]);
+        else
+            return $report->id;
     }
 
     /**
@@ -135,5 +138,28 @@ class RedmineReportController extends RedmineController
         $request->session()->flash('alert-success', 'Report has been successfully deleted!');
 
         return back()->withInput();
+    }
+
+    public function sendAllToJira($report_id, $request) {
+        $report = Report::find($report_id);
+
+        if (!$report) 
+            abort(403, 'Report not found.');
+
+        $request->task      = array();
+        $request->report_id = $report_id;
+
+        foreach ($report->redmine_entries as $_entry) {
+            if ($_entry->jira_issue_id)
+                $request->task[] = $_entry->id;
+        }
+
+        if ($request->task) {
+            $redmine = new JiraController();
+            $redmine->send($request);
+            return true;
+        }
+
+        return false;
     }
 }

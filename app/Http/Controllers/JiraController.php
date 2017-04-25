@@ -49,7 +49,10 @@ class JiraController extends Controller
         $redirect = app('Illuminate\Routing\Redirector');
         $url      = Config::get('jira.url');
         $username = Setting::find(Auth::user()->id)->jira;
-        $password = $request->session()->get('jira.password');
+        if ($request->jira_password)
+            $password = $request->jira_password;
+        else
+            $password = $request->session()->get('jira.password');
 
         if (!$password) {
             $request->session()->flash('alert-warning', 'Please set your Jira Password (it will be stored only for this session).');
@@ -333,51 +336,51 @@ class JiraController extends Controller
      */
     public function send(Request $request)
     {
+        if (!$request->task) {
+            $request->session()->flash('alert-success', 'No tasks sent - nothing to do.');
+
+            return back();
+        }
+
+        // Connect into Jira
+        $jira = $this->connect($request);
+
+        foreach ($request->task as $_entry_id) {
+            $_entry = TimeEntry::find($_entry_id);
+
+            $_entry->jira_issue_id = trim($_entry->jira_issue_id);
+
+            if (!$_entry || $_entry->user_id != Auth::user()->id) {
+                continue;
+            }
+
+            // Transforming date into Jira's format
+            // removing ':' from timezone and adding '.000' after seconds
+            $_date = preg_replace('/([-+][0-9]{2}):([0-9]{2})$/', '.000${1}${2}', date('c', strtotime($_entry->date_time)));
+
+            $_data = array(
+                'timeSpentSeconds' => $_entry->duration_in_seconds,
+                'started'          => $_date,
+                'comment'          => htmlentities($_entry->description),
+                'issueId'          => $_entry->jira_issue_id,
+            );
+
+            $response = $jira->addWorklog($_entry->jira_issue_id, $_data);
+
+            if ($response) {
+                // Create a JiraSent (log)
+                $sent            = new JiraSent();
+                $sent->report_id = $request->report_id;
+                $sent->task      = $_entry->jira_issue_id;
+                $sent->date      = $_date;
+                $sent->duration  = $_entry->decimal_duration;
+                $sent->user_id   = Auth::user()->id;
+                $sent->save();
+            }
+        }
+
+        // Remove report from session, so when we show previous page again, it's updated
         if ($request->isMethod('post')) {
-            if (!$request->task) {
-                $request->session()->flash('alert-success', 'No tasks sent - nothing to do.');
-
-                return back();
-            }
-
-            // Connect into Jira
-            $jira = $this->connect($request);
-
-            foreach ($request->task as $_entry_id) {
-                $_entry = TimeEntry::find($_entry_id);
-
-                $_entry->jira_issue_id = trim($_entry->jira_issue_id);
-
-                if (!$_entry || $_entry->user_id != Auth::user()->id) {
-                    continue;
-                }
-
-                // Transforming date into Jira's format
-                // removing ':' from timezone and adding '.000' after seconds
-                $_date = preg_replace('/([-+][0-9]{2}):([0-9]{2})$/', '.000${1}${2}', date('c', strtotime($_entry->date_time)));
-
-                $_data = array(
-                    'timeSpentSeconds' => $_entry->decimal_duration * 3600,
-                    'started'          => $_date,
-                    'comment'          => htmlentities($_entry->description),
-                    'issueId'          => $_entry->jira_issue_id,
-                );
-
-                $response = $jira->addWorklog($_entry->jira_issue_id, $_data);
-
-                if ($response) {
-                    // Create a JiraSent (log)
-                    $sent            = new JiraSent();
-                    $sent->report_id = $request->report_id;
-                    $sent->task      = $_entry->jira_issue_id;
-                    $sent->date      = $_date;
-                    $sent->duration  = $_entry->decimal_duration;
-                    $sent->user_id   = Auth::user()->id;
-                    $sent->save();
-                }
-            }
-
-            // Remove report from session, so when we show previous page again, it's updated
             $request->session()->flash('alert-success', 'All tasks have been sent successfully to Jira!');
         }
 
