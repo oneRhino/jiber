@@ -189,13 +189,13 @@ class DailySync extends Command
                     $report = Report::find($report);
 
                     if (is_array($date))
-                        $date = date('F j, Y', strtotime($date[0])).' to '.date('F j, Y', strtotime($date[1]));
+                        $_date = date('F j, Y', strtotime($date[0])).' to '.date('F j, Y', strtotime($date[1]));
                     else
-                        $date = date('F j, Y', strtotime($date));
+                        $_date = date('F j, Y', strtotime($date));
 
                     $data = array(
                         'entries' => $report->getTimeEntries(),
-                        'date'    => $date,
+                        'date'    => $_date,
                     );
 
                     Mail::send('emails.toggl_redmine_report', $data, function ($m) use ($_user) {
