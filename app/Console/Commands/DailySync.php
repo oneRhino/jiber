@@ -28,7 +28,7 @@ class DailySync extends Command
      */
     protected $signature = 'dailysync:sync {method} {date=current}
                             method : Toggl-Redmine or Redmine-Jira
-                            date : For which date(s) should system sync. Ex: "2017-04-11" or "2017-04-01|2017-04-15". Default is current server date.';
+                            date : For which date(s) should system sync. Ex: "2017-04-11" or "2017-04-01|2017-04-15" or "yesterday". Default is current server date.';
 
     /**
      * The console command description.
@@ -54,7 +54,16 @@ class DailySync extends Command
      */
     public function handle()
     {
-        $date = $this->argument('date') == 'current' ? date('Y-m-d') : $this->argument('date');
+        switch ($this->argument('date')) {
+            case 'current':
+                $date = date('Y-m-d');
+                break;
+            case 'yesterday':
+                $date = date('Y-m-d', strtotime('-1 day'));
+                break;
+            default:
+                $date = $this->argument('date');
+        }
 
         if (strpos($date, '|') !== false)
             $date = explode('|', $date);
