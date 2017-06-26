@@ -38,6 +38,7 @@ use App\Setting;
 use App\TimeEntry;
 use chobie\Jira\Api;
 use chobie\Jira\Api\Authentication\Basic;
+use Crypt;
 
 class JiraController extends Controller
 {
@@ -48,9 +49,15 @@ class JiraController extends Controller
     {
         $redirect = app('Illuminate\Routing\Redirector');
         $url      = Config::get('jira.url');
-        $username = Setting::find(Auth::user()->id)->jira;
-        if ($request->jira_password)
-            $password = $request->jira_password;
+        $settings = Setting::find(Auth::user()->id);
+        $username = $settings->jira;
+        if ($settings->jira_password) {
+            try {
+                $password = Crypt::decrypt($settings->jira_password);
+            } catch (DecryptException $e) {
+                die(print_r($e));
+            }
+        }
         else
             $password = $request->session()->get('jira.password');
 

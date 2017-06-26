@@ -208,7 +208,7 @@ class RedmineController extends Controller
         return back()->withInput();
     }
 
-    protected function getRedmineEntries($start_date, $end_date, $filter_user=true)
+    public function getRedmineEntries($start_date, $end_date, $filter_user=true)
     {
         // Connect into Redmine
         $redmine = $this->connect();

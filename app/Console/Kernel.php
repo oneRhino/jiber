@@ -15,6 +15,9 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\DailySync::class,
         Commands\RedmineToJira::class,
+        Commands\JiraManage::class,
+        Commands\RedmineComments::class,
+        Commands\RedmineAssignee::class,
     ];
 
     /**

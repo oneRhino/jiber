@@ -18,6 +18,8 @@ use App\RedmineReport;
 use App\Report;
 use App\Http\Controllers\TogglReportController;
 use App\Http\Controllers\RedmineReportController;
+use Illuminate\Contracts\Encryption\DecryptException;
+use Crypt;
 
 class DailySync extends Command
 {
@@ -26,7 +28,7 @@ class DailySync extends Command
      *
      * @var string
      */
-    protected $signature = 'dailysync:sync {method} {date=current}
+    protected $signature = 'dailysync:sync {method} {date=current} {user=all}
                             method : Toggl-Redmine or Redmine-Jira
                             date : For which date(s) should system sync. Ex: "2017-04-11" or "2017-04-01|2017-04-15" or "yesterday". Default is current server date.';
 
@@ -70,10 +72,10 @@ class DailySync extends Command
 
         switch ($this->argument('method')) {
             case 'Toggl-Redmine':
-                $this->toggl_redmine($date);
+                $this->toggl_redmine($date, $this->argument('user'));
                 break;
             case 'Redmine-Jira':
-                $this->redmine_jira($date);
+                $this->redmine_jira($date, $this->argument('user'));
                 break;
             default:
                 $this->error('Please select a valid method.');
@@ -81,21 +83,30 @@ class DailySync extends Command
         }
     }
 
-    private function redmine_jira($date) {
+    private function redmine_jira($date, $user) {
         // Get all OneRhino hours from all users that set Redmine/Jira sync as ON
-        $settings = Setting::where('redmine_jira_sync', true)->get();
+        if ($user != 'all')
+            $settings = Setting::where('jira', $user)->get();
+        else
+            $settings = Setting::where('redmine_jira_sync', true)->get();
 
         if ($settings) {
             foreach ($settings as $_settings) {
                 // Get user info
                 $_user = $_settings->user;
+                $this->info('Running sync for '.$_user->name);
 
                 // Check if user has jira password
                 if (!$_settings->jira_password) continue;
 
                 try {
-                    $jira_password = decrypt($_settings->jira_password);
-                } catch (DecryptException $e) {}
+                    $jira_password = Crypt::decrypt($_settings->jira_password);
+                } catch (DecryptException $e) {
+                    die(print_r($e));
+                }
+
+                if (!$jira_password)
+                    die(print_r($_user));
 
                 // Set user as logged-in user
                 $request = new Request();
@@ -128,13 +139,13 @@ class DailySync extends Command
                     $report = Report::find($report);
 
                     if (is_array($date))
-                        $date = date('F j, Y', strtotime($date[0])).' to '.date('F j, Y', strtotime($date[1]));
+                        $_date = date('F j, Y', strtotime($date[0])).' to '.date('F j, Y', strtotime($date[1]));
                     else
-                        $date = date('F j, Y', strtotime($date));
+                        $_date = date('F j, Y', strtotime($date));
 
                     $data = array(
                         'entries' => $report->getTimeEntries(),
-                        'date'    => $date,
+                        'date'    => $_date,
                     );
 
                     Mail::send('emails.redmine_jira_report', $data, function ($m) use ($_user) {
