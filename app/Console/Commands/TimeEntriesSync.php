@@ -21,14 +21,14 @@ use App\Http\Controllers\RedmineReportController;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Crypt;
 
-class DailySync extends Command
+class TimeEntriesSync extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'dailysync:sync {method} {date=current} {user=all}
+    protected $signature = 'time-entries:sync {method} {date=current} {user=all}
                             method : Toggl-Redmine or Redmine-Jira
                             date : For which date(s) should system sync. Ex: "2017-04-11" or "2017-04-01|2017-04-15" or "yesterday". Default is current server date.';
 

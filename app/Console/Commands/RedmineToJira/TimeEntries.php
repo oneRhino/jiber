@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\RedmineToJira;
 
 use Illuminate\Console\Command;
 
-class RedmineToJira extends Command
+class TimeEntries extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'redminetojira:sync';
+    protected $signature = 'redmine-to-jira:time-entries';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Sync between Redmine and Jira';
+    protected $description = 'Sync time entries between Redmine and Jira';
 
     /**
      * Create a new command instance.
@@ -46,7 +46,7 @@ class RedmineToJira extends Command
         // From last execution date, until today - 2 days
         $end_date   = date('Y-m-d', mktime(0,0,0,date('n'),date('j')-2));
 
-        $this->call('dailysync:sync', [
+        $this->call('time-entries:sync', [
             'method' => 'Redmine-Jira', 'date' => $start_date.'|'.$end_date
         ]);
 

@@ -8,14 +8,14 @@ use Illuminate\Support\Facades\Auth;
 use App\Setting;
 use App\Http\Controllers\JiraController;
 
-class JiraManage extends Command
+class JiraDeleteWorklogs extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'jiramanage:delete {user} {date}
+    protected $signature = 'jira:delete-worklogs {user} {date}
                             user : Jira User
                             date : For which date(s) should system delete worklogs. Ex: "2017-04-11" or "2017-04-01|2017-04-15".';
 

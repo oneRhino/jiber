@@ -13,11 +13,11 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        Commands\DailySync::class,
-        Commands\RedmineToJira::class,
-        Commands\JiraManage::class,
-        Commands\RedmineComments::class,
-        Commands\RedmineAssignee::class,
+        Commands\TimeEntriesSync::class,
+        Commands\JiraDeleteWorklogs::class,
+        Commands\RedmineToJira\CreatedTasks::class,
+        Commands\RedmineToJira\UpdatedTasks::class,
+        Commands\RedmineToJira\TimeEntries::class,
     ];
 
     /**
