@@ -115,13 +115,13 @@ class UpdatedTasks extends Command
 
                 if ($redmine_change) continue;
 
+                // Get change date/time and creator (get her/his Jira username)
+                $created_on = $_journal['created_on'];
+                $created_by = $this->getJiraUser($_journal['user']['name']);
+
                 // Run through details
                 if ($_journal['details'])
                 {
-                    // Get change date/time and creator (get her/his Jira username)
-                    $created_on = $_journal['created_on'];
-                    $created_by = $this->getJiraUser($_journal['user']['name']);
-
                     foreach ($_journal['details'] as $_detail)
                     {
                         switch ($_detail['name'])
