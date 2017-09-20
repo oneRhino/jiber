@@ -526,7 +526,9 @@ class JiraController extends Controller
                 Log::debug(print_r($data, true));
 
             // Send data to Redmine
-                $redmine->issue->create($data);
+                $result = $redmine->issue->create($data);
+                Log::debug('-- Redmine return:');
+                Log::debug(print_r($result, true));
         }
         elseif ($action == 'updated')
         {
@@ -608,7 +610,9 @@ class JiraController extends Controller
                 Log::debug(print_r($data, true));
 
             // Send data to Redmine
-                $redmine->issue->update($redmine_task['id'], $data);
+                $result = $redmine->issue->update($redmine_task['id'], $data);
+                Log::debug('-- Redmine return:');
+                Log::debug(print_r($result, true));
         }
         elseif ($action == 'deleted')
         {
@@ -632,8 +636,10 @@ class JiraController extends Controller
                 $redmine_task = reset($redmine_entries['issues']);
 
             // Remove task
-                $redmine->issue->remove($redmine_task['id']);
+                $result = $redmine->issue->remove($redmine_task['id']);
                 Log::debug('-- Redmine task removed: '.$redmine_task['id']);
+                Log::debug('-- Redmine return:');
+                Log::debug(print_r($result, true));
         }
     }
 
@@ -681,7 +687,9 @@ class JiraController extends Controller
                 Log::debug(print_r($data, true));
 
             // Send data to Redmine
-                $redmine->issue->update($redmine_task['id'], $data);
+                $result = $redmine->issue->update($redmine_task['id'], $data);
+                Log::debug('-- Redmine return:');
+                Log::debug(print_r($result, true));
         }
     }
 
