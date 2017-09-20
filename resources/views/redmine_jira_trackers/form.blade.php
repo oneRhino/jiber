@@ -8,11 +8,12 @@
                     <h1>Update Redmine/Jira Tracker</h1>
 
                     <form action="{{ action('RedmineJiraTrackersController@update', ['tracker' => $tracker->id]) }}" method="post">
+                        <input name="_method" type="hidden" value="PUT"/>
                         {{ csrf_field() }}
 
                         <fieldset class="form-group">
                             <label for="redmine_name">Redmine Tracker name</label>
-                            <input type="text" name="redmine_name" id="redmine_name" class="form-control" @if($tracker)value="{{ $tracker->redmine_name }}"@endif>
+                            <input type="text" name="redmine_name" readonly id="redmine_name" class="form-control" @if($tracker)value="{{ $tracker->redmine_name }}"@endif>
                         </fieldset>
 
                         <fieldset class="form-group">
