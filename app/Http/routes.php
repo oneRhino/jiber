@@ -48,6 +48,7 @@ Route::post  ('/redmine/report/save'    , ['middleware' => 'auth', 'uses' => 'Re
 Route::delete('/redmine/report/{report}', ['middleware' => 'auth', 'uses' => 'RedmineReportController@delete']);
 
 Route::get ('/redmine/show/{report}', ['middleware' => 'auth', 'uses' => 'RedmineController@show']);
+Route::post('/redmine/send'         , ['middleware' => 'auth', 'uses' => 'RedmineController@send']);
 
 Route::get('/redmine/jira/users/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraUsersController@import']);
 Route::group(['middleware' => 'auth'], function() {

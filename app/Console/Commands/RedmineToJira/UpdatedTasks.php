@@ -266,18 +266,22 @@ class UpdatedTasks extends Command
                             $transiction = null;
 
                             // Get available transictions, so we can get its ID
-                            $result   = $Jira->getTransitions($_jira_id, array());
-                            $statuses = $result->getResult();
+                            $result     = $Jira->getTransitions($_jira_id, array());
+                            $statuses   = $result->getResult();
+                            $transition = null;
 
-                            foreach ($statuses['transitions'] as $_status)
+                            if (isset($statuses['transitions']))
                             {
-                                if ($_status['name'] == $_content)
-                                    $transiction = $_status['id'];
+                                foreach ($statuses['transitions'] as $_status)
+                                {
+                                    if ($_status['name'] == $_content)
+                                        $transition = $_status['id'];
+                                }
                             }
+    
+                            if (!$transition) break;
 
-                            if (!$transiction) break;
-
-                            $args = array('transition' => $transiction);
+                            $args = array('transition' => $transition);
                             $Jira->transition($_jira_id, $args);
 
                             break;
