@@ -6,8 +6,11 @@ use Log;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use App\User;
+use App\Setting;
 use App\RedmineJiraProject;
+use App\Http\Controllers\JiraController;
 use App\Http\Controllers\RedmineController;
 
 class CreatedTasks extends Command
@@ -24,7 +27,7 @@ class CreatedTasks extends Command
      *
      * @var string
      */
-    protected $description = 'Syncs created tickets from Redmine and Jira.';
+    protected $description = 'Syncs created tickets on Redmine and Jira.';
 
     /**
      * Create a new command instance.
@@ -43,23 +46,22 @@ class CreatedTasks extends Command
      */
     public function handle()
     {
-        // Grab tickets recently created/updated on Redmine
+        // Grab tickets recently created on Redmine
         $tickets = $this->getRedmineTickets();
-
-        die(print_r($tickets));
-
-        /*// Grab new tickets from Redmine
-        $tickets = $this->getRedmineNewTickets();
 
         // Create tickets on Jira, and get Redmine ID/Jira ID combinations
         $tickets = $this->createTicketsJira($tickets);
 
+        die(print_r($tickets));
+
         // Update tickets on Redmine, setting Jira ID
-        $this->updateRedmineTickets($tickets);*/
+        //$this->updateRedmineTickets($tickets);
     }
 
     private function getRedmineTickets()
     {
+        $tickets = array();
+
         // Get user
         $user = User::find(1);
 
@@ -75,7 +77,7 @@ class CreatedTasks extends Command
         // Current date
         $date = date('Y-m-d');
 
-        // Get Redmine tasks updated this date
+        // Get Redmine tasks created this date
         $RedmineController = new RedmineController;
         $Redmine = $RedmineController->connect();
         $args = array(
@@ -84,7 +86,32 @@ class CreatedTasks extends Command
             'sort'       => 'created_on:desc',
         );
         $redmine_entries = $Redmine->issue->all($args);
-        die(print_r($redmine_entries));
+
+        foreach ($redmine_entries['issues'] as $_issue)
+        {
+            // Check if project exists on Redmine/Jira Projects
+            $project = RedmineJiraProject::where('name_redmine', $_issue['project']['name'])->first();
+
+            if (!$project) continue;
+
+            // Project exists, check if it has a Jira ID set
+            $jira_id = false;
+            
+            foreach ($_issue['custom_fields'] as $_field)
+            {
+                if ($_field['id'] == Config::get('redmine.jira_id') && !empty($_field['value']))
+                    $jira_id = $_field['value'];
+            }
+
+            // Jira ID exists, so ignore
+            if ($jira_id) continue;
+
+            // Jira ID doesn't exist, and project is OMG
+            $_issue['JiraProject'] = $project->name_jira;
+            $tickets[] = $_issue;
+        }
+
+        return $tickets;
     }
 
     /**
@@ -144,7 +171,7 @@ class CreatedTasks extends Command
         }
 
         return $tickets;
-    }
+    }*/
 
     private function createTicketsJira($tickets)
     {
@@ -173,6 +200,13 @@ class CreatedTasks extends Command
             Auth::setUser($user);
 
             $Jira = $JiraController->connect($request);
+
+            $types = $Jira->getProjectIssueTypes($_ticket['JiraProject']);
+            die(print_r($types));
+
+            $issue = array();
+
+            $Jira->createIssue($_ticket['JiraProject'], $_ticket['subject']);
         }
-    }*/
+    }
 }

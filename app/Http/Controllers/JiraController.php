@@ -29,13 +29,21 @@
 
 namespace App\Http\Controllers;
 
+use Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
+use App\Http\Controllers\RedmineController;
 use App\JiraSent;
+use App\RedmineJiraPriority;
+use App\RedmineJiraProject;
+use App\RedmineJiraStatus;
+use App\RedmineJiraTracker;
+use App\RedmineJiraUser;
 use App\Report;
 use App\Setting;
 use App\TimeEntry;
+use App\User;
 use chobie\Jira\Api;
 use chobie\Jira\Api\Authentication\Basic;
 use Crypt;
@@ -392,5 +400,242 @@ class JiraController extends Controller
         }
 
         return back()->withInput();
+    }
+
+    public function webhook(Request $request)
+    {
+        // Check if content has been sent, and it's JSON
+            $content = $request->getContent();
+            $content = json_decode($content);
+            if (!$content) return false;
+
+        Log::debug('JIRA WEBHOOK ACTIVATED');
+        Log::debug(print_r($content, true));
+
+        // Check if project is supported by Jiber
+            if (!isset($_GET['project'])) return false;
+            $project = RedmineJiraProject::where('jira_name', $_GET['project'])->first();
+            if (!$project) return false;
+            Log::debug('- Project Found');
+
+        // Check if user who is performing the action exists on Jiber
+            if (!isset($_GET['user_id'])) return false;
+            $user = Setting::where('jira', $_GET['user_id'])->first();
+            if (!$user) return false;
+            $user = User::find($user->id);
+            Log::debug('- User Found');
+
+        // Connect on Redmine using this user
+            $request = new Request();
+            $request->merge(['user' => $user]);
+            $request->setUserResolver(function () use ($user) {
+                return $user;
+            });
+            Auth::setUser($user);
+            Log::debug('- User Authenticated');
+
+        // Get event
+            if (isset($content->issue_event_type_name))
+                $event = $content->issue_event_type_name;
+            else
+                $event = $content->webhookEvent;
+
+        switch ($event)
+        {
+            case 'issue_created':
+                $this->issue('created', $content, $request);
+                break;
+            case 'issue_updated':
+            case 'issue_assigned':
+            case 'issue_generic':
+                $this->issue('updated', $content, $request);
+                break;
+            case 'jira:issue_deleted':
+                $this->issue('deleted', $content, $request);
+                break;
+            case 'issue_commented':
+                $this->comment('created', $content, $request);
+                break;
+            /*case 'issue_comment_updated':
+                $this->comment('updated', $content, $request);
+                break;
+            case 'issue_comment_deleted':
+                $this->comment('deleted', $content, $request);
+                break;*/
+        }
+    }
+
+    private function issue($action, $content, $request)
+    {
+        Log::debug('-- Issue method called: action '.$action);
+
+        // Connect into Redmine
+            $redmineController = new RedmineController();
+            $redmine = $redmineController->connect();
+
+        // Create task on Redmine
+        if ($action == 'created')
+        {
+            // Get data
+                $project  =  RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
+                Log::debug('-- Redmine project found');
+                $tracker  =  RedmineJiraTracker::where('jira_name', 'like', '%' . $content->issue->fields->issuetype->name . '%')->first();
+                Log::debug('-- Redmine tracker found');
+                $status   =   RedmineJiraStatus::where('jira_name', $content->issue->fields->status->name)->first();
+                Log::debug('-- Redmine status found');
+                $priority = RedmineJiraPriority::where('jira_name', $content->issue->fields->priority->name)->first();
+                Log::debug('-- Redmine priority found');
+                $assignee =     RedmineJiraUser::where('jira_name', $content->issue->fields->assignee->key)->first();
+                Log::debug('-- Redmine assignee found');
+
+            // Create data array
+                $data = array(
+                    'project_id'      =>  $project->redmine_id,
+                    'tracker_id'      =>  $tracker->redmine_id,
+                    'status_id'       =>   $status->redmine_id,
+                    'priority_id'     => $priority->redmine_id,
+                    'assigned_to_id'  => $assignee->redmine_id,
+                    'subject'         => $content->issue->fields->summary,
+                    'description'     => $content->issue->fields->description,
+                    'custom_fields'   => array(
+                        'custom_value' => array(
+                            'id'    => Config::get('redmine.jira_id'),
+                            'value' => $content->issue->key,
+                        )
+                    )
+                );
+                Log::debug('-- Redmine data:');
+                Log::debug(print_r($data, true));
+
+            // Send data to Redmine
+                $redmine->issue->create($data);
+        }
+        elseif ($action == 'updated')
+        {
+            // if changelog doesn't exist, ignore - it's a comment
+                if (!isset($content->changelog)) return false;
+
+            // Get Redmine Project
+                $project  =  RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
+                Log::debug('-- Redmine project found');
+
+            // Search task on Redmine based on Jira ID
+                $args = array(
+                    'limit' => 100,
+                    'sort'  => 'created_on:desc',
+                    'cf_9'  => $_GET['issue'],
+                    'project_id' => $project->redmine_id,
+                );
+                Log::debug(print_r($args, true));
+                $redmine_entries = $redmine->issue->all($args);
+                Log::debug('-- Redmine tasks found:');
+                Log::debug(print_r($redmine_entries, true));
+
+            // Get first Redmine task
+                $redmine_task = reset($redmine_entries['issues']);
+
+            // Get updated fields
+                $data = array();
+
+                foreach ($content->changelog->items as $_item) {
+                    switch ($_item->field)
+                    {
+                        case 'summary':
+                            $data['subject'] = $_item->toString;
+                            break;
+                        case 'description':
+                            $data['description'] = $_item->toString;
+                            break;
+                        case 'priority':
+                            $priority = RedmineJiraPriority::where('jira_name', $_item->toString)->first();
+                            $data['priority_id'] = $priority->redmine_id;
+                            break;
+                        case 'assignee':
+                            $assignee = RedmineJiraUser::where('jira_name', $_item->to)->first();
+                            $data['assigned_to_id'] = $assignee->redmine_id;
+                            break;
+                        case 'status':
+                            $status = RedmineJiraStatus::where('jira_name', $_item->toString)->first();
+                            $data['status_id'] = $status->redmine_id;
+                            break;
+                        case 'issuetype':
+                            $tracker = RedmineJiraTracker::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
+                            $data['tracker_id'] = $tracker->redmine_id;
+                            break;
+                    }
+                }
+                Log::debug('-- Redmine data:');
+                Log::debug(print_r($data, true));
+
+            // Send data to Redmine
+                $redmine->issue->update($redmine_task['id'], $data);
+        }
+        elseif ($action == 'deleted')
+        {
+            // Get Redmine Project
+                $project = RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
+                Log::debug('-- Redmine project found');
+
+            // Search task on Redmine based on Jira ID
+                $args = array(
+                    'limit' => 100,
+                    'sort'  => 'created_on:desc',
+                    'cf_9'  => $_GET['issue'],
+                    'project_id' => $project->redmine_id,
+                );
+                Log::debug(print_r($args, true));
+                $redmine_entries = $redmine->issue->all($args);
+                Log::debug('-- Redmine tasks found:');
+                Log::debug(print_r($redmine_entries, true));
+
+            // Get first Redmine task
+                $redmine_task = reset($redmine_entries['issues']);
+
+            // Remove task
+                $redmine->issue->remove($redmine_task['id']);
+                Log::debug('-- Redmine task removed: '.$redmine_task['id']);
+        }
+    }
+
+    private function comment($action, $content, $request)
+    {
+        Log::debug('-- Comment method called: action '.$action);
+
+        // Connect into Redmine
+            $redmineController = new RedmineController();
+            $redmine = $redmineController->connect();
+
+        // Create task on Redmine
+        if ($action == 'created')
+        {
+            // Get Redmine Project
+                $project  =  RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
+                Log::debug('-- Redmine project found');
+
+            // Search task on Redmine based on Jira ID
+                $args = array(
+                    'limit' => 100,
+                    'sort'  => 'created_on:desc',
+                    'cf_9'  => $_GET['issue'],
+                    'project_id' => $project->redmine_id,
+                );
+                Log::debug(print_r($args, true));
+                $redmine_entries = $redmine->issue->all($args);
+                Log::debug('-- Redmine tasks found:');
+                Log::debug(print_r($redmine_entries, true));
+
+            // Get first Redmine task
+                $redmine_task = reset($redmine_entries['issues']);
+
+            // Build data array
+                $data = array(
+                    'notes' => $content->comment->body,
+                );
+                Log::debug('-- Redmine data:');
+                Log::debug(print_r($data, true));
+
+            // Send data to Redmine
+                $redmine->issue->update($redmine_task['id'], $data);
+        }
     }
 }
