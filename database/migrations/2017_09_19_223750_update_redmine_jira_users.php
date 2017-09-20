@@ -12,10 +12,12 @@ class UpdateRedmineJiraUsers extends Migration
      */
     public function up()
     {
-        Schema::table('redmine_jira_users', function (Blueprint $table) {
+        Schema::create('redmine_jira_users', function (Blueprint $table) {
+            $table->increments('id');
             $table->string('redmine_name');
             $table->integer('redmine_id');
             $table->string('jira_name');
+            $table->timestamps();
         });
     }
 
@@ -26,10 +28,6 @@ class UpdateRedmineJiraUsers extends Migration
      */
     public function down()
     {
-        Schema::table('redmine_jira_users', function (Blueprint $table) {
-            $table->dropColumn('redmine_name');
-            $table->dropColumn('redmine_id');
-            $table->dropColumn('jira_name');
-        });
+        Schema::drop('redmine_jira_statuses');
     }
 }
