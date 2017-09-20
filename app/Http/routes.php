@@ -50,9 +50,46 @@ Route::delete('/redmine/report/{report}', ['middleware' => 'auth', 'uses' => 'Re
 Route::get ('/redmine/show/{report}', ['middleware' => 'auth', 'uses' => 'RedmineController@show']);
 Route::post('/redmine/send'         , ['middleware' => 'auth', 'uses' => 'RedmineController@send']);
 
+Route::get('/redmine/jira/users/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraUsersController@import']);
+Route::group(['middleware' => 'auth'], function() {
+    Route::resource('/redmine/jira/users', 'RedmineJiraUsersController', ['parameters' => [
+        'users' => 'user'
+    ]]);
+});
+
+Route::get('/redmine/jira/projects/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraProjectsController@import']);
+Route::group(['middleware' => 'auth'], function() {
+    Route::resource('/redmine/jira/projects', 'RedmineJiraProjectsController', ['parameters' => [
+        'projects' => 'project'
+    ]]);
+});
+
+Route::get('/redmine/jira/trackers/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraTrackersController@import']);
+Route::group(['middleware' => 'auth'], function() {
+    Route::resource('/redmine/jira/trackers', 'RedmineJiraTrackersController', ['parameters' => [
+        'trackers' => 'tracker'
+    ]]);
+});
+
+Route::get('/redmine/jira/statuses/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraStatusesController@import']);
+Route::group(['middleware' => 'auth'], function() {
+    Route::resource('/redmine/jira/statuses', 'RedmineJiraStatusesController', ['parameters' => [
+        'statuses' => 'status'
+    ]]);
+});
+
+Route::get('/redmine/jira/priorities/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraPrioritiesController@import']);
+Route::group(['middleware' => 'auth'], function() {
+    Route::resource('/redmine/jira/priorities', 'RedmineJiraPrioritiesController', ['parameters' => [
+        'priorities' => 'priority'
+    ]]);
+});
+
 // Jira routes
 Route::match(['get','post'], '/jira/set-password', ['middleware' => 'auth', 'uses' => 'JiraController@set_password']);
 
 Route::get ('/jira/show/{report}', ['middleware' => 'auth', 'uses' => 'JiraController@show']);
 Route::get ('/jira/csv/{report}' , ['middleware' => 'auth', 'uses' => 'JiraController@csv']);
 Route::post('/jira/send'         , ['middleware' => 'auth', 'uses' => 'JiraController@send']);
+
+Route::match(['get','post'], '/jira/webhook', ['uses' => 'JiraController@webhook']);

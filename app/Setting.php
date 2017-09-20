@@ -38,4 +38,9 @@ class Setting extends MainModel
                 return ($value == $toggl_redmine_data[$toggl_section] ? $return : false);
         }
     }
+
+    public static function getAllWithRedmine()
+    {
+        return self::join('users', 'settings.id', '=', 'users.id')->whereNotNull('redmine')->where('users.enabled', true)->get();
+    }
 }
