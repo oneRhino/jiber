@@ -8,6 +8,7 @@
                     <h1>Update Redmine/Jira Status</h1>
 
                     <form action="{{ action('RedmineJiraStatusesController@update', ['status' => $status->id]) }}" method="post">
+                        <input name="_method" type="hidden" value="PUT"/>
                         {{ csrf_field() }}
 
                         <fieldset class="form-group">

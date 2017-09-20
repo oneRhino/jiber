@@ -8,11 +8,12 @@
                     <h1>Update Redmine/Jira User</h1>
 
                     <form action="{{ action('RedmineJiraUsersController@update', ['user' => $user->id]) }}" method="post">
+                        <input name="_method" type="hidden" value="PUT"/>
                         {{ csrf_field() }}
 
                         <fieldset class="form-group">
                             <label for="redmine_name">Redmine Username</label>
-                            <input type="text" name="redmine_name" id="redmine_name" readonly class="form-control" @if($user)value="{{ $user->redmine_name }}"@endif>
+                            <input type="text" name="redmine_name" readonly id="redmine_name" readonly class="form-control" @if($user)value="{{ $user->redmine_name }}"@endif>
                         </fieldset>
 
                         <fieldset class="form-group">
