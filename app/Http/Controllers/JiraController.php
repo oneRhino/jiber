@@ -687,9 +687,13 @@ class JiraController extends Controller
                 Log::debug(print_r($data, true));
 
             // Send data to Redmine
-                $result = $redmine->issue->update($redmine_task['id'], $data);
-                Log::debug('-- Redmine return:');
-                Log::debug(print_r($result, true));
+                $redmine->issue->update($redmine_task['id'], $data);
+
+            // Get comment ID
+                $args = array('include' => 'journals');
+                $_entry = $Redmine->issue->show($redmine_task['id'], $args);
+                Log::debug('-- Redmine task - GET COMMENT ID:');
+                Log::debug(print_r($_entry, true));
         }
     }
 
