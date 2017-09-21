@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use App\Http\Controllers\RedmineController;
 use App\JiraSent;
+use App\RedmineChange;
 use App\RedmineJiraPriority;
 use App\RedmineJiraProject;
 use App\RedmineJiraStatus;
@@ -569,6 +570,45 @@ class JiraController extends Controller
 
             // Send data to Redmine
                 $redmine->issue->update($redmine_task['id'], $data);
+
+            // Get data from Redmine
+                $args = array('include' => 'journals');
+                $task = $redmine->issue->show($redmine_task['id'], $args);
+                Log::debug('-- Redmine Task '.$redmine_task['id'].':');
+                Log::debug(print_r($task, true));
+
+                foreach ($task['issue']['journals'] as $_journal)
+                {
+                    // Check if change has been done within the past min
+                    $created = strtotime($_journal['created_on']);
+                    $lastmin = mktime(date('H'), date('i')-1);
+
+                    if ($created < $lastmin) continue;
+
+                    // Check if change has already been saved on database
+                    $redmine_change = RedmineChange::where('redmine_change_id', $_journal['id'])->first();
+
+                    if ($redmine_change) continue;
+
+                    // Run through details
+                    if ($_journal['details'])
+                    {
+                        $saveid = false;
+
+                        foreach ($_journal['details'] as $_detail)
+                        {
+                            // Check if it's one of the changes we just did
+                            if (array_key_exists($_detail['name'], $data) && $_detail['new_value'] == $data[$_detail['name']])
+                                $saveid = true;
+                        }
+
+                        if ($saveid) {
+                            $Change = new RedmineChange();
+                            $Change->redmine_change_id = $_journal['id'];
+                            $Change->save();
+                        }
+                    }
+                }
         }
         elseif ($action == 'deleted')
         {
@@ -636,6 +676,36 @@ class JiraController extends Controller
 
             // Send data to Redmine
                 $redmine->issue->update($redmine_task['id'], $data);
+
+            // Get data from Redmine
+                $args = array('include' => 'journals');
+                $task = $redmine->issue->show($redmine_task['id'], $args);
+                Log::debug('-- Redmine Task '.$redmine_task['id'].':');
+                Log::debug(print_r($task, true));
+
+                foreach ($task['issue']['journals'] as $_journal)
+                {
+                    // Check if change has been done within the past min
+                    $created = strtotime($_journal['created_on']);
+                    $lastmin = mktime(date('H'), date('i')-1);
+
+                    if ($created < $lastmin) continue;
+
+                    // Check if change has already been saved on database
+                    $redmine_change = RedmineChange::where('redmine_change_id', $_journal['id'])->first();
+
+                    if ($redmine_change) continue;
+
+                    // Run through details
+                    if (isset($_journal['notes']) && !empty($_journal['notes']))
+                    {
+                        if ($data['notes'] == $_journal['notes']) {
+                            $Change = new RedmineChange();
+                            $Change->redmine_change_id = $_journal['id'];
+                            $Change->save();
+                        }
+                    }
+                }
         }
     }
 }
