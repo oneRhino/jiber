@@ -30,6 +30,7 @@
 namespace App\Http\Controllers;
 
 use Log;
+use Mail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
@@ -489,6 +490,23 @@ class JiraController extends Controller
                 $assignee =     RedmineJiraUser::where('jira_name', $content->issue->fields->assignee->key)->first();
                 Log::debug('-- Redmine assignee found');
 
+            // Check data
+                $errors = array();
+
+                if (!$tracker)
+                    $errors[] = "Tracker not found: {$content->issue->fields->issuetype->name}";
+                if (!$status)
+                    $errors[] = "Status not found: {$content->issue->fields->status->name}";
+                if (!$priority)
+                    $errors[] = "Priority not found: {$content->issue->fields->priority->name}";
+                if (!$assignee)
+                    $errors[] = "Assignee not found: {$content->issue->fields->assignee->key}";
+
+                if ($errors) {
+                    $this->errorEmail($errors);
+                    return false;
+                }
+
             // Create data array
                 $data = array(
                     'project_id'      =>  $project->redmine_id,
@@ -532,6 +550,12 @@ class JiraController extends Controller
                 Log::debug('-- Redmine tasks found:');
                 Log::debug(print_r($redmine_entries, true));
 
+            // Check data
+                if (!$redmine_entries['issues']) {
+                    $this->errorEmail("No task using Jira ID {$_GET['issue']}");
+                    return false;
+                }
+
             // Get first Redmine task
                 $redmine_task = reset($redmine_entries['issues']);
 
@@ -549,18 +573,34 @@ class JiraController extends Controller
                             break;
                         case 'priority':
                             $priority = RedmineJiraPriority::where('jira_name', $_item->toString)->first();
+                            if (!$priority) {
+                                $this->errorEmail("Priority not found: {$content->issue->fields->priority->name}");
+                                return false;
+                            }
                             $data['priority_id'] = $priority->redmine_id;
                             break;
                         case 'assignee':
                             $assignee = RedmineJiraUser::where('jira_name', $_item->to)->first();
+                            if (!$assignee) {
+                                $this->errorEmail("Assignee not found: {$content->issue->fields->assignee->key}");
+                                return false;
+                            }
                             $data['assigned_to_id'] = $assignee->redmine_id;
                             break;
                         case 'status':
                             $status = RedmineJiraStatus::where('jira_name', $_item->toString)->first();
+                            if (!$status) {
+                                $this->errorEmail("Status not found: {$content->issue->fields->status->name}");
+                                return false;
+                            }
                             $data['status_id'] = $status->redmine_id;
                             break;
                         case 'issuetype':
                             $tracker = RedmineJiraTracker::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
+                            if (!$tracker) {
+                                $this->errorEmail("Tracker not found: {$content->issue->fields->issuetype->name}");
+                                return false;
+                            }
                             $data['tracker_id'] = $tracker->redmine_id;
                             break;
                     }
@@ -664,6 +704,12 @@ class JiraController extends Controller
                 Log::debug('-- Redmine tasks found:');
                 Log::debug(print_r($redmine_entries, true));
 
+            // Check data
+                if (!$redmine_entries['issues']) {
+                    $this->errorEmail("No task using Jira ID {$_GET['issue']}");
+                    return false;
+                }
+
             // Get first Redmine task
                 $redmine_task = reset($redmine_entries['issues']);
 
@@ -707,5 +753,18 @@ class JiraController extends Controller
                     }
                 }
         }
+    }
+
+    private function errorEmail($errors)
+    {
+        if (!$errors) return false;
+
+        if (!is_array($errors))
+            $errors = array($errors);
+
+        Mail::send('emails.error', ['errors' => $errors], function ($m) {
+            $m->from('jiber@tmisoft.com', 'Jiber');
+            $m->to('thaissa.mendes@gmail.com', 'Thaissa Mendes')->subject('Redmine/Jira sync error found');
+        });
     }
 }
