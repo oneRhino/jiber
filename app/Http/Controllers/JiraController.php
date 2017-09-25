@@ -409,21 +409,21 @@ class JiraController extends Controller
         // Check if content has been sent, and it's JSON
             $content = $request->getContent();
             $content = json_decode($content);
-            if (!$content) return false;
+            if (!$content) die;
 
         Log::debug('JIRA WEBHOOK ACTIVATED');
         Log::debug(print_r($content, true));
 
         // Check if project is supported by Jiber
-            if (!isset($_GET['project'])) return false;
+            if (!isset($_GET['project'])) die;
             $project = RedmineJiraProject::where('jira_name', $_GET['project'])->first();
-            if (!$project) return false;
+            if (!$project) die;
             Log::debug('- Project Found');
 
         // Check if user who is performing the action exists on Jiber
-            if (!isset($_GET['user_id'])) return false;
+            if (!isset($_GET['user_id'])) die;
             $user = Setting::where('jira', $_GET['user_id'])->first();
-            if (!$user) return false;
+            if (!$user) die;
             $user = User::find($user->id);
             Log::debug('- User Found');
 
@@ -504,7 +504,7 @@ class JiraController extends Controller
 
                 if ($errors) {
                     $this->errorEmail($errors);
-                    return false;
+                    die;
                 }
 
             // Create data array
@@ -532,7 +532,7 @@ class JiraController extends Controller
         elseif ($action == 'updated')
         {
             // if changelog doesn't exist, ignore - it's a comment
-                if (!isset($content->changelog)) return false;
+                if (!isset($content->changelog)) die;
 
             // Get Redmine Project
                 $project  =  RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
@@ -553,7 +553,7 @@ class JiraController extends Controller
             // Check data
                 if (!$redmine_entries['issues']) {
                     $this->errorEmail("No task using Jira ID {$_GET['issue']}");
-                    return false;
+                    die;
                 }
 
             // Get first Redmine task
@@ -575,7 +575,7 @@ class JiraController extends Controller
                             $priority = RedmineJiraPriority::where('jira_name', $_item->toString)->first();
                             if (!$priority) {
                                 $this->errorEmail("Priority not found: {$content->issue->fields->priority->name}");
-                                return false;
+                                die;
                             }
                             $data['priority_id'] = $priority->redmine_id;
                             break;
@@ -583,7 +583,7 @@ class JiraController extends Controller
                             $assignee = RedmineJiraUser::where('jira_name', $_item->to)->first();
                             if (!$assignee) {
                                 $this->errorEmail("Assignee not found: {$content->issue->fields->assignee->key}");
-                                return false;
+                                die;
                             }
                             $data['assigned_to_id'] = $assignee->redmine_id;
                             break;
@@ -591,7 +591,7 @@ class JiraController extends Controller
                             $status = RedmineJiraStatus::where('jira_name', $_item->toString)->first();
                             if (!$status) {
                                 $this->errorEmail("Status not found: {$content->issue->fields->status->name}");
-                                return false;
+                                die;
                             }
                             $data['status_id'] = $status->redmine_id;
                             break;
@@ -599,7 +599,7 @@ class JiraController extends Controller
                             $tracker = RedmineJiraTracker::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
                             if (!$tracker) {
                                 $this->errorEmail("Tracker not found: {$content->issue->fields->issuetype->name}");
-                                return false;
+                                die;
                             }
                             $data['tracker_id'] = $tracker->redmine_id;
                             break;
@@ -707,23 +707,14 @@ class JiraController extends Controller
             // Check data
                 if (!$redmine_entries['issues']) {
                     $this->errorEmail("No task using Jira ID {$_GET['issue']}");
-                    return false;
+                    die;
                 }
 
             // Get first Redmine task
                 $redmine_task = reset($redmine_entries['issues']);
 
-            // Build data array
-                $data = array(
-                    'notes' => $content->comment->body,
-                );
-                Log::debug('-- Redmine data:');
-                Log::debug(print_r($data, true));
-
-            // Send data to Redmine
-                $redmine->issue->update($redmine_task['id'], $data);
-
-            // Get data from Redmine
+            // Check if comment is already on Redmine
+                $send_comment = true;
                 $args = array('include' => 'journals');
                 $task = $redmine->issue->show($redmine_task['id'], $args);
                 Log::debug('-- Redmine Task '.$redmine_task['id'].':');
@@ -731,33 +722,62 @@ class JiraController extends Controller
 
                 foreach ($task['issue']['journals'] as $_journal)
                 {
-                    // Check if change has been done within the past min
-                    $created = strtotime($_journal['created_on']);
-                    $lastmin = mktime(date('H'), date('i')-1);
-
-                    if ($created < $lastmin) continue;
-
-                    // Check if change has already been saved on database
-                    $redmine_change = RedmineChange::where('redmine_change_id', $_journal['id'])->first();
-
-                    if ($redmine_change) continue;
-
                     // Run through details
                     if (isset($_journal['notes']) && !empty($_journal['notes']))
                     {
-                        if ($data['notes'] == $_journal['notes']) {
-                            $Change = new RedmineChange();
-                            $Change->redmine_change_id = $_journal['id'];
-                            $Change->save();
+                        if ($content->comment->body == $_journal['notes']) {
+                            $send_comment = false;
                         }
                     }
                 }
+
+            if ($send_comment) {
+                // Build data array
+                    $data = array(
+                        'notes' => $content->comment->body,
+                    );
+                    Log::debug('-- Redmine data:');
+                    Log::debug(print_r($data, true));
+
+                // Send data to Redmine
+                    $redmine->issue->update($redmine_task['id'], $data);
+
+                // Get data from Redmine
+                    $args = array('include' => 'journals');
+                    $task = $redmine->issue->show($redmine_task['id'], $args);
+                    Log::debug('-- Redmine Task '.$redmine_task['id'].':');
+                    Log::debug(print_r($task, true));
+
+                    foreach ($task['issue']['journals'] as $_journal)
+                    {
+                        // Check if change has been done within the past min
+                        $created = strtotime($_journal['created_on']);
+                        $lastmin = mktime(date('H'), date('i')-1);
+
+                        if ($created < $lastmin) continue;
+
+                        // Check if change has already been saved on database
+                        $redmine_change = RedmineChange::where('redmine_change_id', $_journal['id'])->first();
+
+                        if ($redmine_change) continue;
+
+                        // Run through details
+                        if (isset($_journal['notes']) && !empty($_journal['notes']))
+                        {
+                            if ($data['notes'] == $_journal['notes']) {
+                                $Change = new RedmineChange();
+                                $Change->redmine_change_id = $_journal['id'];
+                                $Change->save();
+                            }
+                        }
+                    }
+            }
         }
     }
 
     private function errorEmail($errors)
     {
-        if (!$errors) return false;
+        if (!$errors) die;
 
         if (!is_array($errors))
             $errors = array($errors);
