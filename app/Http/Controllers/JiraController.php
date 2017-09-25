@@ -784,7 +784,7 @@ class JiraController extends Controller
 
         Mail::send('emails.error', ['errors' => $errors], function ($m) {
             $m->from('jiber@tmisoft.com', 'Jiber');
-            $m->to('thaissa.mendes@gmail.com', 'Thaissa Mendes')->subject('Redmine/Jira sync error found');
+            $m->to('thaissa.mendes@gmail.com', 'Thaissa Mendes')->subject('Redmine/Jira (Jira Webhook) sync error found');
         });
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Console\Commands\RedmineToJira;
 
 use Log;
+use Mail;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -131,7 +132,7 @@ class CreatedTasks extends Command
                 $settings = Setting::where('redmine_user', $_ticket['author']['name'])->first();
 
                 if (!$settings) {
-                    $this->error("No user {$_user} found.");
+                    $this->errorEmail("No user {$_user} found.");
                     continue;
                 }
 
@@ -153,7 +154,7 @@ class CreatedTasks extends Command
                 $tracker = RedmineJiraTracker::where('redmine_name', $_ticket['tracker']['name'])->first();
 
                 if (!$tracker) {
-                    $this->error("No tracker {$_ticket['tracker']['name']} found.");
+                    $this->errorEmail("No tracker {$_ticket['tracker']['name']} found.");
                     continue;
                 }
 
@@ -169,7 +170,7 @@ class CreatedTasks extends Command
                 $priority = RedmineJiraPriority::where('redmine_name', $_ticket['priority']['name'])->first();
 
                 if (!$priority) {
-                    $this->error("No priority {$_ticket['priority']['name']} found.");
+                    $this->errorEmail("No priority {$_ticket['priority']['name']} found.");
                     continue;
                 }
 
@@ -185,7 +186,7 @@ class CreatedTasks extends Command
                 $user = RedmineJiraUser::where('redmine_name', $_ticket['assigned_to']['name'])->first();
 
                 if (!$user) {
-                    $this->error("No user {$_ticket['assigned_to']['name']} found.");
+                    $this->errorEmail("No user {$_ticket['assigned_to']['name']} found.");
                     continue;
                 }
 
@@ -240,5 +241,18 @@ class CreatedTasks extends Command
 
             $Redmine->issue->update($_redmine, $data);
         }
+    }
+
+    private function errorEmail($errors)
+    {
+        if (!$errors) die;
+
+        if (!is_array($errors))
+            $errors = array($errors);
+
+        Mail::send('emails.error', ['errors' => $errors], function ($m) {
+            $m->from('jiber@tmisoft.com', 'Jiber');
+            $m->to('thaissa.mendes@gmail.com', 'Thaissa Mendes')->subject('Redmine/Jira (CreatedTasks) sync error found');
+        });
     }
 }
