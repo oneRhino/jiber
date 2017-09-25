@@ -478,6 +478,28 @@ class JiraController extends Controller
         // Create task on Redmine
         if ($action == 'created')
         {
+            // Current date
+            $date = date('Y-m-d');
+
+            // First, check if it hasn't already been created on Redmine
+                $args = array(
+                    'created_on' => $date,
+                    'limit'      => 100,
+                    'sort'       => 'created_on:desc',
+                );
+                $redmine_entries = $redmine->issue->all($args);
+
+                if (!$redmine_entries['issues']) die;
+
+                foreach ($redmine_entries['issues'] as $_issue)
+                {
+                    foreach ($_issue['custom_fields'] as $_field)
+                    {
+                        if ($_field['id'] == Config::get('redmine.jira_id') && $_field['value'] == $content->issue->key)
+                            die;
+                    }
+                }
+
             // Get data
                 $project  =  RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
                 Log::debug('-- Redmine project found');
