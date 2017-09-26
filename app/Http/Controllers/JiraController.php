@@ -479,13 +479,9 @@ class JiraController extends Controller
         // Create task on Redmine
         if ($action == 'created')
         {
-            // Check if Jira ID exists on RedmineJiraTask, if so, ignore
-                $task = RedmineJiraTask::where('jira_task', $content->issue->key)->first();
-                if ($task) die;
-
             // First, check if it hasn't already been created on Redmine
                 // Current date
-                /*$date = date('Y-m-d');
+                $date = date('Y-m-d');
 
                 $args = array(
                     'created_on' => $date,
@@ -503,7 +499,11 @@ class JiraController extends Controller
                         if ($_field['id'] == Config::get('redmine.jira_id') && $_field['value'] == $content->issue->key)
                             die;
                     }
-                }*/
+                }
+
+            // Check if Jira ID exists on RedmineJiraTask, if so, ignore
+                $task = RedmineJiraTask::where('jira_task', $content->issue->key)->first();
+                if ($task) die;
 
             // Get data
                 $project  =  RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
@@ -572,6 +572,7 @@ class JiraController extends Controller
                 $RedmineJiraTask = new RedmineJiraTask();
                 $RedmineJiraTask->jira_task    = $content->issue->key;
                 $RedmineJiraTask->redmine_task = $redmine_task['id'];
+                $RedmineJiraTask->source       = 'Jira';
                 $RedmineJiraTask->save();
         }
         elseif ($action == 'updated')

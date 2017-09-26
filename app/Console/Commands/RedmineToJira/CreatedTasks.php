@@ -202,7 +202,7 @@ class CreatedTasks extends Command
 
             // Create data array
                 $issue = array(
-                    'description' => $_ticket['description'],
+                    'description' => (isset($_ticket['description'])?$_ticket['description']:''),
                     'priority'    => array('id' => $jira_priority),
                     'assignee'    => array('name' => $user->jira_name),
                 );
@@ -220,6 +220,7 @@ class CreatedTasks extends Command
                 $RedmineJiraTask = new RedmineJiraTask();
                 $RedmineJiraTask->jira_task    = $result['key'];
                 $RedmineJiraTask->redmine_task = $_ticket['id'];
+                $RedmineJiraTask->source       = 'Redmine';
                 $RedmineJiraTask->save();
 
             // Save Jira ID into Redmine's Task
