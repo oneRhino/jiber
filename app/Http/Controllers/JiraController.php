@@ -690,12 +690,27 @@ class JiraController extends Controller
                 Log::debug('-- Redmine tasks found:');
                 Log::debug(print_r($redmine_entries, true));
 
-            // Get first Redmine task
+            // For each redmine task, remove Jira ID
+                foreach ($redmine_entries['issues'] as $_task)
+                {
+                    $data = array(
+                        'custom_fields' => array(
+                            'custom_value' => array(
+                                'id'    => Config::get('redmine.jira_id'),
+                                'value' => ''
+                            )
+                        )
+                    );
+
+                    $redmine->issue->update($_task['id'], $data);
+                }
+
+            /*// Get first Redmine task
                 $redmine_task = reset($redmine_entries['issues']);
 
             // Remove task
                 $redmine->issue->remove($redmine_task['id']);
-                Log::debug('-- Redmine task removed: '.$redmine_task['id']);
+                Log::debug('-- Redmine task removed: '.$redmine_task['id']);*/
         }
     }
 

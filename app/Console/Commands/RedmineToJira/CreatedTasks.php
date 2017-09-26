@@ -166,6 +166,11 @@ class CreatedTasks extends Command
                         $jira_type = $_type['id'];
                 }
 
+                if (!$jira_type) {
+                    $this->errorEmail("Jira type {$tracker->jira_name} not found: <pre>". print_r($tracker, true) . print_r($jira_types, true).'</pre>');
+                    continue;
+                }
+
             // Get Priority
                 $priority = RedmineJiraPriority::where('redmine_name', $_ticket['priority']['name'])->first();
 
@@ -200,6 +205,11 @@ class CreatedTasks extends Command
             // Send everything to Jira, to create ticket
                 $return = $Jira->createIssue($_ticket['JiraProject'], $_ticket['subject'], $jira_type, $issue);
                 $result = $return->getResult();
+
+            if (!isset($result['key'])) {
+                $this->errorEmail('Jira result error: '. print_r($result, true));
+                continue;
+            }
 
             // Save Jira ID into Redmine's Task
             $jira_redmine_tickets[$result['key']] = $_ticket['id'];
