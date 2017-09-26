@@ -12,6 +12,7 @@ use App\User;
 use App\Setting;
 use App\RedmineJiraPriority;
 use App\RedmineJiraProject;
+use App\RedmineJiraTask;
 use App\RedmineJiraTracker;
 use App\RedmineJiraUser;
 use App\Http\Controllers\JiraController;
@@ -94,6 +95,10 @@ class CreatedTasks extends Command
 
         foreach ($redmine_entries['issues'] as $_issue)
         {
+            // Check if task has already been created on Jira (RedmineJiraTask)
+            $task = RedmineJiraTask::where('redmine_task', $_issue['id'])->first();
+            if ($task) continue;
+
             // Check if project exists on Redmine/Jira Projects
             $project = RedmineJiraProject::where('redmine_name', $_issue['project']['name'])->first();
 
@@ -210,6 +215,12 @@ class CreatedTasks extends Command
                 $this->errorEmail('Jira result error: '. print_r($result, true));
                 continue;
             }
+
+            // Save association on RedmineJiraTask
+                $RedmineJiraTask = new RedmineJiraTask();
+                $RedmineJiraTask->jira_task    = $result['key'];
+                $RedmineJiraTask->redmine_task = $_ticket['id'];
+                $RedmineJiraTask->save();
 
             // Save Jira ID into Redmine's Task
             $jira_redmine_tickets[$result['key']] = $_ticket['id'];

@@ -40,6 +40,7 @@ use App\RedmineChange;
 use App\RedmineJiraPriority;
 use App\RedmineJiraProject;
 use App\RedmineJiraStatus;
+use App\RedmineJiraTask;
 use App\RedmineJiraTracker;
 use App\RedmineJiraUser;
 use App\Report;
@@ -478,10 +479,14 @@ class JiraController extends Controller
         // Create task on Redmine
         if ($action == 'created')
         {
-            // Current date
-            $date = date('Y-m-d');
+            // Check if Jira ID exists on RedmineJiraTask, if so, ignore
+                $task = RedmineJiraTask::where('jira_task', $content->issue->key)->first();
+                if ($task) die;
 
             // First, check if it hasn't already been created on Redmine
+                // Current date
+                /*$date = date('Y-m-d');
+
                 $args = array(
                     'created_on' => $date,
                     'limit'      => 100,
@@ -498,7 +503,7 @@ class JiraController extends Controller
                         if ($_field['id'] == Config::get('redmine.jira_id') && $_field['value'] == $content->issue->key)
                             die;
                     }
-                }
+                }*/
 
             // Get data
                 $project  =  RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
@@ -550,6 +555,24 @@ class JiraController extends Controller
 
             // Send data to Redmine
                 $redmine->issue->create($data);
+
+            // Get Redmine recently created task
+                $args = array(
+                    'limit' => 1,
+                    'sort'  => 'created_on:desc',
+                    'cf_9'  => $content->issue->key,
+                    'project_id' => $project->redmine_id,
+                );
+                $redmine_entries = $redmine->issue->all($args);
+
+            // Get first
+                $redmine_task = reset($redmine_entries['issues']);
+
+            // Save association on RedmineJiraTask
+                $RedmineJiraTask = new RedmineJiraTask();
+                $RedmineJiraTask->jira_task    = $content->issue->key;
+                $RedmineJiraTask->redmine_task = $redmine_task['id'];
+                $RedmineJiraTask->save();
         }
         elseif ($action == 'updated')
         {
