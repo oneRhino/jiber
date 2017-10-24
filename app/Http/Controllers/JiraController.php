@@ -612,10 +612,10 @@ class JiraController extends Controller
                     switch ($_item->field)
                     {
                         case 'summary':
-                            $data['subject'] = $_item->toString;
+                            $data['subject'] = addslashes($_item->toString);
                             break;
                         case 'description':
-                            $data['description'] = $_item->toString;
+                            $data['description'] = addslashes($_item->toString);
                             break;
                         case 'priority':
                             $priority = RedmineJiraPriority::where('jira_name', $_item->toString)->first();
@@ -845,7 +845,8 @@ class JiraController extends Controller
 
         Mail::send('emails.error', ['errors' => $errors], function ($m) {
             $m->from('jiber@tmisoft.com', 'Jiber');
-            $m->to('thaissa.mendes@gmail.com', 'Thaissa Mendes')->subject('Redmine/Jira (Jira Webhook) sync error found');
+            $m->cc(['a.bastos@onerhino.com', 'pablo@onerhino.com', 'billy@onerhino.com']);
+            $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject('Redmine/Jira (Jira Webhook) sync error found');
         });
     }
 }

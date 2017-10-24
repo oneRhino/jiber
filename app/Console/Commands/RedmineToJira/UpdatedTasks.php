@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Config;
 use App\User;
 use App\Setting;
 use App\RedmineChange;
+use App\RedmineJiraStatus;
+use App\RedmineJiraUser;
 use App\Http\Controllers\JiraController;
 use App\Http\Controllers\RedmineController;
 
@@ -169,25 +171,9 @@ class UpdatedTasks extends Command
 
     private function jiraStatus($created_on, $created_by, $content)
     {
-        // Get status based on Redmine status ID
-        $status = Config::get('redmine.statuses.'.$content);
+        $status = RedmineJiraStatus::where('redmine_id', $content)->first();
 
-        // Map Redmine status to Jira
-        switch ($status)
-        {
-            case 'New'     :
-            case 'Assigned':
-                $jira_status = Config::get('jira.transictions.todo');
-                break;
-            case 'Feedback':
-            case 'Resolved':
-            case 'Closed'  :
-            case 'Rejected':
-                $jira_status = Config::get('jira.transictions.review');
-                break;
-        }
-
-        $this->jira_updates[$created_by][$this->jira_id]['status'] = $jira_status;
+        $this->jira_updates[$created_by][$this->jira_id]['status'] = $status->jira_name;
     }
 
     private function jiraAssignee($created_on, $created_by, $content)
@@ -293,18 +279,13 @@ class UpdatedTasks extends Command
 
     private function getJiraUser($redmine_user)
     {
-        // Get user details (if on Jiber)
-        $user = Setting::where('redmine_user', $redmine_user)->first();
+        $user = RedmineJiraUser::where('redmine_name', $redmine_user)->first();
 
-        if (!$user) {
-            switch ($redmine_user) {
-                case 'k.lyon':     return 'klyon';       break;
-                case 'm.lovascio': return 'mlovascio';   break;
-                default:           return $redmine_user; break;
-            }
+        if (!$user || !$user->jira_name) {
+            return $redmine_user;
         }
 
-        return $user->jira;
+        return $user->jira_name;
     }
 
     private function loginUser($user)

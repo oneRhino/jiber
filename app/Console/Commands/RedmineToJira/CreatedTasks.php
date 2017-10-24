@@ -137,7 +137,7 @@ class CreatedTasks extends Command
                 $settings = Setting::where('redmine_user', $_ticket['author']['name'])->first();
 
                 if (!$settings) {
-                    $this->errorEmail("No user {$_user} found.");
+                    $this->errorEmail("No user {$_ticket['author']['name']} found.");
                     continue;
                 }
 
