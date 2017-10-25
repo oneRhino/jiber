@@ -205,6 +205,7 @@ class CreatedTasks extends Command
                     'description' => (isset($_ticket['description'])?$_ticket['description']:''),
                     'priority'    => array('id' => $jira_priority),
                     'assignee'    => array('name' => $user->jira_name),
+                    'customfield_10301' => $_ticket['subject'], // Epic Name
                 );
 
             // Send everything to Jira, to create ticket
@@ -212,7 +213,7 @@ class CreatedTasks extends Command
                 $result = $return->getResult();
 
             if (!isset($result['key'])) {
-                $this->errorEmail('Jira result error: '. print_r($result, true));
+                $this->errorEmail('Jira result error: <br><pre>'. print_r($result, true).'<br>'.print_r($_ticket, true).'<br>'.print_r($issue, true).'</pre><br>'.$jira_type);
                 continue;
             }
 
