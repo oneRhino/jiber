@@ -412,19 +412,43 @@ class JiraController extends Controller
             $content = json_decode($content);
             if (!$content) die;
 
-        Log::debug('JIRA WEBHOOK ACTIVATED');
-        Log::debug(print_r($content, true));
+            Log::debug('JIRA WEBHOOK ACTIVATED');
+            Log::debug(print_r($content, true));
 
         // Check if project is supported by Jiber
-            if (!isset($_GET['project'])) die;
+            if (!isset($_GET['project'])) {
+                Log::debug('-- ERROR - Project not found (GET)');
+                die;
+            }
+
             $project = RedmineJiraProject::where('jira_name', $_GET['project'])->first();
-            if (!$project) die;
+            if (!$project) {
+                Log::debug('-- ERROR - Project not found');
+                die;
+            }
             Log::debug('- Project Found');
 
         // Check if user who is performing the action exists on Jiber
-            if (!isset($_GET['user_id'])) die;
+            if (!isset($_GET['user_id'])) {
+                Log::debug('-- ERROR - User not found:');
+                Log::debug(print_r($_GET, true));
+                die;
+            }
+
+        // When ticket is created from 3rd party (like Zendesk), a different user is set on GET
+        // So if user isn't found on Jiber, try getting it by ticket's reporter
             $user = Setting::where('jira', $_GET['user_id'])->first();
-            if (!$user) die;
+            if (!$user) {
+                if (isset($content->issue))
+                    $user = Setting::where('jira', $content->issue->fields->reporter->key)->first();
+                elseif (isset($content->comment))
+                    $user = Setting::where('jira', $content->comment->author->key)->first();
+
+                if (!$user) {
+                    Log::debug('-- ERROR - User not found on Jiber ('.$_GET['user_id'].')');
+                    die;
+                }
+            }
             $user = User::find($user->id);
             Log::debug('- User Found');
 
@@ -496,14 +520,19 @@ class JiraController extends Controller
                 {
                     foreach ($_issue['custom_fields'] as $_field)
                     {
-                        if ($_field['id'] == Config::get('redmine.jira_id') && $_field['value'] == $content->issue->key)
+                        if ($_field['id'] == Config::get('redmine.jira_id') && $_field['value'] == $content->issue->key) {
+                            Log::debug('-- ERROR: Redmine ticket found using this Jira ID');
                             die;
+                        }
                     }
                 }
 
             // Check if Jira ID exists on RedmineJiraTask, if so, ignore
                 $task = RedmineJiraTask::where('jira_task', $content->issue->key)->first();
-                if ($task) die;
+                if ($task) {
+                    Log::debug('-- ERROR - RedmineJiraTask found');
+                    die;
+                }
 
             // Get data
                 $project  =  RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
@@ -541,8 +570,8 @@ class JiraController extends Controller
                     'status_id'       =>   $status->redmine_id,
                     'priority_id'     => $priority->redmine_id,
                     'assigned_to_id'  => $assignee->redmine_id,
-                    'subject'         => $content->issue->fields->summary,
-                    'description'     => $content->issue->fields->description,
+                    'subject'         => htmlentities($content->issue->fields->summary),
+                    'description'     => htmlentities($content->issue->fields->description),
                     'custom_fields'   => array(
                         'custom_value' => array(
                             'id'    => Config::get('redmine.jira_id'),
@@ -612,10 +641,10 @@ class JiraController extends Controller
                     switch ($_item->field)
                     {
                         case 'summary':
-                            $data['subject'] = addslashes($_item->toString);
+                            $data['subject'] = htmlentities($_item->toString);
                             break;
                         case 'description':
-                            $data['description'] = addslashes($_item->toString);
+                            $data['description'] = htmlentities($_item->toString);
                             break;
                         case 'priority':
                             $priority = RedmineJiraPriority::where('jira_name', $_item->toString)->first();
@@ -786,16 +815,16 @@ class JiraController extends Controller
                     // Run through details
                     if (isset($_journal['notes']) && !empty($_journal['notes']))
                     {
-                        if ($content->comment->body == $_journal['notes']) {
+                        if (isset($content->comment) && $content->comment->body == $_journal['notes']) {
                             $send_comment = false;
                         }
                     }
                 }
 
-            if ($send_comment) {
+            if ($send_comment && isset($content->comment)) {
                 // Build data array
                     $data = array(
-                        'notes' => $content->comment->body,
+                        'notes' => htmlentities($content->comment->body),
                     );
                     Log::debug('-- Redmine data:');
                     Log::debug(print_r($data, true));

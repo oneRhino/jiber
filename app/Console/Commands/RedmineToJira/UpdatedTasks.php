@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\RedmineToJira;
 
-use Log;
+//use Log;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Config;
 use App\User;
 use App\Setting;
 use App\RedmineChange;
+use App\RedmineJiraPriority;
 use App\RedmineJiraStatus;
 use App\RedmineJiraUser;
 use App\Http\Controllers\JiraController;
@@ -51,23 +52,30 @@ class UpdatedTasks extends Command
      */
     public function handle()
     {
+        $this->writeLog('***** INIT *****');
+
         // Grab tickets recently created/updated on Redmine
         $this->getRedmineChanges();
 
         $this->updateJira();
+
+        $this->writeLog('***** END *****');
     }
 
     private function getRedmineChanges()
     {
         // Get user - use thaissa (redmine user)
+        $this->writeLog('Login Start');
         $user = User::find(1);
 
         $this->loginUser($user);
+        $this->writeLog('Login End');
 
         // Current date
         $date = date('Y-m-d');
 
         // Get Redmine tasks updated this date
+        $this->writeLog('Get Redmine tasks');
         $RedmineController = new RedmineController;
         $Redmine = $RedmineController->connect();
         $args = array(
@@ -76,12 +84,17 @@ class UpdatedTasks extends Command
             'sort'       => 'updated_on:desc',
         );
         $redmine_entries = $Redmine->issue->all($args);
+        $this->writeLog(print_r($redmine_entries, true));
 
-        if (!$redmine_entries['issues']) return;
+        if (!$redmine_entries['issues']) {
+            $this->writeLog('No tasks found, END');
+            return;
+        }
 
         foreach ($redmine_entries['issues'] as $_issue)
         {
             // Check if ticket has a Jira ID, otherwise ignore
+            $this->writeLog("Check task {$_issue['id']}");
             $this->jira_id = false;
             
             foreach ($_issue['custom_fields'] as $_field)
@@ -90,11 +103,18 @@ class UpdatedTasks extends Command
                     $this->jira_id = $_field['value'];
             }
 
-            if (!$this->jira_id) continue;
+            if (!$this->jira_id) {
+                $this->writeLog('No Jira ID found, CONTINUE');
+                continue;
+            }
+
+            $this->writeLog("Jira ID {$this->jira_id}");
 
             // Get ticket details
             $args = array('include' => 'journals');
             $_entry = $Redmine->issue->show($_issue['id'], $args);
+            $this->writeLog('Ticket details:');
+            $this->writeLog(print_r($_entry, true));
 
             /**
              * Run through each journal:
@@ -107,15 +127,23 @@ class UpdatedTasks extends Command
             foreach ($_entry['issue']['journals'] as $_journal)
             {
                 // Check if change has been done within the past 10 min
+                $this->writeLog('Check if change has been done within the past 10 min');
                 $created = strtotime($_journal['created_on']);
                 $lastmin = mktime(date('H'), date('i')-10);
 
-                if ($created < $lastmin) continue;
+                if ($created < $lastmin) {
+                    $this->writeLog("Old entry ({$_journal['created_on']}), CONTINUE");
+                    continue;
+                }
 
                 // Check if change has already been saved on database
+                $this->writeLog('Check if change has already been saved on database');
                 $redmine_change = RedmineChange::where('redmine_change_id', $_journal['id'])->first();
 
-                if ($redmine_change) continue;
+                if ($redmine_change) {
+                    $this->writeLog("Change {$_journal['id']} already saved, CONTINUE");
+                    continue;
+                }
 
                 // Get change date/time and creator (get her/his Jira username)
                 $created_on = $_journal['created_on'];
@@ -137,6 +165,12 @@ class UpdatedTasks extends Command
                             case 'status_id':
                                 $this->jiraStatus     ($created_on, $created_by, $_detail['new_value']);
                                 break;
+                            case 'priority_id':
+                                $this->jiraPriority   ($created_on, $created_by, $_detail['new_value']);
+                                break;
+                            case 'due_date':
+                                $this->jiraDueDate    ($created_on, $created_by, $_detail['new_value']);
+                                break;
                             case 'assigned_to_id':
                                 // Don't change assignee if ticket status is "Feedback"
                                 if ($_entry['issue']['status']['id'] == 4) break;
@@ -152,11 +186,19 @@ class UpdatedTasks extends Command
                     $this->jiraComment($created_on, $created_by, $_journal['notes']);
                 }
 
+                $this->writeLog("Changes to be sent to Jira");
+                $this->writeLog(print_r($this->jira_updates, true));
+
                 $Change = new RedmineChange();
                 $Change->redmine_change_id = $_journal['id'];
                 $Change->save();
             }
         }
+    }
+
+    private function jiraDueDate($created_on, $created_by, $content)
+    {
+        $this->jira_updates[$created_by][$this->jira_id]['duedate'] = $content;
     }
 
     private function jiraSubject($created_on, $created_by, $content)
@@ -169,6 +211,13 @@ class UpdatedTasks extends Command
         $this->jira_updates[$created_by][$this->jira_id]['description'] = $content;
     }
 
+    private function jiraPriority($created_on, $created_by, $content)
+    {
+        $priority = RedmineJiraPriority::where('redmine_id', $content)->first();
+
+        $this->jira_updates[$created_by][$this->jira_id]['priority'] = $priority->jira_name;
+    }
+
     private function jiraStatus($created_on, $created_by, $content)
     {
         $status = RedmineJiraStatus::where('redmine_id', $content)->first();
@@ -179,11 +228,9 @@ class UpdatedTasks extends Command
     private function jiraAssignee($created_on, $created_by, $content)
     {
         // Get assignee based on Redmine user ID
-        $redmine_assignee = Config::get('redmine.users.'.$content);
+        $user = RedmineJiraUser::where('redmine_id', $content)->first();
 
-        $assignee = $this->getJiraUser($redmine_assignee);
-
-        $this->jira_updates[$created_by][$this->jira_id]['assignee'] = $assignee;
+        $this->jira_updates[$created_by][$this->jira_id]['assignee'] = $user->jira_name;
     }
 
     private function jiraComment($created_on, $created_by, $content)
@@ -205,12 +252,14 @@ class UpdatedTasks extends Command
         if (!$this->jira_updates) return;
 
         // Run through all updates, per user
+        $this->writeLog('Run through each Jira update');
         foreach ($this->jira_updates as $_user => $_user_updates)
         {
             // Get user based on jira user (to login on jira)
             $settings = Setting::where('jira', $_user)->first();
 
             if (!$settings) {
+                $this->writeLog("ERROR: No user {$_user} found");
                 $this->error("No user {$_user} found.");
                 continue;
             }
@@ -228,27 +277,50 @@ class UpdatedTasks extends Command
                     switch ($_type)
                     {
                         case 'assignee':
+                            $this->writeLog('JIRA: Assignee');
                             $args = array('fields' => array('assignee' => array('name' => $_content)));
-                            $Jira->editIssue($_jira_id, $args);
+                            $result = $Jira->editIssue($_jira_id, $args);
+                            $this->writeLog(print_r($result, true));
                             break;
 
                         case 'subject':
+                            $this->writeLog('JIRA: Subject');
                             $args = array('fields' => array('summary' => $_content));
-                            $Jira->editIssue($_jira_id, $args);
+                            $result = $Jira->editIssue($_jira_id, $args);
+                            $this->writeLog(print_r($result, true));
+                            break;
+
+                        case 'priority':
+                            $this->writeLog('JIRA: Priority');
+                            $args = array('fields' => array('priority' => array('name' => $_content)));
+                            $result = $Jira->editIssue($_jira_id, $args);
+                            $this->writeLog(print_r($result, true));
                             break;
 
                         case 'description':
+                            $this->writeLog('JIRA: Description');
                             $args = array('fields' => array('description' => $_content));
-                            $Jira->editIssue($_jira_id, $args);
+                            $result = $Jira->editIssue($_jira_id, $args);
+                            $this->writeLog(print_r($result, true));
+                            break;
+
+                        case 'duedate':
+                            #$this->writeLog('JIRA: Due date');
+                            #$args = array('fields' => array('duedate' => $_content));
+                            #$result = $Jira->editIssue($_jira_id, $args);
+                            #$this->writeLog(print_r($result, true));
                             break;
 
                         case 'comment':
+                            $this->writeLog('JIRA: Comments');
                             foreach ($_content as $_comment) {
-                                $Jira->addComment($_jira_id, $_comment);
+                                $result = $Jira->addComment($_jira_id, $_comment);
+                                $this->writeLog(print_r($result, true));
                             }
                             break;
 
                         case 'status':
+                            $this->writeLog('JIRA: Status');
                             $transiction = null;
 
                             // Get available transictions, so we can get its ID
@@ -265,10 +337,14 @@ class UpdatedTasks extends Command
                                 }
                             }
     
-                            if (!$transition) break;
+                            if (!$transition) {
+                                $this->writeLog("ERROR: Status not found ({$_content})");
+                                break;
+                            }
 
                             $args = array('transition' => $transition);
-                            $Jira->transition($_jira_id, $args);
+                            $result = $Jira->transition($_jira_id, $args);
+                            $this->writeLog(print_r($result, true));
 
                             break;
                     }
@@ -300,5 +376,10 @@ class UpdatedTasks extends Command
         Auth::setUser($user);
 
         return $request;
+    }
+
+    private function writeLog($message)
+    {
+        file_put_contents('redmine-update.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
     }
 }

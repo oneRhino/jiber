@@ -6,4 +6,5 @@ Homestead.json
 .env
 *~
 *.swp
-last-exec-redmine-jira.log
+*.log
+*.txt

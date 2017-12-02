@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\RedmineToJira;
 
-use Log;
+//use Log;
 use Mail;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
@@ -51,6 +51,8 @@ class CreatedTasks extends Command
      */
     public function handle()
     {
+        $this->writeLog('***** INIT *****');
+
         // Grab tickets recently created on Redmine
         $tickets = $this->getRedmineTickets();
 
@@ -58,6 +60,8 @@ class CreatedTasks extends Command
         $tickets = $this->createTicketsJira($tickets);
 
         $this->updateRedmineTickets($tickets);
+
+        $this->writeLog('***** END *****');
     }
 
     /**
@@ -93,16 +97,25 @@ class CreatedTasks extends Command
         );
         $redmine_entries = $Redmine->issue->all($args);
 
+        $this->writeLog('Redmine new tasks');
+        $this->writeLog(print_r($redmine_entries, true));
+
         foreach ($redmine_entries['issues'] as $_issue)
         {
             // Check if task has already been created on Jira (RedmineJiraTask)
             $task = RedmineJiraTask::where('redmine_task', $_issue['id'])->first();
-            if ($task) continue;
+            if ($task) {
+                $this->writeLog('-- Task already been created on Jira, CONTINUE');
+                continue;
+            }
 
             // Check if project exists on Redmine/Jira Projects
             $project = RedmineJiraProject::where('redmine_name', $_issue['project']['name'])->first();
 
-            if (!$project) continue;
+            if (!$project) {
+                $this->writeLog('-- Project doesnt match Jira, CONTINUE');
+                continue;
+            }
 
             // Project exists, check if it has a Jira ID set
             $jira_id = false;
@@ -114,7 +127,12 @@ class CreatedTasks extends Command
             }
 
             // Jira ID exists, so ignore
-            if ($jira_id) continue;
+            if ($jira_id) {
+                $this->writeLog('-- Jira ID exists, CONTINUE');
+                continue;
+            }
+
+            $this->writeLog("Ticket {$_issue['id']} will be created on Jira");
 
             // Jira ID doesn't exist, and project is OMG
             $_issue['JiraProject'] = $project->jira_name;
@@ -193,6 +211,10 @@ class CreatedTasks extends Command
                 }
 
             // Get Assignee
+                if (!isset($_ticket['assigned_to'])) {
+                    continue;
+                }
+
                 $user = RedmineJiraUser::where('redmine_name', $_ticket['assigned_to']['name'])->first();
 
                 if (!$user) {
@@ -205,7 +227,7 @@ class CreatedTasks extends Command
                     'description' => (isset($_ticket['description'])?$_ticket['description']:''),
                     'priority'    => array('id' => $jira_priority),
                     'assignee'    => array('name' => $user->jira_name),
-                    'customfield_10301' => $_ticket['subject'], // Epic Name
+                    //'customfield_10301' => $_ticket['subject'], // Epic Name
                 );
 
             // Send everything to Jira, to create ticket
@@ -277,5 +299,10 @@ class CreatedTasks extends Command
             $m->from('jiber@tmisoft.com', 'Jiber');
             $m->to('thaissa.mendes@gmail.com', 'Thaissa Mendes')->subject('Redmine/Jira (CreatedTasks) sync error found');
         });
+    }
+
+    private function writeLog($message)
+    {
+        file_put_contents('redmine-create.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
     }
 }
