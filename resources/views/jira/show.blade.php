@@ -71,7 +71,7 @@
                                                     @if ($_entries['third_entries'])
                                                         @foreach ($_entries['third_entries'] as $_entry)
                                                             <tr class="danger">
-                                                                <td></td>
+                                                            	<td><input type="checkbox" name="delete[]" value="{{ $_entry['id'] }}-{{ $_entries['entry_entries'][0]->jira_issue_id }}" class="delete"></td>
                                                                 <td>{{ $_entry['description'] }}</td>
                                                                 <td>{{ $_entry['time'] }} h</td>
                                                             </tr>

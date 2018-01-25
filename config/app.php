@@ -39,7 +39,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://jiber.tmisoft.com'),
+    'url' => env('APP_URL', 'https://jiber.onerhino.com'),
 
     /*
     |--------------------------------------------------------------------------

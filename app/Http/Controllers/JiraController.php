@@ -354,7 +354,7 @@ class JiraController extends Controller
      */
     public function send(Request $request)
     {
-        if (!$request->task) {
+        if (!$request->task && !$request->delete) {
             $request->session()->flash('alert-success', 'No tasks sent - nothing to do.');
 
             return back();
@@ -363,39 +363,55 @@ class JiraController extends Controller
         // Connect into Jira
         $jira = $this->connect($request);
 
-        foreach ($request->task as $_entry_id) {
-            $_entry = TimeEntry::find($_entry_id);
+/*echo '<pre>';
+print_r($request->delete);
+die(print_r($request->task));*/
 
-            $_entry->jira_issue_id = trim($_entry->jira_issue_id);
+	if ($request->task) {
+		foreach ($request->task as $_entry_id) {
+		    $_entry = TimeEntry::find($_entry_id);
 
-            if (!$_entry || $_entry->user_id != Auth::user()->id) {
-                continue;
-            }
+		    $_entry->jira_issue_id = trim($_entry->jira_issue_id);
 
-            // Transforming date into Jira's format
-            // removing ':' from timezone and adding '.000' after seconds
-            $_date = preg_replace('/([-+][0-9]{2}):([0-9]{2})$/', '.000${1}${2}', date('c', strtotime($_entry->date_time)));
+		    if (!$_entry || $_entry->user_id != Auth::user()->id) {
+			continue;
+		    }
 
-            $_data = array(
-                'timeSpentSeconds' => $_entry->duration_in_seconds,
-                'started'          => $_date,
-                'comment'          => htmlentities($_entry->description),
-                'issueId'          => $_entry->jira_issue_id,
-            );
+		    // Transforming date into Jira's format
+		    // removing ':' from timezone and adding '.000' after seconds
+		    $_date = preg_replace('/([-+][0-9]{2}):([0-9]{2})$/', '.000${1}${2}', date('c', strtotime($_entry->date_time)));
 
-            $response = $jira->addWorklog($_entry->jira_issue_id, $_data);
+		    $_data = array(
+			'timeSpentSeconds' => $_entry->duration_in_seconds,
+			'started'          => $_date,
+			'comment'          => htmlentities($_entry->description),
+			'issueId'          => $_entry->jira_issue_id,
+		    );
 
-            if ($response) {
-                // Create a JiraSent (log)
-                $sent            = new JiraSent();
-                $sent->report_id = $request->report_id;
-                $sent->task      = $_entry->jira_issue_id;
-                $sent->date      = $_date;
-                $sent->duration  = $_entry->decimal_duration;
-                $sent->user_id   = Auth::user()->id;
-                $sent->save();
-            }
-        }
+		    $response = $jira->addWorklog($_entry->jira_issue_id, $_data);
+
+		    if ($response) {
+			// Create a JiraSent (log)
+			$sent            = new JiraSent();
+			$sent->report_id = $request->report_id;
+			$sent->task      = $_entry->jira_issue_id;
+			$sent->date      = $_date;
+			$sent->duration  = $_entry->decimal_duration;
+			$sent->user_id   = Auth::user()->id;
+			$sent->save();
+		    }
+		}
+	}
+
+	if ($request->delete) {
+		foreach ($request->delete as $_entry_id) {
+			$_temp = explode('-', $_entry_id);
+			$_worklog_id = array_shift($_temp);
+			$_issue_id   = implode('-', $_temp);
+
+			$jira->deleteWorklog($_issue_id, $_worklog_id);
+		}
+	}
 
         // Remove report from session, so when we show previous page again, it's updated
         if ($request->isMethod('post')) {
@@ -439,7 +455,7 @@ class JiraController extends Controller
         // So if user isn't found on Jiber, try getting it by ticket's reporter
             $user = Setting::where('jira', $_GET['user_id'])->first();
             if (!$user) {
-                if (isset($content->issue))
+                if (isset($content->issue) && isset($content->issue->fields->reporter))
                     $user = Setting::where('jira', $content->issue->fields->reporter->key)->first();
                 elseif (isset($content->comment))
                     $user = Setting::where('jira', $content->comment->author->key)->first();

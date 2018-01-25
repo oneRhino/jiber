@@ -36,6 +36,18 @@ jQuery(document).ready(function($){
 		}
 	});
 
+	$('input.delete[type=checkbox]').bootstrapSwitch({
+		size   : 'mini',
+		onText : 'delete',
+		offText: 'ignore',
+		onSwitchChange: function(event, state){
+			if (state)
+				$(this).parents('tr').removeClass('disabled');
+			else
+				$(this).parents('tr').addClass('disabled');
+		}
+	});
+
 	$('#close-all').click(function(e){
 		e.preventDefault();
 		$('.panel-collapse').collapse('hide');
