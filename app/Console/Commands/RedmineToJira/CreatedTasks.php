@@ -230,6 +230,12 @@ class CreatedTasks extends Command
                     //'customfield_10301' => $_ticket['subject'], // Epic Name
                 );
 
+		if (isset($_ticket['due_date']) && !empty($_ticket['due_date']))
+			$issue['duedate'] = $_ticket['due_date'];
+
+		if (isset($_ticket['estimated_hours']))
+			$issue['timetracking'] = array('originalEstimate' => ($_ticket['estimated_hours'] * 60));
+
             // Send everything to Jira, to create ticket
                 $return = $Jira->createIssue($_ticket['JiraProject'], $_ticket['subject'], $jira_type, $issue);
                 $result = $return->getResult();
@@ -288,16 +294,18 @@ class CreatedTasks extends Command
         }
     }
 
-    private function errorEmail($errors)
+    private function errorEmail($errors, $level='error')
     {
         if (!$errors) die;
 
         if (!is_array($errors))
             $errors = array($errors);
 
+	$subject = 'Redmine/Jira (CreatedTasks) sync '.$level;
+
         Mail::send('emails.error', ['errors' => $errors], function ($m) {
             $m->from('jiber@tmisoft.com', 'Jiber');
-            $m->to('thaissa.mendes@gmail.com', 'Thaissa Mendes')->subject('Redmine/Jira (CreatedTasks) sync error found');
+            $m->to('thaissa.mendes@gmail.com', 'Thaissa Mendes')->subject($subject);
         });
     }
 

@@ -171,6 +171,9 @@ class UpdatedTasks extends Command
                             case 'due_date':
                                 $this->jiraDueDate    ($created_on, $created_by, $_detail['new_value']);
                                 break;
+                            case 'estimated_hours':
+                                $this->jiraEstimated  ($created_on, $created_by, $_detail['new_value']);
+                                break;
                             case 'assigned_to_id':
                                 // Don't change assignee if ticket status is "Feedback"
                                 if ($_entry['issue']['status']['id'] == 4) break;
@@ -194,6 +197,11 @@ class UpdatedTasks extends Command
                 $Change->save();
             }
         }
+    }
+
+    private function jiraEstimated($created_on, $created_by, $content)
+    {
+        $this->jira_updates[$created_by][$this->jira_id]['estimated'] = $content * 60;
     }
 
     private function jiraDueDate($created_on, $created_by, $content)
@@ -304,11 +312,18 @@ class UpdatedTasks extends Command
                             $this->writeLog(print_r($result, true));
                             break;
 
+                        case 'estimated':
+                            $this->writeLog('JIRA: Estimated Time');
+                            $args = array('fields' => array('timetracking' => array('originalEstimate' => $_content)));
+                            $result = $Jira->editIssue($_jira_id, $args);
+                            $this->writeLog(print_r($result, true));
+                            break;
+
                         case 'duedate':
-                            #$this->writeLog('JIRA: Due date');
-                            #$args = array('fields' => array('duedate' => $_content));
-                            #$result = $Jira->editIssue($_jira_id, $args);
-                            #$this->writeLog(print_r($result, true));
+                            $this->writeLog('JIRA: Due date');
+                            $args = array('fields' => array('duedate' => $_content));
+                            $result = $Jira->editIssue($_jira_id, $args);
+                            $this->writeLog(print_r($result, true));
                             break;
 
                         case 'comment':

@@ -643,7 +643,7 @@ die(print_r($request->task));*/
 
             // Check data
                 if (!$redmine_entries['issues']) {
-                    $this->errorEmail("No task using Jira ID {$_GET['issue']}");
+                    $this->errorEmail("No task using Jira ID {$_GET['issue']}", 'alert');
                     die;
                 }
 
@@ -812,7 +812,7 @@ die(print_r($request->task));*/
 
             // Check data
                 if (!$redmine_entries['issues']) {
-                    $this->errorEmail("No task using Jira ID {$_GET['issue']}");
+                    $this->errorEmail("No task using Jira ID {$_GET['issue']}", 'alert');
                     die;
                 }
 
@@ -881,17 +881,19 @@ die(print_r($request->task));*/
         }
     }
 
-    private function errorEmail($errors)
+    private function errorEmail($errors, $level='error')
     {
         if (!$errors) die;
 
         if (!is_array($errors))
             $errors = array($errors);
 
+	$subject = 'Redmine/Jira (Jira Webhook) sync '.$level;
+
         Mail::send('emails.error', ['errors' => $errors], function ($m) {
             $m->from('jiber@tmisoft.com', 'Jiber');
             $m->cc(['a.bastos@onerhino.com', 'pablo@onerhino.com', 'billy@onerhino.com']);
-            $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject('Redmine/Jira (Jira Webhook) sync error found');
+            $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
         });
     }
 }
