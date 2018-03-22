@@ -84,7 +84,7 @@ class UpdatedTasks extends Command
             'sort'       => 'updated_on:desc',
         );
         $redmine_entries = $Redmine->issue->all($args);
-        $this->writeLog(print_r($redmine_entries, true));
+        //$this->writeLog(print_r($redmine_entries, true));
 
         if (!$redmine_entries['issues']) {
             $this->writeLog('No tasks found, END');
@@ -113,8 +113,8 @@ class UpdatedTasks extends Command
             // Get ticket details
             $args = array('include' => 'journals');
             $_entry = $Redmine->issue->show($_issue['id'], $args);
-            $this->writeLog('Ticket details:');
-            $this->writeLog(print_r($_entry, true));
+            //$this->writeLog('Ticket details:');
+            //$this->writeLog(print_r($_entry, true));
 
             /**
              * Run through each journal:
@@ -172,7 +172,8 @@ class UpdatedTasks extends Command
                                 $this->jiraDueDate    ($created_on, $created_by, $_detail['new_value']);
                                 break;
                             case 'estimated_hours':
-                                $this->jiraEstimated  ($created_on, $created_by, $_detail['new_value']);
+				if (isset($_detail['new_value']))
+	                                $this->jiraEstimated  ($created_on, $created_by, $_detail['new_value']);
                                 break;
                             case 'assigned_to_id':
                                 // Don't change assignee if ticket status is "Feedback"

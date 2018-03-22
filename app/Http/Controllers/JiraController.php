@@ -483,6 +483,8 @@ die(print_r($request->task));*/
             else
                 $event = $content->webhookEvent;
 
+        Log::debug("- Event: {$event}");
+
         switch ($event)
         {
             case 'issue_created':
@@ -496,7 +498,7 @@ die(print_r($request->task));*/
             case 'jira:issue_deleted':
                 $this->issue('deleted', $content, $request);
                 break;
-            case 'issue_commented':
+            case 'comment_created':
                 $this->comment('created', $content, $request);
                 break;
             /*case 'issue_comment_updated':
@@ -588,6 +590,7 @@ die(print_r($request->task));*/
                     'assigned_to_id'  => $assignee->redmine_id,
                     'subject'         => htmlentities($content->issue->fields->summary),
                     'description'     => htmlentities($content->issue->fields->description),
+                    'due_date'        => $content->issue->fields->duedate,
                     'custom_fields'   => array(
                         'custom_value' => array(
                             'id'    => Config::get('redmine.jira_id'),
@@ -661,6 +664,9 @@ die(print_r($request->task));*/
                             break;
                         case 'description':
                             $data['description'] = htmlentities($_item->toString);
+                            break;
+                        case 'duedate':
+                            $data['due_date'] = substr($_item->toString, 0, strpos($_item->toString, ' '));
                             break;
                         case 'priority':
                             $priority = RedmineJiraPriority::where('jira_name', $_item->toString)->first();
@@ -890,7 +896,7 @@ die(print_r($request->task));*/
 
 	$subject = 'Redmine/Jira (Jira Webhook) sync '.$level;
 
-        Mail::send('emails.error', ['errors' => $errors], function ($m) {
+        Mail::send('emails.error', ['errors' => $errors], function ($m) use($subject) {
             $m->from('jiber@tmisoft.com', 'Jiber');
             $m->cc(['a.bastos@onerhino.com', 'pablo@onerhino.com', 'billy@onerhino.com']);
             $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);

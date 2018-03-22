@@ -185,7 +185,7 @@ class CreatedTasks extends Command
                 $jira_type  = null;
 
                 foreach ($jira_types as $_type) {
-                    if (stripos($tracker->jira_name, $_type['name']) !== false)
+                    if (isset($_type['name']) && stripos($tracker->jira_name, $_type['name']) !== false)
                         $jira_type = $_type['id'];
                 }
 
@@ -229,6 +229,9 @@ class CreatedTasks extends Command
                     'assignee'    => array('name' => $user->jira_name),
                     //'customfield_10301' => $_ticket['subject'], // Epic Name
                 );
+
+		if (!$issue['description'])
+			$issue['description'] = 'TODO';
 
 		if (isset($_ticket['due_date']) && !empty($_ticket['due_date']))
 			$issue['duedate'] = $_ticket['due_date'];
@@ -303,7 +306,7 @@ class CreatedTasks extends Command
 
 	$subject = 'Redmine/Jira (CreatedTasks) sync '.$level;
 
-        Mail::send('emails.error', ['errors' => $errors], function ($m) {
+        Mail::send('emails.error', ['errors' => $errors], function ($m) use($subject) {
             $m->from('jiber@tmisoft.com', 'Jiber');
             $m->to('thaissa.mendes@gmail.com', 'Thaissa Mendes')->subject($subject);
         });
