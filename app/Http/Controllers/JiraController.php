@@ -450,15 +450,19 @@ class JiraController extends Controller
         // When ticket is created from 3rd party (like Zendesk), a different user is set on GET
         // So if user isn't found on Jiber, try getting it by ticket's reporter
         $user = Setting::where('jira', $_GET['user_id'])->first();
+
         if (!$user) {
             if (isset($content->issue) && isset($content->issue->fields->reporter))
                 $user = Setting::where('jira', $content->issue->fields->reporter->key)->first();
             elseif (isset($content->comment))
                 $user = Setting::where('jira', $content->comment->author->key)->first();
+            elseif ($_GET['user_id'] == 'addon_zendesk_for_jira') {
+                $user = Setting::where('jira', 'klyon')->first();
+            }
 
             if (!$user) {
                 Log::debug('-- ERROR - User not found on Jiber ('.$_GET['user_id'].')');
-                           die;
+                die;
             }
         }
 
