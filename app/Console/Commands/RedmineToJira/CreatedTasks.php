@@ -212,7 +212,8 @@ class CreatedTasks extends Command
 
             // Get Assignee
                 if (!isset($_ticket['assigned_to'])) {
-                    continue;
+                    // If assignee is not set on Redmine, assign task to author
+                    $_ticket['assigned_to'] = array('name' => $_ticket['author']['name']);
                 }
 
                 $user = RedmineJiraUser::where('redmine_name', $_ticket['assigned_to']['name'])->first();
