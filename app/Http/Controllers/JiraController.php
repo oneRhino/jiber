@@ -417,6 +417,24 @@ class JiraController extends Controller
         return back()->withInput();
     }
 
+    /**
+     * Get all opened tickets from project, and create them on Redmine
+     */
+    public function legacy(Request $request)
+    {
+        // Connect into Jira
+        $jira = $this->connect($request);
+
+        $walker = new \chobie\Jira\Issues\Walker($jira);
+        $walker->push("project = {$request->project}", "*navigable");
+
+        echo '<pre>';
+        foreach ($walker as $k => $issue) {
+            print_r($issue);
+        }
+        die;
+    }
+
     public function webhook(Request $request)
     {
         // Check if content has been sent, and it's JSON

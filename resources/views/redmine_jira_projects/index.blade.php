@@ -38,6 +38,9 @@
                                             {{ method_field('DELETE') }}
                                             <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i></button>
                                         </form>
+                                        @if ($_project->jira_name)
+                                            <a href="{{ action('JiraController@legacy', ['project' => $_project->jira_name]) }}" class="btn btn-default"><i class="fa fa-upload"></i></a>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

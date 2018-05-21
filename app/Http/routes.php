@@ -93,4 +93,6 @@ Route::get ('/jira/show/{report}', ['middleware' => 'auth', 'uses' => 'JiraContr
 Route::get ('/jira/csv/{report}' , ['middleware' => 'auth', 'uses' => 'JiraController@csv']);
 Route::post('/jira/send'         , ['middleware' => 'auth', 'uses' => 'JiraController@send']);
 
+Route::get ('/jira/legacy/{project}', ['middleware' => 'auth', 'uses' => 'JiraController@legacy']);
+
 Route::match(['get','post'], '/jira/webhook', ['uses' => 'JiraController@webhook']);
