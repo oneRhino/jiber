@@ -425,6 +425,10 @@ class JiraController extends Controller
         // Connect into Jira
         $jira = $this->connect($request);
 
+        // Connect into Redmine
+        $redmineController = new RedmineController();
+        $redmine = $redmineController->connect();
+
         $walker = new \chobie\Jira\Issues\Walker($jira);
         $walker->push("project = {$request->project}", "*navigable");
 
@@ -552,11 +556,16 @@ class JiraController extends Controller
 
             // Save association on RedmineJiraTask
             $RedmineJiraTask = new RedmineJiraTask();
-            $RedmineJiraTask->jira_task    = $content->issue->key;
+            $RedmineJiraTask->jira_task    = $jira_key;
             $RedmineJiraTask->redmine_task = $redmine_task['id'];
             $RedmineJiraTask->source       = 'Jira';
             $RedmineJiraTask->save();
         }
+
+        // show previous page again, it's finished
+        $request->session()->flash('alert-success', 'All tasks have been created successfully to Redmine!');
+
+        return back()->withInput();
     }
 
     public function webhook(Request $request)
