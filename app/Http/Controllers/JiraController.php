@@ -448,9 +448,9 @@ class JiraController extends Controller
             Log::debug('- User Found');
 
             // Connect on Redmine using this user
-            $request = new Request();
-            $request->merge(['user' => $user]);
-            $request->setUserResolver(function () use ($user) {
+            $_request = new Request();
+            $_request->merge(['user' => $user]);
+            $_request->setUserResolver(function () use ($user) {
                 return $user;
             });
             Auth::setUser($user);
