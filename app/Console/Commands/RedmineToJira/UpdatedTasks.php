@@ -66,7 +66,7 @@ class UpdatedTasks extends Command
     {
         // Get user - use thaissa (redmine user)
         $this->writeLog('Login Start');
-        $user = User::find(1);
+        $user = User::find(7);
 
         $this->loginUser($user);
         $this->writeLog('Login End');
@@ -113,8 +113,8 @@ class UpdatedTasks extends Command
             // Get ticket details
             $args = array('include' => 'journals');
             $_entry = $Redmine->issue->show($_issue['id'], $args);
-            //$this->writeLog('Ticket details:');
-            //$this->writeLog(print_r($_entry, true));
+            $this->writeLog('Ticket details:');
+            $this->writeLog(print_r($_entry['issue']['journals'], true));
 
             /**
              * Run through each journal:

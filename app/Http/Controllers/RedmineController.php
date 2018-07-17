@@ -176,7 +176,7 @@ class RedmineController extends Controller
         foreach ($request->task as $_entry_id) {
             $_entry = TimeEntry::find($_entry_id);
 
-            if (!$_entry || $_entry->user_id != Auth::user()->id) {
+            if (!$_entry || $_entry->user_id != Auth::user()->id || !$_entry->redmine_issue_id) {
                 continue;
             }
 

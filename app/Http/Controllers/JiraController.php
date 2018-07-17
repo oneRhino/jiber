@@ -527,7 +527,7 @@ class JiraController extends Controller
                 'priority_id'     => $priority->redmine_id,
                 'assigned_to_id'  => $assignee->redmine_id,
                 'subject'         => htmlentities($issue->getSummary()),
-                'description'     => htmlentities($issue->getDescription()),
+                'description'     => $issue->getDescription(),//htmlentities($issue->getDescription()),
                 'due_date'        => $issue->getDueDate(),
                 'custom_fields'   => array(
                     'custom_value' => array(
@@ -728,6 +728,9 @@ class JiraController extends Controller
                 die;
             }
 
+	    $subject     = htmlspecialchars($content->issue->fields->summary, ENT_XML1, 'UTF-8');
+	    $description = htmlspecialchars($content->issue->fields->description, ENT_XML1, 'UTF-8');
+
             // Create data array
             $data = array(
                 'project_id'      =>  $project->redmine_id,
@@ -735,8 +738,8 @@ class JiraController extends Controller
                 'status_id'       =>   $status->redmine_id,
                 'priority_id'     => $priority->redmine_id,
                 'assigned_to_id'  => $assignee->redmine_id,
-                'subject'         => htmlentities($content->issue->fields->summary),
-                'description'     => htmlentities($content->issue->fields->description),
+                'subject'         => $subject,
+                'description'     => $description,
                 'due_date'        => $content->issue->fields->duedate,
                 'custom_fields'   => array(
                     'custom_value' => array(
@@ -793,8 +796,8 @@ class JiraController extends Controller
 
             // Check data
             if (!$redmine_entries['issues']) {
-                $this->errorEmail("No task using Jira ID {$_GET['issue']}", 'alert');
-                die;
+                $this->errorEmail("No task using Jira ID {$_GET['issue']} - so it was created", 'alert');
+		return $this->issue('created', $content, $request);
             }
 
             // Get first Redmine task
@@ -810,7 +813,12 @@ class JiraController extends Controller
                         $data['subject'] = htmlentities($_item->toString);
                         break;
                     case 'description':
-                        $data['description'] = htmlentities($_item->toString);
+			$data['description'] = str_replace('\r\n', "\n", $_item->toString);
+			$data['description'] = str_replace('\"', '"', $data['description']);
+			if (strpos($data['description'], '"') === 0) {
+				$data['description'] = substr($data['description'], 1, -1);
+			}
+			$data['description'] = htmlspecialchars($data['description'], ENT_XML1, 'UTF-8');
                         break;
                     case 'duedate':
                         $data['due_date'] = substr($_item->toString, 0, strpos($_item->toString, ' '));
@@ -964,7 +972,7 @@ class JiraController extends Controller
             Log::debug(print_r($redmine_entries, true));
 
             // Check data
-            if (!$redmine_entries['issues']) {
+            if (!isset($redmine_entries['issues']) || !$redmine_entries['issues']) {
                 $this->errorEmail("No task using Jira ID {$_GET['issue']}", 'alert');
                 die;
             }
@@ -993,13 +1001,14 @@ class JiraController extends Controller
             if ($send_comment && isset($content->comment)) {
                 // Build data array
                 $data = array(
-                    'notes' => htmlentities($content->comment->body),
+                    'notes' => htmlspecialchars($content->comment->body),
                 );
                 Log::debug('-- Redmine data:');
                 Log::debug(print_r($data, true));
 
                 // Send data to Redmine
-                $redmine->issue->update($redmine_task['id'], $data);
+                Log::debug('-- Sent data to Redmine:');
+                Log::debug($redmine->issue->update($redmine_task['id'], $data));
 
                 // Get data from Redmine
                 $args = array('include' => 'journals');
@@ -1023,10 +1032,11 @@ class JiraController extends Controller
                     // Run through details
                     if (isset($_journal['notes']) && !empty($_journal['notes']))
                     {
-                        if ($data['notes'] == $_journal['notes']) {
+                        if ($data['notes'] == htmlentities($_journal['notes'])) {
                             $Change = new RedmineChange();
                             $Change->redmine_change_id = $_journal['id'];
                             $Change->save();
+                		Log::debug('-- Comment saved: '.$_journal['id']);
                         }
                     }
                 }
