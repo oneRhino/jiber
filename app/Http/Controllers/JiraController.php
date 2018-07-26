@@ -436,6 +436,9 @@ class JiraController extends Controller
             $reporter = $issue->getReporter();
             $jira_key = $issue->getKey();
 
+		if ($reporter['name'] == 'addon_zendesk_for_jira')
+			$reporter['name'] = 'klyon';
+
             // USER
             $user = Setting::where('jira', $reporter['name'])->first();
 
@@ -491,7 +494,7 @@ class JiraController extends Controller
             Log::debug('-- Redmine tracker found');
 
             $jira_status = $issue->getStatus();
-            $status = RedmineJiraStatus::where('jira_name', $jira_status['name'])->first();
+            $status = RedmineJiraStatus::where('jira_name', 'like', '%' . $jira_status['name'] . '%')->first();
             Log::debug('-- Redmine status found');
 
             $jira_priority = $issue->getPriority();
@@ -515,6 +518,8 @@ class JiraController extends Controller
                 $errors[] = "Assignee not found: {$jira_assignee['key']}";
 
             if ($errors) {
+            	Log::debug('-- Errors found:');
+            	Log::debug(print_r($errors));
                 $this->errorEmail($errors);
                 continue;
             }
@@ -684,6 +689,10 @@ class JiraController extends Controller
                 {
                     foreach ($_issue['custom_fields'] as $_field)
                     {
+			if (!isset($_field['id']) || !isset($_field['value'])) continue;
+
+Log::debug(print_r($_field, true));
+
                         if ($_field['id'] == Config::get('redmine.jira_id') && $_field['value'] == $content->issue->key) {
                             Log::debug('-- ERROR: Redmine ticket found using this Jira ID');
                             die;
@@ -704,7 +713,7 @@ class JiraController extends Controller
             Log::debug('-- Redmine project found');
             $tracker  =  RedmineJiraTracker::where('jira_name', 'like', '%' . $content->issue->fields->issuetype->name . '%')->first();
             Log::debug('-- Redmine tracker found');
-            $status   =   RedmineJiraStatus::where('jira_name', $content->issue->fields->status->name)->first();
+            $status   =   RedmineJiraStatus::where('jira_name', 'like', '%' . $content->issue->fields->status->name . '%')->first();
             Log::debug('-- Redmine status found');
             $priority = RedmineJiraPriority::where('jira_name', $content->issue->fields->priority->name)->first();
             Log::debug('-- Redmine priority found');
@@ -840,7 +849,7 @@ class JiraController extends Controller
                         $data['assigned_to_id'] = $assignee->redmine_id;
                         break;
                     case 'status':
-                        $status = RedmineJiraStatus::where('jira_name', $_item->toString)->first();
+                        $status = RedmineJiraStatus::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
                         if (!$status) {
                             $this->errorEmail("Status not found: {$content->issue->fields->status->name}");
                             die;
