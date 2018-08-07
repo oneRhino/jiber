@@ -73,7 +73,7 @@ class CreatedTasks extends Command
         $tickets = array();
 
         // Get user
-        $user = User::find(1);
+        $user = User::find(7);
 
         // Set user as logged-in user
         $request = new Request();
@@ -268,7 +268,7 @@ class CreatedTasks extends Command
         if (!$tickets) die;
 
         // Get user
-        $user = User::find(1);
+        $user = User::find(7);
 
         // Set user as logged-in user
         $request = new Request();
