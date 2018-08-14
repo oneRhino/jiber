@@ -85,13 +85,13 @@ class CreatedTasks extends Command
         Auth::setUser($user);
 
         // Current date
-        $date = date('Y-m-d');
+	$date = date('Y-m-d', strtotime("-20 minutes"));;
 
         // Get Redmine tasks created this date
         $RedmineController = new RedmineController;
         $Redmine = $RedmineController->connect();
         $args = array(
-            'created_on' => $date,
+            'created_on' => '>='.$date,
             'limit'      => 100,
             'sort'       => 'created_on:desc',
         );
@@ -105,7 +105,7 @@ class CreatedTasks extends Command
             // Check if task has already been created on Jira (RedmineJiraTask)
             $task = RedmineJiraTask::where('redmine_task', $_issue['id'])->first();
             if ($task) {
-                $this->writeLog('-- Task already been created on Jira, CONTINUE');
+                $this->writeLog('-- Task '.$_issue['id'].' already been created on Jira, CONTINUE');
                 continue;
             }
 
@@ -188,6 +188,7 @@ class CreatedTasks extends Command
                     if (isset($_type['name']) && stripos($tracker->jira_name, $_type['name']) !== false)
                         $jira_type = $_type['id'];
                 }
+                //$this->writeLog('-- Jira TYPE: '.$jira_type);
 
                 if (!$jira_type) {
                     $this->errorEmail("Jira type {$tracker->jira_name} not found: <pre>". print_r($tracker, true) . print_r($jira_types, true).'</pre>');
@@ -228,8 +229,11 @@ class CreatedTasks extends Command
                     'description' => (isset($_ticket['description'])?$_ticket['description']:''),
                     'priority'    => array('id' => $jira_priority),
                     'assignee'    => array('name' => $user->jira_name),
-                    //'customfield_10301' => $_ticket['subject'], // Epic Name
                 );
+
+		if ($jira_type == '6') {
+			$issue['customfield_10301'] = $_ticket['subject']; // Epic Name
+		}
 
 		if (!$issue['description'])
 			$issue['description'] = 'TODO';
