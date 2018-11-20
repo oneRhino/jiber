@@ -34,6 +34,8 @@ class CreatedTasks extends Command
      */
     protected $description = 'Syncs created tickets on Redmine and Jira.';
 
+    private $debug = false;
+
     /**
      * Create a new command instance.
      *
@@ -241,10 +243,11 @@ class CreatedTasks extends Command
 		if (isset($_ticket['due_date']) && !empty($_ticket['due_date']))
 			$issue['duedate'] = $_ticket['due_date'];
 
-		if (isset($_ticket['estimated_hours']))
-			$issue['timetracking'] = array('originalEstimate' => ($_ticket['estimated_hours'] * 60));
+		//if (isset($_ticket['estimated_hours']))
+		//	$issue['timetracking'] = array('originalEstimate' => ($_ticket['estimated_hours'] * 60));
 
             // Send everything to Jira, to create ticket
+		$this->writeLog(print_r($issue, true));
                 $return = $Jira->createIssue($_ticket['JiraProject'], $_ticket['subject'], $jira_type, $issue);
                 $result = $return->getResult();
 
@@ -319,6 +322,7 @@ class CreatedTasks extends Command
 
     private function writeLog($message)
     {
-        file_put_contents('redmine-create.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
+	if ($this->debug)
+        	file_put_contents('redmine-create.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
     }
 }

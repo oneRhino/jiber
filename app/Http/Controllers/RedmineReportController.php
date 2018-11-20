@@ -77,6 +77,8 @@ class RedmineReportController extends RedmineController
 
         // Save Redmine Entries
         foreach ($redmine_entries['time_entries'] as $_entry) {
+            if (!isset($_entry['issue'])) continue;
+
             $description = (isset($_entry['comments']) ? $_entry['comments'] : $_entry['activity']['name']);
             if (!$description) $description = $_entry['activity']['name'];
 

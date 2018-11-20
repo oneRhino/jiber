@@ -32,6 +32,8 @@ class UpdatedTasks extends Command
      */
     protected $description = 'Syncs updated tickets from Redmine and Jira.';
 
+    private $debug = false;
+
     /**
      * Create a new command instance.
      *
@@ -240,7 +242,8 @@ class UpdatedTasks extends Command
         // Get assignee based on Redmine user ID
         $user = RedmineJiraUser::where('redmine_id', $content)->first();
 
-        $this->jira_updates[$created_by][$this->jira_id]['assignee'] = $user->jira_name;
+	if ($user)
+	        $this->jira_updates[$created_by][$this->jira_id]['assignee'] = $user->jira_name;
     }
 
     private function jiraComment($created_on, $created_by, $content)
@@ -397,6 +400,7 @@ class UpdatedTasks extends Command
 
     private function writeLog($message)
     {
-        file_put_contents('redmine-update.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
+	if ($this->debug)
+	        file_put_contents('redmine-update.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
     }
 }

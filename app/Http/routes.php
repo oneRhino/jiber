@@ -51,7 +51,7 @@ Route::get ('/redmine/show/{report}', ['middleware' => 'auth', 'uses' => 'Redmin
 Route::post('/redmine/send'         , ['middleware' => 'auth', 'uses' => 'RedmineController@send']);
 
 Route::get('/redmine/jira/users/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraUsersController@import']);
-//Route::get('/redmine/jira/users/login' , ['middleware' => 'auth', 'uses' => 'RedmineJiraUsersController@login']);
+Route::get('/redmine/jira/users/login' , ['middleware' => 'auth', 'uses' => 'RedmineJiraUsersController@login']);
 Route::group(['middleware' => 'auth'], function() {
     Route::resource('/redmine/jira/users', 'RedmineJiraUsersController', ['parameters' => [
         'users' => 'user'

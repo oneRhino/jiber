@@ -612,7 +612,8 @@ class JiraController extends Controller
 				$user = Setting::where('jira', $content->issue->fields->reporter->key)->first();
 			elseif (isset($content->comment))
 				$user = Setting::where('jira', $content->comment->author->key)->first();
-			elseif ($_GET['user_id'] == 'addon_zendesk_for_jira') {
+
+			if (!$user && $_GET['user_id'] == 'addon_zendesk_for_jira') {
 				$user = Setting::where('jira', 'klyon')->first();
 			}
 
@@ -1010,8 +1011,10 @@ class JiraController extends Controller
 
 			if ($send_comment && isset($content->comment)) {
 				// Build data array
+				$treated_content = htmlentities($content->comment->body, ENT_HTML401);
+				$treated_content = str_replace("\r\n", "\n", $treated_content);
 				$data = array(
-					'notes' => htmlspecialchars($content->comment->body),
+					'notes' => $treated_content,
 				);
 				Log::debug('-- Redmine data:');
 				Log::debug(print_r($data, true));
@@ -1042,7 +1045,7 @@ class JiraController extends Controller
 					// Run through details
 					if (isset($_journal['notes']) && !empty($_journal['notes']))
 					{
-						if ($data['notes'] == htmlentities($_journal['notes'])) {
+						if ($data['notes'] == $treated_content) {
 							$Change = new RedmineChange();
 							$Change->redmine_change_id = $_journal['id'];
 							$Change->save();
