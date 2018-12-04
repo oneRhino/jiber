@@ -1,31 +1,31 @@
 <?php
 
 /**
- * Copyright 2016 Thaissa Mendes
- *
- * This file is part of Jiber.
- *
- * Jiber is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Jiber is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Jiber. If not, see <http://www.gnu.org/licenses/>.
- */
+* Copyright 2016 Thaissa Mendes
+*
+* This file is part of Jiber.
+*
+* Jiber is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* Jiber is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with Jiber. If not, see <http://www.gnu.org/licenses/>.
+*/
 
 /**
- * Connect into Jira, get and send information using its API
- *
- * @author Thaissa Mendes <thaissa.mendes@gmail.com>
- * @since 8 August, 2016
- * @version 0.1
- */
+* Connect into Jira, get and send information using its API
+*
+* @author Thaissa Mendes <thaissa.mendes@gmail.com>
+* @since 8 August, 2016
+* @version 0.1
+*/
 
 namespace App\Http\Controllers;
 
@@ -54,8 +54,8 @@ use Crypt;
 class JiraController extends Controller
 {
 	/**
-	 * Connect into Jira API
-	 */
+	* Connect into Jira API
+	*/
 	public function connect(Request $request)
 	{
 		$redirect = app('Illuminate\Routing\Redirector');
@@ -70,7 +70,7 @@ class JiraController extends Controller
 			}
 		}
 		else
-			$password = $request->session()->get('jira.password');
+		$password = $request->session()->get('jira.password');
 
 		if (!$password) {
 			$request->session()->flash('alert-warning', 'Please set your Jira Password (it will be stored only for this session).');
@@ -87,8 +87,8 @@ class JiraController extends Controller
 	}
 
 	/**
-	 * Show set Jira password form and save it into session
-	 */
+	* Show set Jira password form and save it into session
+	*/
 	public function set_password(Request $request)
 	{
 		$redirect = app('Illuminate\Routing\Redirector');
@@ -120,8 +120,8 @@ class JiraController extends Controller
 	}
 
 	/**
-	 * Test Jira connection
-	 */
+	* Test Jira connection
+	*/
 	public function test(Request $request)
 	{
 		$connection = $this->connect($request);
@@ -140,8 +140,8 @@ class JiraController extends Controller
 	}
 
 	/**
-	 * Show Jira's time entries grouped by date and Redmine's task ID
-	 */
+	* Show Jira's time entries grouped by date and Redmine's task ID
+	*/
 	public function show(Report $report, Request $request)
 	{
 		if ($report->user_id != Auth::user()->id) {
@@ -219,7 +219,13 @@ class JiraController extends Controller
 							continue;
 						}
 
-						$_time['description'] = ($_time['comment'] ? $_time['comment'] : '<No comment>');
+						$comment = '<No comment>';
+
+						if (isset($_time['comment']) && !empty($_time['comment'])) {
+							$comment = $_time['comment'];
+						}
+
+						$_time['description'] = $comment;
 						$_time['time']        = round(($_time['timeSpentSeconds'] / 3600), 2);
 						$_time['user']        = $_time['author']['name'];
 
@@ -236,20 +242,20 @@ class JiraController extends Controller
 
 		if ($report->filter_user) {
 			return view('jira.show', [
-						'entries'   => $entries,
-						'report_id' => $report->id,
+				'entries'   => $entries,
+				'report_id' => $report->id,
 			]);
 		} else {
 			return view('jira.show_all', [
-						'entries'   => $entries,
-						'report_id' => $report->id,
+				'entries'   => $entries,
+				'report_id' => $report->id,
 			]);
 		}
 	}
 
 	/**
-	 * Export CSV comparing Redmine and Jira
-	 */
+	* Export CSV comparing Redmine and Jira
+	*/
 	public function csv(Report $report, Request $request)
 	{
 		if ($report->user_id != Auth::user()->id) {
@@ -350,8 +356,8 @@ class JiraController extends Controller
 	}
 
 	/**
-	 * Send time to Jira
-	 */
+	* Send time to Jira
+	*/
 	public function send(Request $request)
 	{
 		if (!$request->task && !$request->delete) {
@@ -418,8 +424,8 @@ class JiraController extends Controller
 	}
 
 	/**
-	 * Get all opened tickets from project, and create them on Redmine
-	 */
+	* Get all opened tickets from project, and create them on Redmine
+	*/
 	public function legacy(Request $request)
 	{
 		// Connect into Jira
@@ -437,134 +443,134 @@ class JiraController extends Controller
 			$jira_key = $issue->getKey();
 
 			if ($reporter['name'] == 'addon_zendesk_for_jira')
-				$reporter['name'] = 'klyon';
+			$reporter['name'] = 'klyon';
 
 			// USER
 			$user = Setting::where('jira', $reporter['name'])->first();
 
 			if (!$user) {
 				Log::debug('-- ERROR - User not found on Jiber ('.$reporter['name'].')');
-						   continue;
-						   }
+				continue;
+			}
 
-						   $user = User::find($user->id);
-						   Log::debug('- User Found');
+			$user = User::find($user->id);
+			Log::debug('- User Found');
 
-						   // Connect on Redmine using this user
-						   $_request = new Request();
-						   $_request->merge(['user' => $user]);
-						   $_request->setUserResolver(function () use ($user) {
-													  return $user;
-													  });
-						   Auth::setUser($user);
-						   Log::debug('- User Authenticated');
+			// Connect on Redmine using this user
+			$_request = new Request();
+			$_request->merge(['user' => $user]);
+			$_request->setUserResolver(function () use ($user) {
+				return $user;
+			});
+			Auth::setUser($user);
+			Log::debug('- User Authenticated');
 
-						   $jira_project = $issue->getProject();
-						   $project =  RedmineJiraProject::where('jira_name', $jira_project['key'])->first();
-						   Log::debug('-- Redmine project found');
+			$jira_project = $issue->getProject();
+			$project =  RedmineJiraProject::where('jira_name', $jira_project['key'])->first();
+			Log::debug('-- Redmine project found');
 
-						   // First, check if it hasn't already been created on Redmine
-						   // Current date
-						   $date = date('Y-m-d');
+			// First, check if it hasn't already been created on Redmine
+			// Current date
+			$date = date('Y-m-d');
 
-						   $args = array(
-							   'limit' => 1,
-							   'sort'  => 'created_on:desc',
-							   'cf_9'  => $jira_key,
-							   'project_id' => $project->redmine_id,
-						   );
-						   $redmine_entries = $redmine->issue->all($args);
+			$args = array(
+				'limit' => 1,
+				'sort'  => 'created_on:desc',
+				'cf_9'  => $jira_key,
+				'project_id' => $project->redmine_id,
+			);
+			$redmine_entries = $redmine->issue->all($args);
 
-						   if (isset($redmine_entries['issues']) && !empty($redmine_entries['issues']))
-						   {
-							   Log::debug('-- ERROR: Redmine ticket found using this Jira ID');
-							   continue;
-						   }
+			if (isset($redmine_entries['issues']) && !empty($redmine_entries['issues']))
+			{
+				Log::debug('-- ERROR: Redmine ticket found using this Jira ID');
+				continue;
+			}
 
-						   // Check if Jira ID exists on RedmineJiraTask, if so, ignore
-						   $task = RedmineJiraTask::where('jira_task', $jira_key)->first();
-						   if ($task) {
-							   Log::debug('-- ERROR - RedmineJiraTask found');
-							   continue;
-						   }
+			// Check if Jira ID exists on RedmineJiraTask, if so, ignore
+			$task = RedmineJiraTask::where('jira_task', $jira_key)->first();
+			if ($task) {
+				Log::debug('-- ERROR - RedmineJiraTask found');
+				continue;
+			}
 
-						   // Get data
-						   $jira_tracker = $issue->getIssueType();
-						   $tracker = RedmineJiraTracker::where('jira_name', 'like', '%' . $jira_tracker['name'] . '%')->first();
-						   Log::debug('-- Redmine tracker found');
+			// Get data
+			$jira_tracker = $issue->getIssueType();
+			$tracker = RedmineJiraTracker::where('jira_name', 'like', '%' . $jira_tracker['name'] . '%')->first();
+			Log::debug('-- Redmine tracker found');
 
-						   $jira_status = $issue->getStatus();
-						   $status = RedmineJiraStatus::where('jira_name', 'like', '%' . $jira_status['name'] . '%')->first();
-						   Log::debug('-- Redmine status found');
+			$jira_status = $issue->getStatus();
+			$status = RedmineJiraStatus::where('jira_name', 'like', '%' . $jira_status['name'] . '%')->first();
+			Log::debug('-- Redmine status found');
 
-						   $jira_priority = $issue->getPriority();
-						   $priority = RedmineJiraPriority::where('jira_name', $jira_priority['name'])->first();
-						   Log::debug('-- Redmine priority found');
+			$jira_priority = $issue->getPriority();
+			$priority = RedmineJiraPriority::where('jira_name', $jira_priority['name'])->first();
+			Log::debug('-- Redmine priority found');
 
-						   $jira_assignee = $issue->getAssignee();
-						   $assignee = RedmineJiraUser::where('jira_name', $jira_assignee['key'])->first();
-						   Log::debug('-- Redmine assignee found');
+			$jira_assignee = $issue->getAssignee();
+			$assignee = RedmineJiraUser::where('jira_name', $jira_assignee['key'])->first();
+			Log::debug('-- Redmine assignee found');
 
-						   // Check data
-						   $errors = array();
+			// Check data
+			$errors = array();
 
-						   if (!$tracker)
-							   $errors[] = "Tracker not found: {$jira_tracker['name']}";
-						   if (!$status)
-							   $errors[] = "Status not found: {$jira_status['name']}";
-						   if (!$priority)
-							   $errors[] = "Priority not found: {$jira_priority['name']}";
-						   if (!$assignee)
-							   $errors[] = "Assignee not found: {$jira_assignee['key']}";
+			if (!$tracker)
+			$errors[] = "Tracker not found: {$jira_tracker['name']}";
+			if (!$status)
+			$errors[] = "Status not found: {$jira_status['name']}";
+			if (!$priority)
+			$errors[] = "Priority not found: {$jira_priority['name']}";
+			if (!$assignee)
+			$errors[] = "Assignee not found: {$jira_assignee['key']}";
 
-						   if ($errors) {
-							   Log::debug('-- Errors found:');
-							   Log::debug(print_r($errors));
-							   $this->errorEmail($errors);
-							   continue;
-						   }
+			if ($errors) {
+				Log::debug('-- Errors found:');
+				Log::debug(print_r($errors));
+				$this->errorEmail($errors);
+				continue;
+			}
 
-						   // Create data array
-						   $data = array(
-							   'project_id'      =>  $project->redmine_id,
-							   'tracker_id'      =>  $tracker->redmine_id,
-							   'status_id'       =>   $status->redmine_id,
-							   'priority_id'     => $priority->redmine_id,
-							   'assigned_to_id'  => $assignee->redmine_id,
-							   'subject'         => htmlentities($issue->getSummary()),
-							   'description'     => $issue->getDescription(),//htmlentities($issue->getDescription()),
-							   'due_date'        => $issue->getDueDate(),
-							   'custom_fields'   => array(
-								   'custom_value' => array(
-									   'id'    => Config::get('redmine.jira_id'),
-									   'value' => $jira_key,
-								   )
-							   )
-						   );
-						   Log::debug('-- Redmine data:');
-						   Log::debug(print_r($data, true));
+			// Create data array
+			$data = array(
+				'project_id'      =>  $project->redmine_id,
+				'tracker_id'      =>  $tracker->redmine_id,
+				'status_id'       =>   $status->redmine_id,
+				'priority_id'     => $priority->redmine_id,
+				'assigned_to_id'  => $assignee->redmine_id,
+				'subject'         => htmlentities($issue->getSummary()),
+				'description'     => $issue->getDescription(),//htmlentities($issue->getDescription()),
+				'due_date'        => $issue->getDueDate(),
+				'custom_fields'   => array(
+					'custom_value' => array(
+						'id'    => Config::get('redmine.jira_id'),
+						'value' => $jira_key,
+					)
+				)
+			);
+			Log::debug('-- Redmine data:');
+			Log::debug(print_r($data, true));
 
-						   // Send data to Redmine
-						   $redmine->issue->create($data);
+			// Send data to Redmine
+			$redmine->issue->create($data);
 
-						   // Get Redmine recently created task
-						   $args = array(
-							   'limit' => 1,
-							   'sort'  => 'created_on:desc',
-							   'cf_9'  => $jira_key,
-							   'project_id' => $project->redmine_id,
-						   );
-						   $redmine_entries = $redmine->issue->all($args);
+			// Get Redmine recently created task
+			$args = array(
+				'limit' => 1,
+				'sort'  => 'created_on:desc',
+				'cf_9'  => $jira_key,
+				'project_id' => $project->redmine_id,
+			);
+			$redmine_entries = $redmine->issue->all($args);
 
-						   // Get first
-						   $redmine_task = reset($redmine_entries['issues']);
+			// Get first
+			$redmine_task = reset($redmine_entries['issues']);
 
-						   // Save association on RedmineJiraTask
-						   $RedmineJiraTask = new RedmineJiraTask();
-						   $RedmineJiraTask->jira_task    = $jira_key;
-						   $RedmineJiraTask->redmine_task = $redmine_task['id'];
-						   $RedmineJiraTask->source       = 'Jira';
-						   $RedmineJiraTask->save();
+			// Save association on RedmineJiraTask
+			$RedmineJiraTask = new RedmineJiraTask();
+			$RedmineJiraTask->jira_task    = $jira_key;
+			$RedmineJiraTask->redmine_task = $redmine_task['id'];
+			$RedmineJiraTask->source       = 'Jira';
+			$RedmineJiraTask->save();
 		}
 
 		// show previous page again, it's finished
@@ -608,9 +614,9 @@ class JiraController extends Controller
 		$user = Setting::where('jira', $_GET['user_id'])->first();
 
 		if (!$user) {
-			if (isset($content->issue) && isset($content->issue->fields->reporter))
+			if (isset($content->issue) && isset($content->issue->fields->reporter)) {
 				$user = Setting::where('jira', $content->issue->fields->reporter->key)->first();
-			elseif (isset($content->comment))
+			} elseif (isset($content->comment)) {
 				$user = Setting::where('jira', $content->comment->author->key)->first();
 
 			if (!$user && $_GET['user_id'] == 'addon_zendesk_for_jira') {
@@ -619,47 +625,48 @@ class JiraController extends Controller
 
 			if (!$user) {
 				Log::debug('-- ERROR - User not found on Jiber ('.$_GET['user_id'].')');
-						   die;
-						   }
-						   }
+				die;
+			}
+		}
 
-						   $user = User::find($user->id);
-						   Log::debug('- User Found');
+		$user = User::find($user->id);
+		Log::debug('- User Found');
 
-						   // Connect on Redmine using this user
-						   $request = new Request();
-						   $request->merge(['user' => $user]);
-						   $request->setUserResolver(function () use ($user) {
-													 return $user;
-													 });
-						   Auth::setUser($user);
-						   Log::debug('- User Authenticated');
+		// Connect on Redmine using this user
+		$request = new Request();
+		$request->merge(['user' => $user]);
+		$request->setUserResolver(function () use ($user) {
+			return $user;
+		});
+		Auth::setUser($user);
+		Log::debug('- User Authenticated');
 
-						   // Get event
-						   if (isset($content->issue_event_type_name))
-						   $event = $content->issue_event_type_name;
-						   else
-							   $event = $content->webhookEvent;
+		// Get event
+		if (isset($content->issue_event_type_name)) {
+			$event = $content->issue_event_type_name;
+		} else {
+			$event = $content->webhookEvent;
+		}
 
-						   Log::debug("- Event: {$event}");
+		Log::debug("- Event: {$event}");
 
-						   switch ($event)
-						   {
-							   case 'issue_created':
-								   $this->issue('created', $content, $request);
-								   break;
-							   case 'issue_updated':
-							   case 'issue_assigned':
-							   case 'issue_generic':
-								   $this->issue('updated', $content, $request);
-								   break;
-							   case 'jira:issue_deleted':
-										  $this->issue('deleted', $content, $request);
-										  break;
-							   case 'comment_created':
-										  $this->comment('created', $content, $request);
-										  break;
-						   }
+		switch ($event)
+		{
+			case 'issue_created':
+				$this->issue('created', $content, $request);
+				break;
+			case 'issue_updated':
+			case 'issue_assigned':
+			case 'issue_generic':
+				$this->issue('updated', $content, $request);
+				break;
+			case 'jira:issue_deleted':
+				$this->issue('deleted', $content, $request);
+				break;
+			case 'comment_created':
+				$this->comment('created', $content, $request);
+				break;
+		}
 	}
 
 	private function issue($action, $content, $request)
@@ -724,37 +731,52 @@ class JiraController extends Controller
 			// Check data
 			$errors = array();
 
-			if (!$tracker)
+			if (!$tracker) {
 				$errors[] = "Tracker not found: {$content->issue->fields->issuetype->name}";
-			if (!$status)
+			}
+			if (!$status) {
 				$errors[] = "Status not found: {$content->issue->fields->status->name}";
-			if (!$priority)
+			}
+			if (!$priority) {
 				$errors[] = "Priority not found: {$content->issue->fields->priority->name}";
-			if (!$assignee)
+			}
+			if (!$assignee) {
 				$errors[] = "Assignee not found: {$content->issue->fields->assignee->key}";
+			}
 
 			if ($errors) {
 				$this->errorEmail($errors);
 				die;
 			}
 
-			$subject     = htmlspecialchars($content->issue->fields->summary, ENT_XML1, 'UTF-8');
-			$description = htmlspecialchars($content->issue->fields->description, ENT_XML1, 'UTF-8');
+			$subject      = htmlspecialchars($content->issue->fields->summary, ENT_XML1, 'UTF-8');
+			$description  = htmlspecialchars($content->issue->fields->description, ENT_XML1, 'UTF-8');
+			$description .= "\n\nh1. Resources\n";
+			$description .= "\n* JIRA Ticket: https://flypilot.atlassian.net/browse/{$content->issue->key}";
+
+			// If there are attachments, add their links to the description
+			if (!empty($content->issue->fields->attachment)) {
+				$description .= "\n* Attachment(s):";
+
+				foreach ($content->issue->fields->attachment as $_attachment) {
+					$description .= "\n** {$_attachment->content}";
+				}
+			}
 
 			// Create data array
 			$data = array(
-				'project_id'      =>  $project->redmine_id,
-				'tracker_id'      =>  $tracker->redmine_id,
-				'status_id'       =>   $status->redmine_id,
-				'priority_id'     => $priority->redmine_id,
-				'assigned_to_id'  => $assignee->redmine_id,
-				'subject'         => $subject,
-				'description'     => $description,
-				'due_date'        => $content->issue->fields->duedate,
-				'custom_fields'   => array(
+				'project_id'       => $project->redmine_id,
+				'tracker_id'       => $tracker->redmine_id,
+				'status_id'        => $status->redmine_id,
+				'priority_id'      => $priority->redmine_id,
+				'assigned_to_id'   => $assignee->redmine_id,
+				'subject'          => $subject,
+				'description'      => $description,
+				'due_date'         => $content->issue->fields->duedate,
+				'custom_fields'     => array(
 					'custom_value' => array(
-						'id'    => Config::get('redmine.jira_id'),
-						'value' => $content->issue->key,
+						'id'       => Config::get('redmine.jira_id'),
+						'value'    => $content->issue->key,
 					)
 				),
 				'watcher_user_ids' => [1, 105, 89], // Billy, Alejandro, Pablo
@@ -826,45 +848,69 @@ class JiraController extends Controller
 					case 'description':
 						$data['description'] = str_replace('\r\n', "\n", $_item->toString);
 						$data['description'] = str_replace('\"', '"', $data['description']);
+
 						if (strpos($data['description'], '"') === 0) {
 							$data['description'] = substr($data['description'], 1, -1);
 						}
+
 						$data['description'] = htmlspecialchars($data['description'], ENT_XML1, 'UTF-8');
+
 						break;
 					case 'duedate':
 						$data['due_date'] = substr($_item->toString, 0, strpos($_item->toString, ' '));
 						break;
 					case 'priority':
 						$priority = RedmineJiraPriority::where('jira_name', $_item->toString)->first();
+
 						if (!$priority) {
 							$this->errorEmail("Priority not found: {$content->issue->fields->priority->name}");
 							die;
 						}
+
 						$data['priority_id'] = $priority->redmine_id;
+
 						break;
 					case 'assignee':
 						$assignee = RedmineJiraUser::where('jira_name', $_item->to)->first();
+
 						if (!$assignee) {
 							$this->errorEmail("Assignee not found: {$content->issue->fields->assignee->key}");
 							die;
 						}
+
 						$data['assigned_to_id'] = $assignee->redmine_id;
+
 						break;
 					case 'status':
 						$status = RedmineJiraStatus::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
+
 						if (!$status) {
 							$this->errorEmail("Status not found: {$content->issue->fields->status->name}");
 							die;
 						}
+
 						$data['status_id'] = $status->redmine_id;
+
 						break;
 					case 'issuetype':
 						$tracker = RedmineJiraTracker::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
+
 						if (!$tracker) {
 							$this->errorEmail("Tracker not found: {$content->issue->fields->issuetype->name}");
 							die;
 						}
+
 						$data['tracker_id'] = $tracker->redmine_id;
+
+						break;
+					case 'Attachment':
+						// Run through all attachments, and add the one who matches
+						foreach ($content->issue->fields->attachment as $_attachment) {
+							if ($_attachment->filename == $_item->toString) {
+								$data['notes'] = "Attachment added: {$_attachment->content}";
+							}
+						}
+
 						break;
 				}
 			}
@@ -902,7 +948,7 @@ class JiraController extends Controller
 					{
 						// Check if it's one of the changes we just did
 						if (array_key_exists($_detail['name'], $data) && $_detail['new_value'] == $data[$_detail['name']])
-							$saveid = true;
+						$saveid = true;
 					}
 
 					if ($saveid) {
@@ -947,7 +993,7 @@ class JiraController extends Controller
 			}
 
 			/*// Get first Redmine task
-			  $redmine_task = reset($redmine_entries['issues']);
+			$redmine_task = reset($redmine_entries['issues']);
 
 			// Remove task
 			$redmine->issue->remove($redmine_task['id']);
@@ -1062,14 +1108,14 @@ class JiraController extends Controller
 		if (!$errors) die;
 
 		if (!is_array($errors))
-			$errors = array($errors);
+		$errors = array($errors);
 
 		$subject = 'Redmine/Jira (Jira Webhook) sync '.$level;
 
 		Mail::send('emails.error', ['errors' => $errors], function ($m) use($subject) {
-				   $m->from('jiber@tmisoft.com', 'Jiber');
-				   $m->cc(['a.bastos@onerhino.com', 'pablo@onerhino.com', 'billy@onerhino.com']);
-				   $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
-				   });
+			$m->from('jiber@tmisoft.com', 'Jiber');
+			$m->cc(['a.bastos@onerhino.com', 'pablo@onerhino.com', 'billy@onerhino.com']);
+			$m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
+		});
 	}
 }

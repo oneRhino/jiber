@@ -21,36 +21,36 @@ use App\Http\Controllers\RedmineController;
 class CreatedTasks extends Command
 {
     /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+    * The name and signature of the console command.
+    *
+    * @var string
+    */
     protected $signature = 'redmine-to-jira:sync-created-tasks';
 
     /**
-     * The console command description.
-     *
-     * @var string
-     */
+    * The console command description.
+    *
+    * @var string
+    */
     protected $description = 'Syncs created tickets on Redmine and Jira.';
 
     private $debug = false;
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
+    * Create a new command instance.
+    *
+    * @return void
+    */
     public function __construct()
     {
         parent::__construct();
     }
 
     /**
-     * Execute the console command.
-     *
-     * @return mixed
-     */
+    * Execute the console command.
+    *
+    * @return mixed
+    */
     public function handle()
     {
         $this->writeLog('***** INIT *****');
@@ -67,9 +67,9 @@ class CreatedTasks extends Command
     }
 
     /**
-     * Get all Redmine today tickets, except the ones
-     * with Jira ID or project not on RedmineJiraProjects
-     */
+    * Get all Redmine today tickets, except the ones
+    * with Jira ID or project not on RedmineJiraProjects
+    */
     private function getRedmineTickets()
     {
         $tickets = array();
@@ -125,7 +125,7 @@ class CreatedTasks extends Command
             foreach ($_issue['custom_fields'] as $_field)
             {
                 if ($_field['id'] == Config::get('redmine.jira_id') && !empty($_field['value']))
-                    $jira_id = $_field['value'];
+                $jira_id = $_field['value'];
             }
 
             // Jira ID exists, so ignore
@@ -154,102 +154,104 @@ class CreatedTasks extends Command
 
         foreach ($tickets as $_ticket) {
             // Get user
-                $settings = Setting::where('redmine_user', $_ticket['author']['name'])->first();
+            $settings = Setting::where('redmine_user', $_ticket['author']['name'])->first();
 
-                if (!$settings) {
-                    $this->errorEmail("No user {$_ticket['author']['name']} found.");
-                    continue;
-                }
+            if (!$settings) {
+                $this->errorEmail("No user {$_ticket['author']['name']} found.");
+                continue;
+            }
 
-                $user = $settings->user;
+            $user = $settings->user;
 
             // Set user as logged-in user
-                $request = new Request();
-                $request->merge(['user' => $user]);
-                $request->setUserResolver(function () use ($user) {
-                    return $user;
-                });
+            $request = new Request();
+            $request->merge(['user' => $user]);
+            $request->setUserResolver(function () use ($user) {
+                return $user;
+            });
 
-                Auth::setUser($user);
+            Auth::setUser($user);
 
             // Connect into Jira
-                $Jira = $JiraController->connect($request);
+            $Jira = $JiraController->connect($request);
 
             // Get Tracker/Type
-                $tracker = RedmineJiraTracker::where('redmine_name', $_ticket['tracker']['name'])->first();
+            $tracker = RedmineJiraTracker::where('redmine_name', $_ticket['tracker']['name'])->first();
 
-                if (!$tracker) {
-                    $this->errorEmail("No tracker {$_ticket['tracker']['name']} found.");
-                    continue;
-                }
+            if (!$tracker) {
+                $this->errorEmail("No tracker {$_ticket['tracker']['name']} found.");
+                continue;
+            }
 
-                $jira_types = $Jira->getProjectIssueTypes($_ticket['JiraProject']);
-                $jira_type  = null;
+            $jira_types = $Jira->getProjectIssueTypes($_ticket['JiraProject']);
+            $jira_type  = null;
 
-                foreach ($jira_types as $_type) {
-                    if (isset($_type['name']) && stripos($tracker->jira_name, $_type['name']) !== false)
-                        $jira_type = $_type['id'];
-                }
-                //$this->writeLog('-- Jira TYPE: '.$jira_type);
+            foreach ($jira_types as $_type) {
+                if (isset($_type['name']) && stripos($tracker->jira_name, $_type['name']) !== false)
+                $jira_type = $_type['id'];
+            }
 
-                if (!$jira_type) {
-                    $this->errorEmail("Jira type {$tracker->jira_name} not found: <pre>". print_r($tracker, true) . print_r($jira_types, true).'</pre>');
-                    continue;
-                }
+            if (!$jira_type) {
+                $this->errorEmail("Jira type {$tracker->jira_name} not found: <pre>". print_r($tracker, true) . print_r($jira_types, true).'</pre>');
+                continue;
+            }
 
             // Get Priority
-                $priority = RedmineJiraPriority::where('redmine_name', $_ticket['priority']['name'])->first();
+            $priority = RedmineJiraPriority::where('redmine_name', $_ticket['priority']['name'])->first();
 
-                if (!$priority) {
-                    $this->errorEmail("No priority {$_ticket['priority']['name']} found.");
-                    continue;
-                }
+            if (!$priority) {
+                $this->errorEmail("No priority {$_ticket['priority']['name']} found.");
+                continue;
+            }
 
-                $jira_priorities = $Jira->getPriorities();
-                $jira_priority = null;
+            $jira_priorities = $Jira->getPriorities();
+            $jira_priority = null;
 
-                foreach ($jira_priorities as $_priority) {
-                    if (stripos($priority->jira_name, $_priority['name']) !== false)
-                        $jira_priority = $_priority['id'];
-                }
+            foreach ($jira_priorities as $_priority) {
+                if (stripos($priority->jira_name, $_priority['name']) !== false)
+                $jira_priority = $_priority['id'];
+            }
 
             // Get Assignee
-                if (!isset($_ticket['assigned_to'])) {
-                    // If assignee is not set on Redmine, assign task to author
-                    $_ticket['assigned_to'] = array('name' => $_ticket['author']['name']);
-                }
+            if (!isset($_ticket['assigned_to'])) {
+                // If assignee is not set on Redmine, assign task to author
+                $_ticket['assigned_to'] = array('name' => $_ticket['author']['name']);
+            }
 
-                $user = RedmineJiraUser::where('redmine_name', $_ticket['assigned_to']['name'])->first();
+            $user = RedmineJiraUser::where('redmine_name', $_ticket['assigned_to']['name'])->first();
 
-                if (!$user) {
-                    $this->errorEmail("No user {$_ticket['assigned_to']['name']} found.");
-                    continue;
-                }
+            if (!$user) {
+                $this->errorEmail("No user {$_ticket['assigned_to']['name']} found.");
+                continue;
+            }
 
             // Create data array
-                $issue = array(
-                    'description' => (isset($_ticket['description'])?$_ticket['description']:''),
-                    'priority'    => array('id' => $jira_priority),
-                    'assignee'    => array('name' => $user->jira_name),
-                );
+            $issue = array(
+                'description' => (isset($_ticket['description'])?$_ticket['description']:''),
+                'priority'    => array('id' => $jira_priority),
+                'assignee'    => array('name' => $user->jira_name),
+            );
 
-		if ($jira_type == '6') {
-			$issue['customfield_10301'] = $_ticket['subject']; // Epic Name
-		}
+            if ($jira_type == '6') {
+    			$issue['customfield_10301'] = $_ticket['subject']; // Epic Name
+    		}
 
-		if (!$issue['description'])
-			$issue['description'] = 'TODO';
+            if (!$issue['description']) {
+                $issue['description'] = 'TODO';
+            }
 
-		if (isset($_ticket['due_date']) && !empty($_ticket['due_date']))
-			$issue['duedate'] = $_ticket['due_date'];
+            if (isset($_ticket['due_date']) && !empty($_ticket['due_date'])) {
+                $issue['duedate'] = $_ticket['due_date'];
+            }
 
-		//if (isset($_ticket['estimated_hours']))
-		//	$issue['timetracking'] = array('originalEstimate' => ($_ticket['estimated_hours'] * 60));
+            /*if (isset($_ticket['estimated_hours'])) {
+                $issue['timetracking'] = array('originalEstimate' => ($_ticket['estimated_hours'] * 60));
+            }*/
 
             // Send everything to Jira, to create ticket
-		$this->writeLog(print_r($issue, true));
-                $return = $Jira->createIssue($_ticket['JiraProject'], $_ticket['subject'], $jira_type, $issue);
-                $result = $return->getResult();
+            $this->writeLog(print_r($issue, true));
+            $return = $Jira->createIssue($_ticket['JiraProject'], $_ticket['subject'], $jira_type, $issue);
+            $result = $return->getResult();
 
             if (!isset($result['key'])) {
                 $this->errorEmail('Jira result error: <br><pre>'. print_r($result, true).'<br>'.print_r($_ticket, true).'<br>'.print_r($issue, true).'</pre><br>'.$jira_type);
@@ -257,14 +259,20 @@ class CreatedTasks extends Command
             }
 
             // Save association on RedmineJiraTask
-                $RedmineJiraTask = new RedmineJiraTask();
-                $RedmineJiraTask->jira_task    = $result['key'];
-                $RedmineJiraTask->redmine_task = $_ticket['id'];
-                $RedmineJiraTask->source       = 'Redmine';
-                $RedmineJiraTask->save();
+            $RedmineJiraTask = new RedmineJiraTask();
+            $RedmineJiraTask->jira_task    = $result['key'];
+            $RedmineJiraTask->redmine_task = $_ticket['id'];
+            $RedmineJiraTask->source       = 'Redmine';
+            $RedmineJiraTask->save();
+
+            // Add Jira ID to ticket description
+            $issue['description'] .= "\n* JIRA Ticket: https://flypilot.atlassian.net/browse/{$result['key']}";
 
             // Save Jira ID into Redmine's Task
-            $jira_redmine_tickets[$result['key']] = $_ticket['id'];
+            $jira_redmine_tickets[$result['key']] = [
+                'id'          => $_ticket['id'],
+                'description' => $issue['description'],
+            ];
         }
 
         return $jira_redmine_tickets;
@@ -293,6 +301,7 @@ class CreatedTasks extends Command
         foreach ($tickets as $_jira => $_redmine)
         {
             $data = array(
+                'description' => $_redmine['description'],
                 'custom_fields' => array(
                     'custom_value' => array(
                         'id'    => Config::get('redmine.jira_id'),
@@ -301,7 +310,7 @@ class CreatedTasks extends Command
                 )
             );
 
-            $Redmine->issue->update($_redmine, $data);
+            $Redmine->issue->update($_redmine['id'], $data);
         }
     }
 
@@ -310,9 +319,9 @@ class CreatedTasks extends Command
         if (!$errors) die;
 
         if (!is_array($errors))
-            $errors = array($errors);
+        $errors = array($errors);
 
-	$subject = 'Redmine/Jira (CreatedTasks) sync '.$level;
+        $subject = 'Redmine/Jira (CreatedTasks) sync '.$level;
 
         Mail::send('emails.error', ['errors' => $errors], function ($m) use($subject) {
             $m->from('jiber@tmisoft.com', 'Jiber');
