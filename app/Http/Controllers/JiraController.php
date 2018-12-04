@@ -618,6 +618,7 @@ class JiraController extends Controller
 				$user = Setting::where('jira', $content->issue->fields->reporter->key)->first();
 			} elseif (isset($content->comment)) {
 				$user = Setting::where('jira', $content->comment->author->key)->first();
+			}
 
 			if (!$user && $_GET['user_id'] == 'addon_zendesk_for_jira') {
 				$user = Setting::where('jira', 'klyon')->first();
