@@ -9,7 +9,7 @@ An easy way to send emails with stack trace whenever an exception occurs on the 
 ### Install via composer
 
 ```
-$ composer require squareboat/sneaker
+$ composer require squareboat/sneaker ^1.0
 ```
 
 ### Configure Laravel
@@ -27,11 +27,11 @@ SquareBoat\Sneaker\SneakerServiceProvider::class,
 Add exception capturing to `app/Exceptions/Handler.php`:
 
 ```php
-public function report(Exception $e)
+public function report(Exception $exception)
 {
-    app('sneaker')->captureException($e);
+    app('sneaker')->captureException($exception);
 
-    parent::report($e);
+    parent::report($exception);
 }
 ```
 
@@ -81,13 +81,13 @@ You can also use `'*'` in the `$capture` array which will in turn captures every
 To use this feature you should add the following code in `app/Exceptions/Handler.php`:
 
 ```php
-public function report(Exception $e)
+public function report(Exception $exception)
 {
-    if ($this->shouldReport($e)) {
-        app('sneaker')->captureException($e);
+    if ($this->shouldReport($exception)) {
+        app('sneaker')->captureException($exception);
     }
 
-    parent::report($e);
+    parent::report($exception);
 }
 ```
 
@@ -127,6 +127,19 @@ $ php artisan vendor:publish --provider="SquareBoat\Sneaker\SneakerServiceProvid
 Now the email's subject and body view are located in the `resources/views/vendor/sneaker` directory.
 
 We have passed the thrown exception object `$exception` in the view which you can use to customize the view to fit your needs.
+
+## Security
+
+If you discover any security related issues, please email amit.gupta@squareboat.com instead of using the issue tracker.
+
+## Credits
+
+- [Amit Gupta](https://github.com/akaamitgupta)
+- [All Contributors](../../contributors)
+
+## About Squareboat
+
+Squareboat is a startup focused, product development company based in Gurgaon, India. You'll find an overview of all our open source projects [on GitHub](https://github.com/squareboat).
 
 # License
 

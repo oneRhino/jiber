@@ -42,13 +42,13 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
 
         $this->app->alias('debugbar', 'Barryvdh\Debugbar\LaravelDebugbar');
 
-        $this->app['command.debugbar.clear'] = $this->app->share(
+        $this->app->singleton('command.debugbar.clear',
             function ($app) {
                 return new Console\ClearCommand($app['debugbar']);
             }
         );
 
-        $this->commands(array('command.debugbar.clear'));
+        $this->commands(['command.debugbar.clear']);
     }
 
     /**
@@ -77,6 +77,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
         $routeConfig = [
             'namespace' => 'Barryvdh\Debugbar\Controllers',
             'prefix' => $this->app['config']->get('debugbar.route_prefix'),
+            'domain' => $this->app['config']->get('debugbar.route_domain'),
         ];
 
         $this->getRouter()->group($routeConfig, function($router) {
@@ -169,6 +170,6 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
      */
     public function provides()
     {
-        return array('debugbar', 'command.debugbar.clear');
+        return ['debugbar', 'command.debugbar.clear'];
     }
 }

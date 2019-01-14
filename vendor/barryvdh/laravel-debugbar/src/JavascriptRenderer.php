@@ -19,6 +19,7 @@ class JavascriptRenderer extends BaseJavascriptRenderer
 
         $this->cssFiles['laravel'] = __DIR__ . '/Resources/laravel-debugbar.css';
         $this->cssVendors['fontawesome'] = __DIR__ . '/Resources/vendor/font-awesome/style.css';
+        $this->jsFiles['laravel-sql'] = __DIR__ . '/Resources/sqlqueries/widget.js';
     }
 
     /**
@@ -43,9 +44,12 @@ class JavascriptRenderer extends BaseJavascriptRenderer
 
         $jsRoute = route('debugbar.assets.js', [
             'v' => $this->getModifiedTime('js')
-       ]);
+        ]);
 
-        $html  = "<link rel='stylesheet' type='text/css' href='{$cssRoute}'>";
+        $cssRoute = preg_replace('/\Ahttps?:/', '', $cssRoute);
+        $jsRoute  = preg_replace('/\Ahttps?:/', '', $jsRoute);
+
+        $html  = "<link rel='stylesheet' type='text/css' property='stylesheet' href='{$cssRoute}'>";
         $html .= "<script type='text/javascript' src='{$jsRoute}'></script>";
 
         if ($this->isJqueryNoConflictEnabled()) {
@@ -107,7 +111,7 @@ class JavascriptRenderer extends BaseJavascriptRenderer
         }
 
         if (is_array($uri)) {
-            $uris = array();
+            $uris = [];
             foreach ($uri as $u) {
                 $uris[] = $this->makeUriRelativeTo($u, $root);
             }

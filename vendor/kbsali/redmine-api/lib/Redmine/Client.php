@@ -40,10 +40,10 @@ class Client
     /**
      * @var array
      */
-    private static $defaultPorts = array(
+    private static $defaultPorts = [
         'http' => 80,
         'https' => 443,
-    );
+    ];
 
     /**
      * @var int
@@ -88,12 +88,17 @@ class Client
     /**
      * @var array APIs
      */
-    private $apis = array();
+    private $apis = [];
 
     /**
      * @var string|null username for impersonating API calls
      */
     protected $impersonateUser = null;
+
+    /**
+     * @var string|null customHost
+     */
+    protected $customHost = null;
 
     /**
      * @var int|null Redmine response code, null if request is not still completed
@@ -103,19 +108,19 @@ class Client
     /**
      * @var array cURL options
      */
-    private $curlOptions = array();
+    private $curlOptions = [];
 
     /**
      * Error strings if json is invalid.
      */
-    private static $jsonErrors = array(
+    private static $jsonErrors = [
         JSON_ERROR_NONE => 'No error has occurred',
         JSON_ERROR_DEPTH => 'The maximum stack depth has been exceeded',
         JSON_ERROR_CTRL_CHAR => 'Control character error, possibly incorrectly encoded',
         JSON_ERROR_SYNTAX => 'Syntax error',
-    );
+    ];
 
-    private $classes = array(
+    private $classes = [
         'attachment' => 'Attachment',
         'group' => 'Group',
         'custom_fields' => 'CustomField',
@@ -135,7 +140,7 @@ class Client
         'user' => 'User',
         'version' => 'Version',
         'wiki' => 'Wiki',
-    );
+    ];
 
     /**
      * Usage: apikeyOrUsername can be auth key or username.
@@ -204,7 +209,7 @@ class Client
      * @param string $path
      * @param bool   $decode
      *
-     * @return array
+     * @return array|string|false
      */
     public function get($path, $decode = true)
     {
@@ -222,7 +227,7 @@ class Client
     /**
      * Decodes json response.
      *
-     * Returns $json if no error occured during decoding but decoded value is
+     * Returns $json if no error occurred during decoding but decoded value is
      * null.
      *
      * @param string $json
@@ -276,7 +281,7 @@ class Client
      *
      * @param string $path
      *
-     * @return array
+     * @return false|\SimpleXMLElement|string
      */
     public function delete($path)
     {
@@ -461,6 +466,26 @@ class Client
     }
 
     /**
+     * @param string|null $customHost
+     *
+     * @return Client
+     */
+    public function setCustomHost($customHost = null)
+    {
+        $this->customHost = $customHost;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCustomHost()
+    {
+        return $this->customHost;
+    }
+
+    /**
      * Set a cURL option.
      *
      * @param int   $option The CURLOPT_XXX option to set
@@ -474,6 +499,20 @@ class Client
 
         return $this;
     }
+
+     /**
+      * Unset a cURL option.
+      *
+      * @param int   $option The CURLOPT_XXX option to unset
+      *
+      * @return Client
+      */
+     public function unsetCurlOption($option)
+     {
+         unset($this->curlOptions[$option]);
+
+         return $this;
+     }
 
     /**
      * Get all set cURL options.
@@ -492,12 +531,11 @@ class Client
      * @param string $method
      * @param string $data
      *
-     * @return resource a cURL handle on success, <b>FALSE</b> on errors.
+     * @return resource a cURL handle on success, <b>FALSE</b> on errors
      */
     public function prepareRequest($path, $method = 'GET', $data = '')
     {
         $this->responseCode = null;
-        $this->curlOptions = array();
         $curl = curl_init();
 
         // General cURL options
@@ -524,32 +562,13 @@ class Client
             $this->setCurlOption(CURLOPT_SSLVERSION, $this->sslVersion);
         }
 
-        // Additional request headers
-        $httpHeader = array(
-            'Expect: ',
-        );
-
-        // Content type headers
-        $tmp = parse_url($this->url.$path);
-        if ('/uploads.json' === $path || '/uploads.xml' === $path) {
-            $httpHeader[] = 'Content-Type: application/octet-stream';
-        } elseif ('json' === substr($tmp['path'], -4)) {
-            $httpHeader[] = 'Content-Type: application/json';
-        } elseif ('xml' === substr($tmp['path'], -3)) {
-            $httpHeader[] = 'Content-Type: text/xml';
-        }
-
-        // Redmine specific headers
-        if ($this->impersonateUser !== null) {
-            $httpHeader[] = 'X-Redmine-Switch-User: '.$this->impersonateUser;
-        }
-        if (null === $this->pass) {
-            $httpHeader[] = 'X-Redmine-API-Key: '.$this->apikeyOrUsername;
-        }
-
         // Set the HTTP request headers
+        $httpHeader = $this->setHttpHeader($path);
         $this->setCurlOption(CURLOPT_HTTPHEADER, $httpHeader);
 
+        $this->unsetCurlOption(CURLOPT_CUSTOMREQUEST);
+        $this->unsetCurlOption(CURLOPT_POST);
+        $this->unsetCurlOption(CURLOPT_POSTFIELDS);
         switch ($method) {
             case 'POST':
                 $this->setCurlOption(CURLOPT_POST, 1);
@@ -576,6 +595,38 @@ class Client
         return $curl;
     }
 
+    private function setHttpHeader($path)
+    {
+        // Additional request headers
+        $httpHeader = [
+            'Expect: ',
+        ];
+
+        // Content type headers
+        $tmp = parse_url($this->url.$path);
+        if ('/uploads.json' === $path || '/uploads.xml' === $path) {
+            $httpHeader[] = 'Content-Type: application/octet-stream';
+        } elseif ('json' === substr($tmp['path'], -4)) {
+            $httpHeader[] = 'Content-Type: application/json';
+        } elseif ('xml' === substr($tmp['path'], -3)) {
+            $httpHeader[] = 'Content-Type: text/xml';
+        }
+
+        if ($this->customHost !== null) {
+            $httpHeader[] = 'Host: '.$this->customHost;
+        }
+
+        // Redmine specific headers
+        if ($this->impersonateUser !== null) {
+            $httpHeader[] = 'X-Redmine-Switch-User: '.$this->impersonateUser;
+        }
+        if (null === $this->pass) {
+            $httpHeader[] = 'X-Redmine-API-Key: '.$this->apikeyOrUsername;
+        }
+
+        return $httpHeader;
+    }
+
     /**
      * Process the cURL response.
      *
@@ -584,7 +635,7 @@ class Client
      *
      * @throws \Exception If anything goes wrong on curl request
      *
-     * @return bool|\SimpleXMLElement|string
+     * @return false|\SimpleXMLElement|string
      */
     public function processCurlResponse($response, $contentType)
     {
@@ -609,7 +660,7 @@ class Client
      *
      * @throws \Exception If anything goes wrong on curl request
      *
-     * @return bool|\SimpleXMLElement|string
+     * @return false|\SimpleXMLElement|string
      */
     protected function runRequest($path, $method = 'GET', $data = '')
     {

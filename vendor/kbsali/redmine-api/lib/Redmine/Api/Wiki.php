@@ -5,24 +5,25 @@ namespace Redmine\Api;
 /**
  * Listing Wiki pages.
  *
- * @link   http://www.redmine.org/projects/redmine/wiki/Rest_WikiPages
+ * @see   http://www.redmine.org/projects/redmine/wiki/Rest_WikiPages
  *
  * @author Kevin Saliou <kevin at saliou dot name>
  */
 class Wiki extends AbstractApi
 {
-    private $wikiPages = array();
+    private $wikiPages = [];
 
     /**
      * List wiki pages of given $project.
      *
-     * @link http://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-the-pages-list-of-a-wiki
+     * @see http://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-the-pages-list-of-a-wiki
      *
-     * @param array $params optional parameters to be passed to the api (offset, limit, ...)
+     * @param int|string $project project name
+     * @param array      $params  optional parameters to be passed to the api (offset, limit, ...)
      *
      * @return array list of wiki pages found for the given project
      */
-    public function all($project, array $params = array())
+    public function all($project, array $params = [])
     {
         $this->wikiPages = $this->retrieveAll('/projects/'.$project.'/wiki/index.json', $params);
 
@@ -32,8 +33,8 @@ class Wiki extends AbstractApi
     /**
      * Getting [an old version of] a wiki page.
      *
-     * @link http://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-a-wiki-page
-     * @link http://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-an-old-version-of-a-wiki-page
+     * @see http://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-a-wiki-page
+     * @see http://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Getting-an-old-version-of-a-wiki-page
      *
      * @param int|string $project the project name
      * @param string     $page    the page name
@@ -57,15 +58,15 @@ class Wiki extends AbstractApi
      * @param string     $page    the page name
      * @param array      $params  the new wiki page data
      *
-     * @return \SimpleXMLElement
+     * @return string|false
      */
-    public function create($project, $page, array $params = array())
+    public function create($project, $page, array $params = [])
     {
-        $defaults = array(
+        $defaults = [
             'text' => null,
             'comments' => null,
             'version' => null,
-        );
+        ];
         $params = $this->sanitizeParams($defaults, $params);
 
         $xml = new \SimpleXMLElement('<?xml version="1.0"?><wiki_page></wiki_page>');
@@ -83,9 +84,9 @@ class Wiki extends AbstractApi
      * @param string     $page    the page name
      * @param array      $params  the new wiki page data
      *
-     * @return \SimpleXMLElement
+     * @return string|false
      */
-    public function update($project, $page, array $params = array())
+    public function update($project, $page, array $params = [])
     {
         return $this->create($project, $page, $params);
     }
@@ -93,7 +94,7 @@ class Wiki extends AbstractApi
     /**
      * Delete a wiki page.
      *
-     * @link http://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Deleting-a-wiki-page
+     * @see http://www.redmine.org/projects/redmine/wiki/Rest_WikiPages#Deleting-a-wiki-page
      *
      * @param int|string $project the project name
      * @param string     $page    the page name

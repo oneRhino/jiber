@@ -42,6 +42,7 @@ abstract class AbstractApi
      * Perform the client get() method.
      *
      * @param string $path
+     * @param bool   $decode
      *
      * @return array
      */
@@ -81,7 +82,7 @@ abstract class AbstractApi
      *
      * @param string $path
      *
-     * @return array
+     * @return false|\SimpleXMLElement|string
      */
     protected function delete($path)
     {
@@ -114,7 +115,7 @@ abstract class AbstractApi
     {
         return array_filter(
             array_merge($defaults, $params),
-            array($this, 'isNotNull')
+            [$this, 'isNotNull']
         );
     }
 
@@ -127,18 +128,18 @@ abstract class AbstractApi
      *
      * @return array elements found
      */
-    protected function retrieveAll($endpoint, array $params = array())
+    protected function retrieveAll($endpoint, array $params = [])
     {
         if (empty($params)) {
             return $this->get($endpoint);
         }
-        $defaults = array(
+        $defaults = [
             'limit' => 25,
             'offset' => 0,
-        );
+        ];
         $params = $this->sanitizeParams($defaults, $params);
 
-        $ret = array();
+        $ret = [];
 
         $limit = $params['limit'];
         $offset = $params['offset'];
@@ -175,7 +176,7 @@ abstract class AbstractApi
      * Attaches Custom Fields to a create/update query.
      *
      * @param \SimpleXMLElement $xml    XML Element the custom fields are attached to
-     * @param array            $fields array of fields to attach, each field needs name, id and value set
+     * @param array             $fields array of fields to attach, each field needs name, id and value set
      *
      * @return \SimpleXMLElement $xml
      *
@@ -203,7 +204,7 @@ abstract class AbstractApi
                     $_values->addChild('value', $val);
                 }
             } else {
-                $_field->addChild('value', $field['value']);
+                $_field->value = $field['value'];
             }
         }
 

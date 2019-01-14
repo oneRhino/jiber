@@ -13,15 +13,23 @@
         }
     ],
     "require": {
-        "php": ">=5.4",
-        "ext-curl": "*"
+        "php": "^5.4 || ^7.0",
+        "ext-curl": "*",
+        "ext-simplexml": "*",
+        "ext-json": "*"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4.0"
+        "friendsofphp/php-cs-fixer": "^2.0",
+        "phpunit/phpunit": "^4.8.35 || ^5.4.3 || ^6.0"
     },
     "autoload": {
-        "psr-0": {
-            "Redmine": "lib/"
+        "psr-4": {
+            "Redmine\\": "lib/Redmine/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Redmine\\Tests\\": "tests/"
         }
     }
 }
