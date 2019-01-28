@@ -751,7 +751,7 @@ class JiraController extends Controller
 			}
 
 			$subject      = htmlspecialchars($content->issue->fields->summary, ENT_XML1, 'UTF-8');
-			$description  = htmlspecialchars($content->issue->fields->description, ENT_XML1, 'UTF-8');
+            $description  = $this->transformDescription($content->issue->fields->description);
 			$description .= "\n\nh1. Resources\n";
 			$description .= "\n* JIRA Ticket: https://flypilot.atlassian.net/browse/{$content->issue->key}";
 
@@ -847,15 +847,7 @@ class JiraController extends Controller
 						$data['subject'] = htmlentities($_item->toString);
 						break;
 					case 'description':
-						$data['description'] = str_replace('\r\n', "\n", $_item->toString);
-						$data['description'] = str_replace('\"', '"', $data['description']);
-
-						if (strpos($data['description'], '"') === 0) {
-							$data['description'] = substr($data['description'], 1, -1);
-						}
-
-						$data['description'] = htmlspecialchars($data['description'], ENT_XML1, 'UTF-8');
-
+                        $description  = $this->transformDescription($_item->toString);
 						break;
 					case 'duedate':
 						$data['due_date'] = substr($_item->toString, 0, strpos($_item->toString, ' '));
@@ -1119,4 +1111,33 @@ class JiraController extends Controller
 			$m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
 		});
 	}
+
+    private function transformDescription($description) {
+        // Remove \r from line breaks
+        $description = str_replace('\r\n', "\n", $description);
+
+        // Remove escaping double quotes
+        $description = str_replace('\"', '"', $description);
+
+        // If description starts with a double quote, remove it
+        if (strpos($description, '"') === 0) {
+            $description = substr($description, 1, -1);
+        }
+
+        // Transform Special Chars
+        $description  = htmlspecialchars($description, ENT_XML1, 'UTF-8');
+
+        // Adjust links
+        $pattern = [
+            '|\[(http(.)*)]|i',
+            '/\[([^|]*)\|(http(.)*)]/i',
+        ];
+        $replacement = [
+            '$1',
+            '[$1]($2)',
+        ];
+        $description = preg_replace($pattern, $replacement, $description);
+
+        return $description;
+    }
 }
