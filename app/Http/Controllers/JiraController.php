@@ -1135,7 +1135,7 @@ class JiraController extends Controller
         ];
         $replacement = [
             '$1',
-            '[$1]($2)',
+            '$1 ($2)',
         ];
         $description = preg_replace($pattern, $replacement, $description);
 
