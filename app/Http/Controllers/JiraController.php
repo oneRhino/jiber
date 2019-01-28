@@ -848,67 +848,67 @@ class JiraController extends Controller
                 switch ($_item->field)
                 {
                     case 'summary':
-                    $data['subject'] = htmlentities($_item->toString);
-                    break;
+                        $data['subject'] = htmlentities($_item->toString);
+                        break;
                     case 'description':
-                    $description  = $this->transformDescription($_item->toString);
-                    break;
+                        $data['description'] = $this->transformDescription($_item->toString);
+                        break;
                     case 'duedate':
-                    $data['due_date'] = substr($_item->toString, 0, strpos($_item->toString, ' '));
-                    break;
+                        $data['due_date'] = substr($_item->toString, 0, strpos($_item->toString, ' '));
+                        break;
                     case 'priority':
-                    $priority = RedmineJiraPriority::where('jira_name', $_item->toString)->first();
+                        $priority = RedmineJiraPriority::where('jira_name', $_item->toString)->first();
 
-                    if (!$priority) {
-                        $this->errorEmail("Priority not found: {$content->issue->fields->priority->name}");
-                        die;
-                    }
-
-                    $data['priority_id'] = $priority->redmine_id;
-
-                    break;
-                    case 'assignee':
-                    $assignee = RedmineJiraUser::where('jira_name', $_item->to)->first();
-
-                    if (!$assignee) {
-                        $this->errorEmail("Assignee not found: {$content->issue->fields->assignee->key}");
-                        die;
-                    }
-
-                    $data['assigned_to_id'] = $assignee->redmine_id;
-
-                    break;
-                    case 'status':
-                    $status = RedmineJiraStatus::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
-
-                    if (!$status) {
-                        $this->errorEmail("Status not found: {$content->issue->fields->status->name}");
-                        die;
-                    }
-
-                    $data['status_id'] = $status->redmine_id;
-
-                    break;
-                    case 'issuetype':
-                    $tracker = RedmineJiraTracker::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
-
-                    if (!$tracker) {
-                        $this->errorEmail("Tracker not found: {$content->issue->fields->issuetype->name}");
-                        die;
-                    }
-
-                    $data['tracker_id'] = $tracker->redmine_id;
-
-                    break;
-                    case 'Attachment':
-                    // Run through all attachments, and add the one who matches
-                    foreach ($content->issue->fields->attachment as $_attachment) {
-                        if ($_attachment->filename == $_item->toString) {
-                            $data['notes'] = "Attachment added: {$_attachment->content}";
+                        if (!$priority) {
+                            $this->errorEmail("Priority not found: {$content->issue->fields->priority->name}");
+                            die;
                         }
-                    }
 
-                    break;
+                        $data['priority_id'] = $priority->redmine_id;
+
+                        break;
+                    case 'assignee':
+                        $assignee = RedmineJiraUser::where('jira_name', $_item->to)->first();
+
+                        if (!$assignee) {
+                            $this->errorEmail("Assignee not found: {$content->issue->fields->assignee->key}");
+                            die;
+                        }
+
+                        $data['assigned_to_id'] = $assignee->redmine_id;
+
+                        break;
+                    case 'status':
+                        $status = RedmineJiraStatus::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
+
+                        if (!$status) {
+                            $this->errorEmail("Status not found: {$content->issue->fields->status->name}");
+                            die;
+                        }
+
+                        $data['status_id'] = $status->redmine_id;
+
+                        break;
+                    case 'issuetype':
+                        $tracker = RedmineJiraTracker::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
+
+                        if (!$tracker) {
+                            $this->errorEmail("Tracker not found: {$content->issue->fields->issuetype->name}");
+                            die;
+                        }
+
+                        $data['tracker_id'] = $tracker->redmine_id;
+
+                        break;
+                    case 'Attachment':
+                        // Run through all attachments, and add the one who matches
+                        foreach ($content->issue->fields->attachment as $_attachment) {
+                            if ($_attachment->filename == $_item->toString) {
+                                $data['notes'] = "Attachment added: {$_attachment->content}";
+                            }
+                        }
+
+                        break;
                 }
             }
             Log::debug('-- Redmine data:');
