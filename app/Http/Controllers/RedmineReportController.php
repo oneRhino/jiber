@@ -79,8 +79,13 @@ class RedmineReportController extends RedmineController
         foreach ($redmine_entries['time_entries'] as $_entry) {
             if (!isset($_entry['issue'])) continue;
 
-            $description = (isset($_entry['comments']) ? $_entry['comments'] : $_entry['activity']['name']);
-            if (!$description) $description = $_entry['activity']['name'];
+		if (isset($_entry['comments'])) {
+			$description = $_entry['comments'];
+		} elseif (isset($_entry['activity'])) {
+			$description = $_entry['activity']['name'];
+		} else {
+			$description = 'Development';
+		}
 
             $time_entry = new TimeEntry();
             $time_entry->user_id           = Auth::user()->id;

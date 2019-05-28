@@ -21,6 +21,12 @@
                             <input type="text" name="jira_name" id="jira_name" class="form-control" @if($project)value="{{ $project->jira_name }}"@endif>
                         </fieldset>
 
+                        <fieldset class="form-group">
+                            <label for="content">Content</label>
+                            <textarea name="content" id="content" class="form-control">@if($project){{ $project->content }}@endif</textarea>
+			    <p>This will be added at the end of the ticket's description when it's created.</p>
+                        </fieldset>
+
                         <button type="submit" class="btn btn-primary">Save</button>
                     </form>
                 </div>

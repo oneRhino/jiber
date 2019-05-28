@@ -6,7 +6,9 @@ jQuery(document).ready(function($){
 
 	if ($('table.datatable').length > 0)
 	{
-		var table = $('table.datatable').DataTable();
+		var table = $('table.datatable').DataTable({
+			stateSave: true
+		});
 
 		$(table.table().container())
 			.find('div.dataTables_paginate')

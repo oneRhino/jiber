@@ -87,7 +87,7 @@ class CreatedTasks extends Command
         Auth::setUser($user);
 
         // Current date
-	$date = date('Y-m-d', strtotime("-20 minutes"));;
+	$date = date('Y-m-d', strtotime("-20 minutes"));
 
         // Get Redmine tasks created this date
         $RedmineController = new RedmineController;
@@ -96,6 +96,7 @@ class CreatedTasks extends Command
             'created_on' => '>='.$date,
             'limit'      => 100,
             'sort'       => 'created_on:desc',
+		'include' => 'attachments',
         );
         $redmine_entries = $Redmine->issue->all($args);
 
@@ -233,16 +234,25 @@ class CreatedTasks extends Command
             );
 
             if ($jira_type == '6') {
-    			$issue['customfield_10301'] = $_ticket['subject']; // Epic Name
-    		}
+    		$issue['customfield_10301'] = $_ticket['subject']; // Epic Name
+    	    }
 
             if (!$issue['description']) {
                 $issue['description'] = 'TODO';
             }
 
+            $project = RedmineJiraProject::where('redmine_name', $_ticket['project']['name'])->first();
+	    if ($project->content) {
+		$issue['description'] .= "\n".$project->content;
+	    }
+
             if (isset($_ticket['due_date']) && !empty($_ticket['due_date'])) {
                 $issue['duedate'] = $_ticket['due_date'];
             }
+
+            //if (isset($_ticket['start_date']) && !empty($_ticket['start_date'])) {
+            //    $issue['customfield_11700'] = $_ticket['start_date'];
+            //}
 
             /*if (isset($_ticket['estimated_hours'])) {
                 $issue['timetracking'] = array('originalEstimate' => ($_ticket['estimated_hours'] * 60));
@@ -301,7 +311,7 @@ class CreatedTasks extends Command
         foreach ($tickets as $_jira => $_redmine)
         {
             $data = array(
-                'description' => $_redmine['description'],
+                'description' => htmlentities($_redmine['description'], ENT_XML1),
                 'custom_fields' => array(
                     'custom_value' => array(
                         'id'    => Config::get('redmine.jira_id'),

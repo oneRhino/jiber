@@ -171,6 +171,9 @@ class UpdatedTasks extends Command
                             case 'priority_id':
                                 $this->jiraPriority   ($created_on, $created_by, $_detail['new_value']);
                                 break;
+                            case 'start_date':
+                                $this->jiraStartDate  ($created_on, $created_by, $_detail['new_value']);
+                                break;
                             case 'due_date':
                                 $this->jiraDueDate    ($created_on, $created_by, $_detail['new_value']);
                                 break;
@@ -205,7 +208,12 @@ class UpdatedTasks extends Command
 
     private function jiraEstimated($created_on, $created_by, $content)
     {
-        $this->jira_updates[$created_by][$this->jira_id]['estimated'] = $content * 60;
+        $this->jira_updates[$created_by][$this->jira_id]['estimated'] = $content;
+    }
+
+    private function jiraStartDate($created_on, $created_by, $content)
+    {
+        $this->jira_updates[$created_by][$this->jira_id]['startdate'] = $content;
     }
 
     private function jiraDueDate($created_on, $created_by, $content)
@@ -234,7 +242,10 @@ class UpdatedTasks extends Command
     {
         $status = RedmineJiraStatus::where('redmine_id', $content)->first();
 
-        $this->jira_updates[$created_by][$this->jira_id]['status'] = $status->jira_name;
+	$status = explode(',', $status->jira_name);
+	$status = reset($status);
+
+        $this->jira_updates[$created_by][$this->jira_id]['status'] = $status;
     }
 
     private function jiraAssignee($created_on, $created_by, $content)
@@ -318,16 +329,25 @@ class UpdatedTasks extends Command
                             break;
 
                         case 'estimated':
-                            //$this->writeLog('JIRA: Estimated Time');
+                            $this->writeLog('JIRA: Estimated Time');
                             $args = array('fields' => array('timetracking' => array('originalEstimate' => $_content)));
+                            //$args = array('fields' => array('customfield_11702' => $_content));
+                            $this->writeLog(print_r($args, true));
                             $result = $Jira->editIssue($_jira_id, $args);
-                            //$this->writeLog(print_r($result, true));
+                            $this->writeLog(print_r($result, true));
                             break;
 
                         case 'duedate':
                             //$this->writeLog('JIRA: Due date');
                             $args = array('fields' => array('duedate' => $_content));
                             $result = $Jira->editIssue($_jira_id, $args);
+                            //$this->writeLog(print_r($result, true));
+                            break;
+
+                        case 'startdate':
+                            //$this->writeLog('JIRA: Due date');
+                            //$args = array('fields' => array('customfield_11700' => $_content));
+                            //$result = $Jira->editIssue($_jira_id, $args);
                             //$this->writeLog(print_r($result, true));
                             break;
 
@@ -340,19 +360,20 @@ class UpdatedTasks extends Command
                             break;
 
                         case 'status':
-                            //$this->writeLog('JIRA: Status');
+                            $this->writeLog('JIRA: Status');
                             $transiction = null;
 
                             // Get available transictions, so we can get its ID
                             $result     = $Jira->getTransitions($_jira_id, array());
                             $statuses   = $result->getResult();
+                            $this->writeLog(print_r($statuses, true));
                             $transition = null;
 
                             if (isset($statuses['transitions']))
                             {
                                 foreach ($statuses['transitions'] as $_status)
                                 {
-                                    if ($_status['name'] == $_content)
+                                    if (strtolower($_status['to']['name']) == strtolower($_content))
                                         $transition = $_status['id'];
                                 }
                             }
@@ -363,8 +384,9 @@ class UpdatedTasks extends Command
                             }
 
                             $args = array('transition' => $transition);
+                            $this->writeLog(print_r($args, true));
                             $result = $Jira->transition($_jira_id, $args);
-                            //$this->writeLog(print_r($result, true));
+                            $this->writeLog(print_r($result, true));
 
                             break;
                     }

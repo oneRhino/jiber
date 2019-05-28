@@ -31,6 +31,7 @@ class RedmineJiraProjectsController extends Controller
         // Save project
         $project->redmine_name = $request->redmine_name;
         $project->jira_name    = $request->jira_name;
+        $project->content      = $request->content;
         $project->save();
 
         $request->session()->flash('alert-success', 'Project updated successfully!');

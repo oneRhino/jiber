@@ -750,7 +750,7 @@ class JiraController extends Controller
                 die;
             }
 
-            $subject      = htmlspecialchars($content->issue->fields->summary, ENT_XML1, 'UTF-8');
+            $subject      = $content->issue->fields->summary;
             $description  = $this->transformDescription($content->issue->fields->description);
             $description .= "\n\nh1. Resources\n";
             $description .= "\n* JIRA Ticket: https://flypilot.atlassian.net/browse/{$content->issue->key}";
@@ -848,7 +848,7 @@ class JiraController extends Controller
                 switch ($_item->field)
                 {
                     case 'summary':
-                        $data['subject'] = htmlentities($_item->toString);
+                        $data['subject'] = $_item->toString;
                         break;
                     case 'description':
                         $data['description'] = $this->transformDescription($_item->toString);
@@ -1053,9 +1053,8 @@ class JiraController extends Controller
             }
 
             if ($send_comment && isset($content->comment)) {
-                // Build data array
-                $treated_content = htmlentities($content->comment->body, ENT_HTML401);
-                $treated_content = str_replace("\r\n", "\n", $treated_content);
+		// Build data array
+		$treated_content = $this->transformDescription($content->comment->body);
                 $data = array(
                     'notes' => $treated_content,
                 );
@@ -1117,30 +1116,72 @@ class JiraController extends Controller
     }
 
     private function transformDescription($description) {
+	// HELPDESK Transformations
+	if (strpos($description, '{quote}') !== false) {
+		// Remove all {color*} tags
+		$pattern = '|{color(:#?[a-z0-9]*)?}|i';
+		$description = preg_replace($pattern, '', $description);
+		// Add a ">" on all lines between {quote} and {quote}
+		$lines = preg_split('/\R/', $description);
+		$inside_quote = false;
+		foreach ($lines as &$line) {
+			// First of all, remove pipes and images
+			$patterns = [
+				'|\s\||', // pipes with space or breakline before it
+				'|\|\s|', // pipes with space or breakline after it
+				'|!([a-z0-9:\/\.\-?=&%;])*!|i', // images
+			];
+			$line = preg_replace($patterns, '', $line);
+
+			// Starting quote
+			if (!$inside_quote && strpos($line, '{quote}') !== false) {
+				$inside_quote = true;
+			}
+			// Ending quote
+			elseif ($inside_quote && strpos($line, '{quote}') !== false) {
+				$inside_quote = false;
+			}
+			// Inside quote
+			elseif ($inside_quote) {
+				$line = '> ' . $line;
+			}
+		}
+		$description = implode("\r\n", $lines);
+		// Remove {quote}
+		$description = str_replace('{quote}', '', $description);
+	}
+
         // Remove \r from line breaks
         $description = str_replace('\r\n', "\n", $description);
 
         // Remove escaping double quotes
-        $description = str_replace('\"', '"', $description);
+	$description = str_replace('\"', '"', $description);
+
+	// Remove escaping minus signs
+	$description = str_replace('\-', '-', $description);
 
         // If description starts with a double quote, remove it
         if (strpos($description, '"') === 0) {
             $description = substr($description, 1, -1);
-        }
+	}
+
+	$url = 'http([a-z0-9:_\/\.\-?=&%;])*';
 
         // Adjust links
         $pattern = [
             '|\[(http(.)*)]|i',
             '/\[([^|]*)\|(http(.)*)]/i',
+	    '/(http[^|]*)\|(http[\S]*)/i',
         ];
         $replacement = [
             '$1',
-            '$1 ($2)',
+	    '$1 ($2)',
+	    '$1',
         ];
         $description = preg_replace($pattern, $replacement, $description);
 
         // Transform Special Chars
-        $description  = htmlspecialchars($description, ENT_XML1, 'UTF-8');
+        //$description  = htmlspecialchars($description, ENT_XML1, 'UTF-8');
 
         return $description;
     }
