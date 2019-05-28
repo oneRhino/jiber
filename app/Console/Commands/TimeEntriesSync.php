@@ -99,15 +99,6 @@ class TimeEntriesSync extends Command
                 // Check if user has jira password
                 if (!$_settings->jira_password) continue;
 
-                try {
-                    $jira_password = Crypt::decrypt($_settings->jira_password);
-                } catch (DecryptException $e) {
-                    die(print_r($e));
-                }
-
-                if (!$jira_password)
-                    die(print_r($_user));
-
                 // Set user as logged-in user
                 $request = new Request();
                 $request->merge(['user' => $_user]);

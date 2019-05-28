@@ -66,17 +66,16 @@ class UsersController extends Controller
                 );
             }
 
-            $setting->id       = Auth::user()->id;
-            $setting->toggl    = $request->toggl;
-            $setting->redmine  = $request->redmine;
-            $setting->jira     = $request->jira;
-            $setting->basecamp = $request->basecamp;
+            $setting->id                 = Auth::user()->id;
+            $setting->toggl              = $request->toggl;
+            $setting->redmine            = $request->redmine;
+            $setting->jira               = $request->jira;
+            $setting->jira_password      = $request->jira_password;
+            $setting->basecamp           = $request->basecamp;
             $setting->toggl_redmine_sync = $request->toggl_redmine_sync;
             $setting->redmine_jira_sync  = $request->redmine_jira_sync;
             if ($toggl_redmine_data)
                 $setting->toggl_redmine_data = serialize($toggl_redmine_data);
-            if ($request->jira_password)
-                $setting->jira_password  = Crypt::encrypt($request->jira_password);
             $setting->save();
             $request->session()->flash('alert-success', 'Settings successfully saved.');
         }

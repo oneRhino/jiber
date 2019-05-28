@@ -16,10 +16,15 @@
                     <form class="form-horizontal" role="form" method="POST" action="{{ action('UsersController@settings') }}">
                         {{ csrf_field() }}
 
-                        @include('users.settings_field', ['boolean' => $toggl   , 'name' => 'toggl'   , 'label' => 'Toggl API Token'  , 'value' => $setting->toggl ])
-                        @include('users.settings_field', ['boolean' => $redmine , 'name' => 'redmine' , 'label' => 'Redmine API Token', 'value' => $setting->redmine ])
-                        @include('users.settings_field', ['boolean' => $jira    , 'name' => 'jira'    , 'label' => 'Jira Username'    , 'value' => $setting->jira ])
+                        @include('users.settings_field', ['boolean' => $toggl   , 'name' => 'toggl'        , 'label' => 'Toggl API Token'   , 'value' => $setting->toggl ])
+                        @include('users.settings_field', ['boolean' => $redmine , 'name' => 'redmine'      , 'label' => 'Redmine API Token' , 'value' => $setting->redmine ])
+                        @include('users.settings_field', ['boolean' => $jira    , 'name' => 'jira'         , 'label' => 'Jira Email Address', 'value' => $setting->jira ])
+                        @include('users.settings_field', ['boolean' => $jira    , 'name' => 'jira_password', 'label' => 'Jira API Token'    , 'value' => $setting->jira_password ])
                         {{-- @include('users.settings_field', ['boolean' => $basecamp, 'name' => 'basecamp', 'label' => 'Basecamp Username', 'value' => $setting->basecamp ]) --}}
+
+                        <div class="checkbox">
+                            <label><input type="checkbox" name="redmine_jira_sync" id="redmine_jira_sync" value="1" @if ($setting->redmine_jira_sync) checked="checked" @endif> Enable Redmine/Jira Daily Sync</label>
+                        </div>
 
                         <div class="checkbox">
                             <label><input type="checkbox" name="toggl_redmine_sync" id="toggl_redmine_sync" value="1" @if ($setting->toggl_redmine_sync) checked="checked" @endif> Enable Toggl/Redmine Daily Sync</label>
@@ -62,20 +67,6 @@
                             @endforeach
                         </div>
 
-                        <div class="checkbox">
-                            <label><input type="checkbox" name="redmine_jira_sync" id="redmine_jira_sync" value="1" @if ($setting->redmine_jira_sync) checked="checked" @endif> Enable Redmine/Jira Daily Sync</label>
-                        </div>
-
-                        <div id="redmine_jira_sync_div" class="panel-body @unless ($setting->redmine_jira_sync) hidden @endunless">
-                            <h4 class="text-center">Please add your Jira password</h4>
-
-                            <fieldset class="form-group">
-	                            <div class="col-md-12 input-group">
-		                            <input id="jira_password" autocomplete="off" type="password" class="form-control" name="jira_password" @if ($setting->jira_password)placeholder="Encrypted"@endif>
-                                </div>
-                            </fieldset>
-                        </div>
-
                         <div class="form-group">
                             <div class="col-md-12 col-md-offset-4">
                                 <button type="submit" class="btn btn-primary">Save</button>
@@ -94,9 +85,6 @@
 jQuery(document).ready(function($){
     $('#toggl_redmine_sync').click(function(){
         $('#toggl_redmine_sync_div').toggleClass('hidden');
-    });
-    $('#redmine_jira_sync').click(function(){
-        $('#redmine_jira_sync_div').toggleClass('hidden');
     });
 });
 </script>

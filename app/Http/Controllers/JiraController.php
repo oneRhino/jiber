@@ -61,62 +61,15 @@ class JiraController extends Controller
         $redirect = app('Illuminate\Routing\Redirector');
         $url      = Config::get('jira.url');
         $settings = Setting::find(Auth::user()->id);
-        $username = $settings->jira;
-        if ($settings->jira_password) {
-            try {
-                $password = Crypt::decrypt($settings->jira_password);
-            } catch (DecryptException $e) {
-                die(print_r($e));
-            }
-        }
-        else
-        $password = $request->session()->get('jira.password');
-
-        if (!$password) {
-            $request->session()->flash('alert-warning', 'Please set your Jira Password (it will be stored only for this session).');
-            $request->session()->put('back', $request->path());
-            $redirect->to('/jira/set-password')->send();
-        }
+        $email    = $settings->jira;
+        $token    = $settings->jira_password;
 
         $api = new Api(
             $url,
-            new Basic($username, $password)
+            new Basic($email, $token)
         );
 
         return $api;
-    }
-
-    /**
-    * Show set Jira password form and save it into session
-    */
-    public function set_password(Request $request)
-    {
-        $redirect = app('Illuminate\Routing\Redirector');
-
-        if (!Setting::find(Auth::user()->id)->jira) {
-            $request->session()->flash('alert-warning', 'Please set your Jira Username.');
-            $request->session()->put('back', $request->path());
-            $redirect->to('/settings')->send();
-        }
-
-        if ($request->isMethod('post')) {
-            $request->session()->put('jira.password', $request->jira_password);
-
-            // Test Connection
-            if ($this->test($request)) {
-                $request->session()->flash('alert-success', 'Your Jira password has been successfully set.');
-                if ($request->session()->has('back')) {
-                    return redirect($request->session()->get('back'));
-                } else {
-                    return redirect('/settings');
-                }
-            } else {
-                $request->session()->flash('alert-warning', 'Connection failed. Please check your Jira password.');
-                return view('jira.set_password');
-            }
-        } else {
-            return view('jira.set_password');
-        }
     }
 
     /**

@@ -20,10 +20,6 @@ switch ($boolean) {
 			@if ($boolean < 0)
 				<p><a href="{{ Config::get('redmine.url') }}my/account" target="_blank">{{ Config::get('redmine.url') }}my/account</a></p>
 			@endif
-		@elseif ($name == 'jira')
-			@if ($value != '')
-				<a href="{{ action('JiraController@set_password') }}">Reset Password</a>
-			@endif
 		@endif
 	</div>
 </div>
