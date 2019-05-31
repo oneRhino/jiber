@@ -163,7 +163,7 @@ class JiraController extends Controller
                     foreach ($results['worklogs'] as $_time) {
                         // Worklog author isn't current jira user? Continue!
                         // Unless report isn't filtering out other users
-                        if ($report->filter_user && $_time['author']['name'] != $jira_username) {
+                        if ($report->filter_user && $_time['author']['emailAddress'] != $jira_username) {
                             continue;
                         }
 
