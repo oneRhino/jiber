@@ -108,7 +108,7 @@ class TimeEntriesSync extends Command
 
                 Auth::setUser($_user);
 
-                $request->jira_password = $jira_password;
+                //$request->jira_password = $jira_password;
 
                 // Create a report for the requested date(s)
                 $RedmineController = new RedmineReportController($request);

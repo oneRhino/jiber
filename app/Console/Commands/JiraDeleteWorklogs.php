@@ -86,7 +86,7 @@ class JiraDeleteWorklogs extends Command
                 $resultWL = $returnWL->getResult();
 
                 foreach ($resultWL['worklogs'] as $_worklog) {
-                    if ($_worklog['author']['emailAddress'] != $jira_user) continue;
+                    if ($_worklog['author']['name'] != $jira_user) continue;
                     if (strtotime($_worklog['started']) < strtotime($date[0].' 00:00:00') || strtotime($_worklog['started']) > strtotime($date[1].' 23:59:59')) continue;
 
                     $this->info("- Deleting {$_worklog['timeSpent']} - {$_worklog['started']} - user {$_worklog['author']['name']}");
