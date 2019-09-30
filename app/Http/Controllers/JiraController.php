@@ -61,8 +61,10 @@ class JiraController extends Controller
         $redirect = app('Illuminate\Routing\Redirector');
         $url      = Config::get('jira.url');
         $settings = Setting::find(Auth::user()->id);
-        $email    = $settings->jira;
+        $email    = $settings->jira_email;
         $token    = $settings->jira_password;
+
+        if (!$token) return false;
 
         $api = new Api(
             $url,
@@ -568,7 +570,11 @@ class JiraController extends Controller
 
         if (!$user) {
             if (isset($content->issue) && isset($content->issue->fields->reporter)) {
-                $user = Setting::where('jira', $content->issue->fields->reporter->key)->first();
+                if (!isset($content->issue->fields->reporter->key)) {
+                    Log::debug(print_r($content->issue->fields->reporter, true));
+                } else {
+                    $user = Setting::where('jira', $content->issue->fields->reporter->key)->first();
+                }
             } elseif (isset($content->comment)) {
                 $user = Setting::where('jira', $content->comment->author->key)->first();
             }
@@ -824,6 +830,11 @@ class JiraController extends Controller
                         $assignee = RedmineJiraUser::where('jira_name', $_item->to)->first();
 
                         if (!$assignee) {
+                            $assignee = RedmineJiraUser::where('jira_code', $_item->to)->first();
+                        }
+
+                        if (!$assignee) {
+                            Log::debug('Assignee not found: '.print_r($content->issue->fields->assignee, true));
                             $this->errorEmail("Assignee not found: {$content->issue->fields->assignee->key}");
                             die;
                         }

@@ -184,16 +184,19 @@ class CreatedTasks extends Command
                 continue;
             }
 
+            $trackers = explode(',', $tracker->jira_name);
+
             $jira_types = $Jira->getProjectIssueTypes($_ticket['JiraProject']);
             $jira_type  = null;
 
             foreach ($jira_types as $_type) {
-                if (isset($_type['name']) && stripos($tracker->jira_name, $_type['name']) !== false)
-                $jira_type = $_type['id'];
+                if (isset($_type['name']) && in_array($_type['name'], $trackers)) {
+                    $jira_type = $_type['id'];
+                }
             }
 
             if (!$jira_type) {
-                $this->errorEmail("Jira type {$tracker->jira_name} not found: <pre>". print_r($tracker, true) . print_r($jira_types, true).'</pre>');
+                $this->errorEmail("Jira type {$tracker->jira_name} not found (project '{$_ticket['JiraProject']}'): <pre>". print_r($tracker, true) . print_r($jira_types, true) . print_r($user, true) . '</pre>');
                 continue;
             }
 
@@ -328,20 +331,21 @@ class CreatedTasks extends Command
     {
         if (!$errors) die;
 
-        if (!is_array($errors))
-        $errors = array($errors);
+        if (!is_array($errors)) {
+            $errors = array($errors);
+        }
 
         $subject = 'Redmine/Jira (CreatedTasks) sync '.$level;
 
         Mail::send('emails.error', ['errors' => $errors], function ($m) use($subject) {
-            $m->from('jiber@tmisoft.com', 'Jiber');
-            $m->to('thaissa.mendes@gmail.com', 'Thaissa Mendes')->subject($subject);
+            $m->from('jiber@onerhino.com', 'Jiber');
+            $m->to('thaissa@tmisoft.com', 'Thaissa Mendes')->subject($subject);
         });
     }
 
-    private function writeLog($message)
-    {
-	if ($this->debug)
+    private function writeLog($message) {
+        if ($this->debug) {
         	file_put_contents('redmine-create.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
+        }
     }
 }

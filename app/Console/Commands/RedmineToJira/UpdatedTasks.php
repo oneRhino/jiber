@@ -99,7 +99,7 @@ class UpdatedTasks extends Command
             // Check if ticket has a Jira ID, otherwise ignore
             $this->writeLog("Check task {$_issue['id']}");
             $this->jira_id = false;
-            
+
             foreach ($_issue['custom_fields'] as $_field)
             {
                 if ($_field['id'] == Config::get('redmine.jira_id') && !empty($_field['value']))
@@ -292,6 +292,11 @@ class UpdatedTasks extends Command
             $request = $this->loginUser($user);
             $Jira    = $JiraController->connect($request);
 
+            if (!$Jira) {
+                $this->writeLog("ERROR: User {$_user} do not have jira token set");
+                continue;
+            }
+
             // Run through all user's updates, per Jira Task ID
             foreach ($_user_updates as $_jira_id => $_task_updates)
             {
@@ -329,12 +334,12 @@ class UpdatedTasks extends Command
                             break;
 
                         case 'estimated':
-                            $this->writeLog('JIRA: Estimated Time');
-                            $args = array('fields' => array('timetracking' => array('originalEstimate' => $_content)));
+                            // $this->writeLog('JIRA: Estimated Time');
+                            // $args = array('fields' => array('timetracking' => array('originalEstimate' => $_content)));
                             //$args = array('fields' => array('customfield_11702' => $_content));
-                            $this->writeLog(print_r($args, true));
-                            $result = $Jira->editIssue($_jira_id, $args);
-                            $this->writeLog(print_r($result, true));
+                            // $this->writeLog(print_r($args, true));
+                            // $result = $Jira->editIssue($_jira_id, $args);
+                            // $this->writeLog(print_r($result, true));
                             break;
 
                         case 'duedate':
@@ -345,10 +350,9 @@ class UpdatedTasks extends Command
                             break;
 
                         case 'startdate':
-                            //$this->writeLog('JIRA: Due date');
-                            //$args = array('fields' => array('customfield_11700' => $_content));
-                            //$result = $Jira->editIssue($_jira_id, $args);
-                            //$this->writeLog(print_r($result, true));
+                            $this->writeLog('JIRA: Start Date (customfield_11700)');
+                            $args = array('fields' => array('customfield_11700' => $_content));
+                            $result = $Jira->editIssue($_jira_id, $args);
                             break;
 
                         case 'comment':
@@ -377,7 +381,7 @@ class UpdatedTasks extends Command
                                         $transition = $_status['id'];
                                 }
                             }
-    
+
                             if (!$transition) {
                                 $this->writeLog("ERROR: Status not found ({$_content})");
                                 break;

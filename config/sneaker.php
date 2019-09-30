@@ -38,7 +38,7 @@ return [
     */
 
     'to' => [
-        'thaissa.mendes@gmail.com',
+        'thaissa@tmisoft.com',
     ],
 
     /*
