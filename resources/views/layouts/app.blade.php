@@ -38,16 +38,6 @@
                 <!-- Left Side Of Navbar -->
                 <ul class="nav navbar-nav">
                     <li>
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Toggl <span class="caret"></span></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="{{ action('TogglWorkspaceController@index') }}">Workspaces</a></li>
-                            <li><a href="{{ action('TogglClientController@index') }}">Clients</a></li>
-                            <li><a href="{{ action('TogglProjectController@index') }}">Projects</a></li>
-                            <li><a href="{{ action('TogglTaskController@index') }}">Tasks</a></li>
-                            <li><a href="{{ action('TogglReportController@index') }}">Reports</a></li>
-                        </ul>
-                    </li>
-                    <li>
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Redmine <span class="caret"></span></a>
                         <ul class="dropdown-menu">
                             <li><a href="{{ action('RedmineReportController@index') }}">Reports</a></li>
@@ -58,6 +48,16 @@
                                 <li><a href="{{ action('RedmineJiraStatusesController@index') }}">Redmine/Jira Statuses</a></li>
                                 <li><a href="{{ action('RedmineJiraPrioritiesController@index') }}">Redmine/Jira Priorities</a></li>
                             @endif
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Toggl <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{{ action('TogglWorkspaceController@index') }}">Workspaces</a></li>
+                            <li><a href="{{ action('TogglClientController@index') }}">Clients</a></li>
+                            <li><a href="{{ action('TogglProjectController@index') }}">Projects</a></li>
+                            <li><a href="{{ action('TogglTaskController@index') }}">Tasks</a></li>
+                            <li><a href="{{ action('TogglReportController@index') }}">Reports</a></li>
                         </ul>
                     </li>
                 </ul>
