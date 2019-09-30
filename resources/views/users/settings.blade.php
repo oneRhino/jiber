@@ -18,7 +18,8 @@
 
                         @include('users.settings_field', ['boolean' => $toggl   , 'name' => 'toggl'        , 'label' => 'Toggl API Token'   , 'value' => $setting->toggl ])
                         @include('users.settings_field', ['boolean' => $redmine , 'name' => 'redmine'      , 'label' => 'Redmine API Token' , 'value' => $setting->redmine ])
-                        @include('users.settings_field', ['boolean' => $jira    , 'name' => 'jira'         , 'label' => 'Jira Email Address', 'value' => $setting->jira ])
+                        @include('users.settings_field', ['boolean' => $jira    , 'name' => 'jira'         , 'label' => 'Jira Username'     , 'value' => $setting->jira ])
+                        @include('users.settings_field', ['boolean' => $jira    , 'name' => 'jira_email'   , 'label' => 'Jira Email Address', 'value' => $setting->jira_email ])
                         @include('users.settings_field', ['boolean' => $jira    , 'name' => 'jira_password', 'label' => 'Jira API Token'    , 'value' => $setting->jira_password ])
                         {{-- @include('users.settings_field', ['boolean' => $basecamp, 'name' => 'basecamp', 'label' => 'Basecamp Username', 'value' => $setting->basecamp ]) --}}
 
