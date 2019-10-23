@@ -79,14 +79,16 @@ class JiraController extends Controller
     */
     public function test(Request $request)
     {
-        $connection = $this->connect($request);
+	$connection = $this->connect($request);
+
+	if (!$connection) return false;
 
         try {
             $details = $connection->api('GET', '/rest/api/2/mypermissions');
 
             if ($details) {
                 return true;
-            }
+	    }
         } catch (\Exception $e) {
             return false;
         }
