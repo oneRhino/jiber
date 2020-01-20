@@ -128,7 +128,7 @@ class TimeEntriesSync extends Command
                     );
 
                     Mail::send('emails.redmine_jira_report', $data, function ($m) use ($_user) {
-                        $m->from('noreply@tmisoft.com', 'Jiber');
+                        $m->from('noreply@onerhino.com', 'Jiber');
                         $m->cc(['thaissa@onerhino.com', 'pablo@onerhino.com', 'william@onerhino.com', 'billy@onerhino.com']);
                         $m->to($_user->email, $_user->name)->subject('Redmine-to-Jira Daily Report');
                     });

@@ -95,7 +95,8 @@ class CheckTimeEntries extends Command {
             Mail::send('emails.differencces_report', $data, function ($m) {
                 $timeframe = \ucwords($this->argument('timeframe'));
                 $m->from('noreply@onerhino.com', 'Jiber');
-                $m->to('pm@onerhino.com,thaissa@onerhino.com')->subject("Redmine-Jira Time Differences {$timeframe} Report");
+                $m->cc(['thaissa@onerhino.com']);
+                $m->to('pm@onerhino.com')->subject("Redmine-Jira Time Differences {$timeframe} Report");
             });
         }
     }
