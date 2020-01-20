@@ -133,11 +133,11 @@ class CheckTimeEntries extends Command {
                 $discrepancy = 0.5;
                 break;
 
-            case 'week':
+            case 'weekly':
                 $discrepancy = 1;
                 break;
 
-            case 'month':
+            case 'monthly':
                 $discrepancy = 2;
                 break;
         }
