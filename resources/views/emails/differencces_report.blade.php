@@ -5,7 +5,7 @@
     <p>{{ $_user }}</p>
     <ul>
         @foreach ($_diffs as $_ids => $_diff)
-            <li>{{ $_ids }}: {{ $_diff }}</li>
+            <li>{{ $_ids }}: <strong>{{ $_diff }}h</strong></li>
         @endforeach
     </ul>
 @endforeach
