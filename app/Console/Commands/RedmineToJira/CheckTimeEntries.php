@@ -7,6 +7,7 @@ use App\Http\Controllers\{JiraController, RedmineReportController};
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Mail;
 
 class CheckTimeEntries extends Command {
     /**
