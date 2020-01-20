@@ -172,7 +172,7 @@ class CheckTimeEntries extends Command {
         Auth::setUser($user);
     }
 
-    private function getTimeframe():void {
+    private function getTimeframe():array {
         switch ($this->argument('timeframe')) {
             case '72h':
                 $start_date = '-3 days';
