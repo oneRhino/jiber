@@ -792,7 +792,7 @@ class JiraController extends Controller
             //Log::debug(print_r($redmine_entries, true));
 
             // Check data
-            if (!$redmine_entries['issues']) {
+            if (empty($redmine_entries['issues'])) {
                 $this->errorEmail("No task using Jira ID {$_GET['issue']} - so it was created", 'alert');
                 return $this->issue('created', $content, $request);
             }
@@ -1125,6 +1125,9 @@ class JiraController extends Controller
 
 	// Remove escaping minus signs
 	$description = str_replace('\-', '-', $description);
+
+	// Fix Unicode characters
+	$description = html_entity_decode($description);
 
         // If description starts with a double quote, remove it
         if (strpos($description, '"') === 0) {
