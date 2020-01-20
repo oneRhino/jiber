@@ -1,4 +1,5 @@
 <p>These are the time differences for the range {{ $start_date }} - {{ $end_date }}</p>
+<p>Negative time means Jira has more time logged than Redmine.</p>
 
 @foreach ($differences as $_user => $_diffs)
     <p>{{ $_user }}</p>

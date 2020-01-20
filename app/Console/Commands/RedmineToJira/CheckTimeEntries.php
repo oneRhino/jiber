@@ -93,8 +93,9 @@ class CheckTimeEntries extends Command {
             ];
 
             Mail::send('emails.differencces_report', $data, function ($m) {
+                $timeframe = \ucwords($this->argument('timeframe'));
                 $m->from('noreply@onerhino.com', 'Jiber');
-                $m->to('thaissa.mendes@gmail.com')->subject('Redmine-Jira Time Differences Report');
+                $m->to('pm@onerhino.com,thaissa@onerhino.com')->subject("Redmine-Jira Time Differences {$timeframe} Report");
             });
         }
     }
@@ -116,7 +117,7 @@ class CheckTimeEntries extends Command {
 
                 // Add redmine and jira ids to differences array
                 foreach ($_value['entry_entries'] as $_jira_entry) {
-                    $key = $_key . '|' . $_jira_entry->jira_issue_id;
+                    $key = $_key . ' | ' . $_jira_entry->jira_issue_id;
                     $differences[$key] = $difference;
                 }
             }
@@ -179,11 +180,11 @@ class CheckTimeEntries extends Command {
                 $start_date = '-3 days';
                 break;
 
-            case 'week':
+            case 'weekly':
                 $start_date = '-7 days';
                 break;
 
-            case 'month':
+            case 'monthly':
                 $start_date = '-1 month';
                 break;
         }
