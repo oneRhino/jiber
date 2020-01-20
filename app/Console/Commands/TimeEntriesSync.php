@@ -2,24 +2,14 @@
 
 namespace App\Console\Commands;
 
-use Mail;
+use App\{Setting, TogglClient, TogglReport, TogglProject, TogglTask, TimeEntry, TogglTimeEntry, RedmineReport, Report};
+use App\Http\Controllers\{TogglReportController, RedmineReportController};
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
-use App\Setting;
-use App\TogglClient;
-use App\TogglReport;
-use App\TogglProject;
-use App\TogglTask;
-use App\TimeEntry;
-use App\TogglTimeEntry;
-use App\RedmineReport;
-use App\Report;
-use App\Http\Controllers\TogglReportController;
-use App\Http\Controllers\RedmineReportController;
-use Illuminate\Contracts\Encryption\DecryptException;
-use Crypt;
+use Mail;
 
 class TimeEntriesSync extends Command
 {
@@ -107,8 +97,6 @@ class TimeEntriesSync extends Command
                 });
 
                 Auth::setUser($_user);
-
-                //$request->jira_password = $jira_password;
 
                 // Create a report for the requested date(s)
                 $RedmineController = new RedmineReportController($request);

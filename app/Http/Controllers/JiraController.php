@@ -29,27 +29,14 @@
 
 namespace App\Http\Controllers;
 
-use Log;
-use Mail;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
+use App\{JiraSent, RedmineChange, RedmineJiraPriority, RedmineJiraProject, RedmineJiraStatus, RedmineJiraTask, RedmineJiraTracker, RedmineJiraUser, Report, Setting, TimeEntry, User};
 use App\Http\Controllers\RedmineController;
-use App\JiraSent;
-use App\RedmineChange;
-use App\RedmineJiraPriority;
-use App\RedmineJiraProject;
-use App\RedmineJiraStatus;
-use App\RedmineJiraTask;
-use App\RedmineJiraTracker;
-use App\RedmineJiraUser;
-use App\Report;
-use App\Setting;
-use App\TimeEntry;
-use App\User;
 use chobie\Jira\Api;
 use chobie\Jira\Api\Authentication\Basic;
-use Crypt;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\{Auth, Config};
+use Log;
+use Mail;
 
 class JiraController extends Controller
 {
@@ -79,16 +66,16 @@ class JiraController extends Controller
     */
     public function test(Request $request)
     {
-	$connection = $this->connect($request);
+        $connection = $this->connect($request);
 
-	if (!$connection) return false;
+        if (!$connection) return false;
 
         try {
             $details = $connection->api('GET', '/rest/api/2/mypermissions');
 
             if ($details) {
                 return true;
-	    }
+            }
         } catch (\Exception $e) {
             return false;
         }
@@ -99,7 +86,7 @@ class JiraController extends Controller
     /**
     * Show Jira's time entries grouped by date and Redmine's task ID
     */
-    public function show(Report $report, Request $request)
+    public function show(Report $report, Request $request, $return = false)
     {
         if ($report->user_id != Auth::user()->id) {
             abort(403, 'Unauthorized action.');
@@ -121,9 +108,13 @@ class JiraController extends Controller
         $jira_entries = $report->entries()->whereNotNull('jira_issue_id')->get();
 
         if (!$jira_entries->count()) {
-            $request->session()->flash('alert-warning', 'No Jira tasks have been found in the period.');
+            if ($return) {
+                return false;
+            } else {
+                $request->session()->flash('alert-warning', 'No Jira tasks have been found in the period.');
 
-            return back()->withInput();
+                return back()->withInput();
+            }
         }
 
         // First create arrays and fill with entry information
@@ -197,16 +188,20 @@ class JiraController extends Controller
         // Sort entries based on first key (date), ascending
         ksort($entries);
 
-        if ($report->filter_user) {
-            return view('jira.show', [
-                'entries'   => $entries,
-                'report_id' => $report->id,
-            ]);
+        if ($return) {
+            return $entries;
         } else {
-            return view('jira.show_all', [
-                'entries'   => $entries,
-                'report_id' => $report->id,
-            ]);
+            if ($report->filter_user) {
+                return view('jira.show', [
+                    'entries'   => $entries,
+                    'report_id' => $report->id,
+                ]);
+            } else {
+                return view('jira.show_all', [
+                    'entries'   => $entries,
+                    'report_id' => $report->id,
+                ]);
+            }
         }
     }
 
@@ -1082,70 +1077,72 @@ class JiraController extends Controller
     }
 
     private function transformDescription($description) {
-	// HELPDESK Transformations
-	if (strpos($description, '{quote}') !== false) {
-		// Remove all {color*} tags
-		$pattern = '|{color(:#?[a-z0-9]*)?}|i';
-		$description = preg_replace($pattern, '', $description);
-		// Add a ">" on all lines between {quote} and {quote}
-		$lines = preg_split('/\R/', $description);
-		$inside_quote = false;
-		foreach ($lines as &$line) {
-			// First of all, remove pipes and images
-			$patterns = [
-				'|\s\||', // pipes with space or breakline before it
-				'|\|\s|', // pipes with space or breakline after it
-				'|!([a-z0-9:\/\.\-?=&%;])*!|i', // images
-			];
-			$line = preg_replace($patterns, '', $line);
+    	// HELPDESK Transformations
+    	if (strpos($description, '{quote}') !== false) {
+    		// Remove all {color*} tags
+    		$pattern = '|{color(:#?[a-z0-9]*)?}|i';
+    		$description = preg_replace($pattern, '', $description);
 
-			// Starting quote
-			if (!$inside_quote && strpos($line, '{quote}') !== false) {
-				$inside_quote = true;
-			}
-			// Ending quote
-			elseif ($inside_quote && strpos($line, '{quote}') !== false) {
-				$inside_quote = false;
-			}
-			// Inside quote
-			elseif ($inside_quote) {
-				$line = '> ' . $line;
-			}
-		}
-		$description = implode("\r\n", $lines);
-		// Remove {quote}
-		$description = str_replace('{quote}', '', $description);
-	}
+    		// Add a ">" on all lines between {quote} and {quote}
+    		$lines = preg_split('/\R/', $description);
+    		$inside_quote = false;
+
+    		foreach ($lines as &$line) {
+    			// First of all, remove pipes and images
+    			$patterns = [
+    				'|\s\||', // pipes with space or breakline before it
+    				'|\|\s|', // pipes with space or breakline after it
+    				'|!([a-z0-9:\/\.\-?=&%;])*!|i', // images
+    			];
+    			$line = preg_replace($patterns, '', $line);
+
+    			// Starting quote
+    			if (!$inside_quote && strpos($line, '{quote}') !== false) {
+    				$inside_quote = true;
+    			}
+    			// Ending quote
+    			elseif ($inside_quote && strpos($line, '{quote}') !== false) {
+    				$inside_quote = false;
+    			}
+    			// Inside quote
+    			elseif ($inside_quote) {
+    				$line = '> ' . $line;
+    			}
+    		}
+    		$description = implode("\r\n", $lines);
+    		// Remove {quote}
+    		$description = str_replace('{quote}', '', $description);
+    	}
 
         // Remove \r from line breaks
         $description = str_replace('\r\n', "\n", $description);
 
         // Remove escaping double quotes
-	$description = str_replace('\"', '"', $description);
+    	$description = str_replace('\"', '"', $description);
 
-	// Remove escaping minus signs
-	$description = str_replace('\-', '-', $description);
+    	// Remove escaping minus signs
+    	$description = str_replace('\-', '-', $description);
 
-	// Fix Unicode characters
-	$description = html_entity_decode($description);
+    	// Fix Unicode characters
+    	$description = html_entity_decode($description);
 
-        // If description starts with a double quote, remove it
-        if (strpos($description, '"') === 0) {
-            $description = substr($description, 1, -1);
-	}
+            // If description starts with a double quote, remove it
+            if (strpos($description, '"') === 0) {
+                $description = substr($description, 1, -1);
+    	}
 
-	$url = 'http([a-z0-9:_\/\.\-?=&%;])*';
+    	$url = 'http([a-z0-9:_\/\.\-?=&%;])*';
 
         // Adjust links
         $pattern = [
             '|\[(http(.)*)]|i',
             '/\[([^|]*)\|(http(.)*)]/i',
-	    '/(http[^|]*)\|(http[\S]*)/i',
+            '/(http[^|]*)\|(http[\S]*)/i',
         ];
         $replacement = [
             '$1',
-	    '$1 ($2)',
-	    '$1',
+            '$1 ($2)',
+            '$1',
         ];
         $description = preg_replace($pattern, $replacement, $description);
 

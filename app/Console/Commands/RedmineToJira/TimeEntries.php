@@ -39,17 +39,19 @@ class TimeEntries extends Command
     {
         // Check the last execution date
         $start_date = file_get_contents('last-exec-redmine-jira.log');
-        $start_date = explode('-', date('Y-n-j', strtotime($start_date)));
-        $start_date = mktime(0,0,0, $start_date[1], $start_date[2]+1, $start_date[0]);
-        $start_date = date('Y-m-d', $start_date);
+        $start_date = new DateTime($start_date);
 
-        // From last execution date, until today - 2 days
-        $end_date   = date('Y-m-d', mktime(0,0,0,date('n'),date('j')-2));
+        // Start date should be the day after the last execution date
+        $start_date->modify('+1 day');
+
+        // End date should be previous day from now
+        $end_date = new DateTime('-1 day');
 
         $this->call('time-entries:sync', [
-            'method' => 'Redmine-Jira', 'date' => $start_date.'|'.$end_date
+            'method' => 'Redmine-Jira',
+            'date'   => $start_date->format('Y-m-d').'|'.$end_date->format('Y-m-d')
         ]);
 
-        file_put_contents('last-exec-redmine-jira.log', $end_date);
+        file_put_contents('last-exec-redmine-jira.log', $end_date->format('Y-m-d'));
     }
 }

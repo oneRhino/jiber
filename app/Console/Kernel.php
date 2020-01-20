@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
         Commands\RedmineToJira\CreatedTasks::class,
         Commands\RedmineToJira\UpdatedTasks::class,
         Commands\RedmineToJira\TimeEntries::class,
+        Commands\RedmineToJira\CheckTimeEntries::class,
     ];
 
     /**
