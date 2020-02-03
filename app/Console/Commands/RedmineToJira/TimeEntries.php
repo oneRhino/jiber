@@ -39,13 +39,13 @@ class TimeEntries extends Command
     {
         // Check the last execution date
         $start_date = file_get_contents('last-exec-redmine-jira.log');
-        $start_date = new DateTime($start_date);
+        $start_date = new \DateTime($start_date);
 
         // Start date should be the day after the last execution date
         $start_date->modify('+1 day');
 
         // End date should be previous day from now
-        $end_date = new DateTime('-1 day');
+        $end_date = new \DateTime('-1 day');
 
         $this->call('time-entries:sync', [
             'method' => 'Redmine-Jira',
