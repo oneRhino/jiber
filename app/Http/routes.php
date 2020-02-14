@@ -11,10 +11,11 @@
 |
 */
 
+Auth::routes();
+
 Route::get('/'    , ['middleware' => 'auth', 'uses' => 'RedmineReportController@index']);
 Route::get('/home', ['middleware' => 'auth', 'uses' => 'RedmineReportController@index']);
-
-Route::auth();
+Route::get('/logout', 'Auth\LoginController@logout');
 
 Route::match(['get', 'post'], 'settings', [
 	'middleware' => 'auth',

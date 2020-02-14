@@ -1,25 +1,28 @@
 {
     "name": "laravel/laravel",
     "description": "The Laravel Framework.",
-    "keywords": ["framework", "laravel"],
+    "keywords": [
+        "framework",
+        "laravel"
+    ],
     "license": "MIT",
     "type": "project",
     "require": {
         "php": ">=5.5.9",
-        "laravel/framework": "5.2.*",
+        "laravel/framework": "5.3.*",
         "ajt/guzzle-toggl": "^0.10.0",
         "kbsali/redmine-api": "^1.5",
         "doctrine/dbal": "^2.5",
         "chobie/jira-api-restclient": "^2.0@dev",
-        "barryvdh/laravel-debugbar": "^2.2",
-        "squareboat/sneaker": "^1.0"
+        "barryvdh/laravel-debugbar": "^2.2"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
         "mockery/mockery": "0.9.*",
         "phpunit/phpunit": "~4.0",
-        "symfony/css-selector": "2.8.*|3.0.*",
-        "symfony/dom-crawler": "2.8.*|3.0.*"
+        "symfony/css-selector": "3.1.*",
+        "symfony/dom-crawler": "3.1.*",
+        "composer/composer": "^1.9"
     },
     "autoload": {
         "classmap": [
