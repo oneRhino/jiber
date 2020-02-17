@@ -20,11 +20,11 @@ class RedmineJiraUsersController extends Controller
         ]);
     }
 
-    /*public function login()
+    public function login()
     {
         $user = User::find($_GET['user']);
         Auth::login($user);
-    }*/
+    }
 
     public function edit(RedmineJiraUser $user)
     {
