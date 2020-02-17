@@ -17,7 +17,7 @@ class CreateRedmineClubhouseProjects extends Migration
             $table->increments('id');
             $table->integer('redmine_id')->unsigned()->nullable();
             $table->string('redmine_name')->nullable();
-            $table->string('clubhouse_id')->unsigned()->nullable();
+            $table->integer('clubhouse_id')->unsigned()->nullable();
             $table->string('clubhouse_name')->nullable();
             $table->text('content')->nullable();
             $table->timestamps();
