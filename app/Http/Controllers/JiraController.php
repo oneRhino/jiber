@@ -98,8 +98,8 @@ class JiraController extends Controller
         $jira = $this->connect($request);
 
         // Get Jira current username
-        // $setting       = Setting::find(Auth::user()->id);
-        // $jira_username = $setting->jira;
+        $setting       = Setting::find(Auth::user()->id);
+        $jira_username = $setting->jira;
 
         // Entries array - that will contain all Toggl's and Jira's entries to display
         $entries = array();
