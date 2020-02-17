@@ -151,8 +151,10 @@ class JiraController extends Controller
                 }
 
                 // Get Jira worklog for this task
+                //Log::debug('JIRA ID '.$__entries['entry_entries'][0]->jira_issue_id);
                 $worklog = $jira->getWorklogs($__entries['entry_entries'][0]->jira_issue_id, array());
                 $results = $worklog->getResult();
+                //Log::debug(print_r($results, true));
 
                 if (isset($results['worklogs'])) {
                     foreach ($results['worklogs'] as $_time) {
