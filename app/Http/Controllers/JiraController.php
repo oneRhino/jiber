@@ -271,8 +271,8 @@ class JiraController extends Controller
 
                     if (!isset($entries[$date])) continue;
 
-                    $entries[$date][$_jira_id][$_time['author']['name']]['jira'][] = array(
-                        'user'        => $_time['author']['name'],
+                    $entries[$date][$_jira_id][$_time['author']['displayName']]['jira'][] = array(
+                        'user'        => $_time['author']['displayName'],
                         'description' => ($_time['comment'] ? $_time['comment'] : '<No comment>'),
                         'duration'    => round(($_time['timeSpentSeconds'] / 3600), 2),
                     );
