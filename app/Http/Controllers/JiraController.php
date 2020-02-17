@@ -98,8 +98,8 @@ class JiraController extends Controller
         $jira = $this->connect($request);
 
         // Get Jira current username
-        $setting       = Setting::find(Auth::user()->id);
-        $jira_username = $setting->jira;
+        // $setting       = Setting::find(Auth::user()->id);
+        // $jira_username = $setting->jira;
 
         // Entries array - that will contain all Toggl's and Jira's entries to display
         $entries = array();
@@ -158,7 +158,9 @@ class JiraController extends Controller
                     foreach ($results['worklogs'] as $_time) {
                         // Worklog author isn't current jira user? Continue!
                         // Unless report isn't filtering out other users
-                        if ($report->filter_user && $_time['author']['name'] != $jira_username) {
+                        $author = RedmineJiraUser::where('jira_code', $_time['author']['accountId'])->first();
+
+                        if ($report->filter_user && $author->jira_name != $jira_username) {
                             continue;
                         }
 
@@ -175,7 +177,7 @@ class JiraController extends Controller
 
                         $_time['description'] = $comment;
                         $_time['time']        = round(($_time['timeSpentSeconds'] / 3600), 2);
-                        $_time['user']        = $_time['author']['name'];
+                        $_time['user']        = $_time['author']['displayName'];
 
                         $entries[$_date][$_redmine]['third_entries'][] = $_time;
                         $entries[$_date][$_redmine]['third_total']    += round(($_time['timeSpentSeconds'] / 3600), 2);
