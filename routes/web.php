@@ -66,6 +66,13 @@ Route::group(['middleware' => 'auth'], function() {
     ]]);
 });
 
+Route::get('/redmine/clubhouse/projects/import', ['middleware' => 'auth', 'uses' => 'RedmineClubhouseProjectsController@import']);
+Route::group(['middleware' => 'auth'], function() {
+    Route::resource('/redmine/clubhouse/projects', 'RedmineClubhouseProjectsController', ['parameters' => [
+        'projects' => 'project'
+    ]]);
+});
+
 Route::get('/redmine/jira/trackers/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraTrackersController@import']);
 Route::group(['middleware' => 'auth'], function() {
     Route::resource('/redmine/jira/trackers', 'RedmineJiraTrackersController', ['parameters' => [

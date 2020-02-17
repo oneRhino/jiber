@@ -11,6 +11,7 @@
         "php": ">=7.0.0",
         "ajt/guzzle-toggl": "^1.0",
         "chobie/jira-api-restclient": "^2.0@dev",
+        "doctrine/dbal": "^2.10",
         "fideloper/proxy": "~3.3",
         "kbsali/redmine-api": "^1.5",
         "laravel/framework": "5.5.*",
