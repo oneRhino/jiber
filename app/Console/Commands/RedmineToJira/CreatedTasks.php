@@ -87,7 +87,7 @@ class CreatedTasks extends Command
         Auth::setUser($user);
 
         // Current date
-	$date = date('Y-m-d', strtotime("-20 minutes"));
+        $date = date('Y-m-d', strtotime("-20 minutes"));
 
         // Get Redmine tasks created this date
         $RedmineController = new RedmineController;
@@ -96,7 +96,7 @@ class CreatedTasks extends Command
             'created_on' => '>='.$date,
             'limit'      => 100,
             'sort'       => 'created_on:desc',
-		'include' => 'attachments',
+            'include'    => 'attachments',
         );
         $redmine_entries = $Redmine->issue->all($args);
 
@@ -233,7 +233,7 @@ class CreatedTasks extends Command
             $issue = array(
                 'description' => (isset($_ticket['description'])?$_ticket['description']:''),
                 'priority'    => array('id' => $jira_priority),
-                'assignee'    => array('name' => $user->jira_name),
+                'assignee'    => array('accountId' => $user->jira_code),
             );
 
             if ($jira_type == '6') {
@@ -245,9 +245,10 @@ class CreatedTasks extends Command
             }
 
             $project = RedmineJiraProject::where('redmine_name', $_ticket['project']['name'])->first();
-	    if ($project->content) {
-		$issue['description'] .= "\n".$project->content;
-	    }
+
+    	    if ($project->content) {
+                $issue['description'] .= "\n".$project->content;
+    	    }
 
             if (isset($_ticket['due_date']) && !empty($_ticket['due_date'])) {
                 $issue['duedate'] = $_ticket['due_date'];
