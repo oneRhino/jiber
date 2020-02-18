@@ -162,6 +162,11 @@ class JiraController extends Controller
                         // Unless report isn't filtering out other users
                         $author = RedmineJiraUser::where('jira_code', $_time['author']['accountId'])->first();
 
+                        if (!$author) {
+                            $this->errorEmail("User is not properly setup: ".print_r($_time['author']), 'alert');
+                            continue;
+                        }
+
                         if ($report->filter_user && $author->jira_name != $jira_username) {
                             continue;
                         }
