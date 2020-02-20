@@ -408,8 +408,19 @@ class JiraController extends Controller
             $reporter = $issue->getReporter();
             $jira_key = $issue->getKey();
 
-            if ($reporter['name'] == 'addon_zendesk_for_jira')
-            $reporter['name'] = 'klyon';
+            if (!isset($reporter['name'])) {
+                $errors = [
+                    'Reporter malformed:',
+                    'app/Http/Controllers/JiraController.php:406',
+                    $reporter
+                ];
+                $this->errorEmail($errors);
+                die;
+            }
+
+            if ($reporter['name'] == 'addon_zendesk_for_jira') {
+                $reporter['name'] = 'klyon';
+            }
 
             // USER
             $user = Setting::where('jira', $reporter['name'])->first();
@@ -570,8 +581,8 @@ class JiraController extends Controller
 
         // Check if user who is performing the action exists on Jiber
         if (!isset($_GET['user_id'])) {
-            Log::debug('-- ERROR - User not found:');
-            Log::debug(print_r($_GET, true));
+            Log::error('-- ERROR - User not found:');
+            Log::error(print_r($_GET, true));
             die;
         }
 
@@ -587,6 +598,16 @@ class JiraController extends Controller
                     $user = Setting::where('jira', $content->issue->fields->reporter->key)->first();
                 }
             } elseif (isset($content->comment)) {
+                if (!isset($content->comment->author->key)) {
+                    $errors = [
+                        'Assignee malformed:',
+                        'app/Http/Controllers/JiraController.php:585',
+                        $content->comment->author
+                    ];
+                    $this->errorEmail($errors);
+                    die;
+                }
+
                 $user = Setting::where('jira', $content->comment->author->key)->first();
             }
 
@@ -696,6 +717,18 @@ class JiraController extends Controller
             Log::debug('-- Redmine status found');
             $priority = RedmineJiraPriority::where('jira_name', $content->issue->fields->priority->name)->first();
             Log::debug('-- Redmine priority found');
+
+            if (!isset($content->issue->fields->assignee->key)) {
+                Log::error($content->issue->fields->assignee);
+                $errors = [
+                    'Assignee malformed:',
+                    'app/Http/Controllers/JiraController.php:705',
+                    $content->issue->fields->assignee
+                ];
+                $this->errorEmail($errors);
+                die;
+            }
+
             $assignee =     RedmineJiraUser::where('jira_name', $content->issue->fields->assignee->key)->first();
             Log::debug('-- Redmine assignee found');
 
