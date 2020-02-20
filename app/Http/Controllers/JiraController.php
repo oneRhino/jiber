@@ -168,7 +168,7 @@ class JiraController extends Controller
                         $author = RedmineJiraUser::where('jira_code', $_time['author']['accountId'])->first();
 
                         if (!$author) {
-                            $this->errorEmail("User is not properly setup: ".print_r($_time['author']), 'alert');
+                            $this->errorEmail("User is not properly setup: <pre>".print_r($_time['author'], true).'</pre>', 'alert');
                             continue;
                         }
 
