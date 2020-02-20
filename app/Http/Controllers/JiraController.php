@@ -158,6 +158,11 @@ class JiraController extends Controller
 
                 if (isset($results['worklogs'])) {
                     foreach ($results['worklogs'] as $_time) {
+                        if ('Tempo Timesheets' === $_time['author']['displayName']) {
+                            // Ignore this "user"
+                            continue;
+                        }
+
                         // Worklog author isn't current jira user? Continue!
                         // Unless report isn't filtering out other users
                         $author = RedmineJiraUser::where('jira_code', $_time['author']['accountId'])->first();
