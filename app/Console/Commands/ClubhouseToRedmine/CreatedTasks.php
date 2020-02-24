@@ -9,12 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use App\User;
 use App\Setting;
-use App\RedmineJiraPriority;
 use App\RedmineClubhouseProject;
 use App\RedmineClubhouseTask;
-use App\RedmineJiraTask;
-use App\RedmineJiraTracker;
-use App\RedmineJiraUser;
 use App\Http\Controllers\ClubhouseController;
 use App\Http\Controllers\RedmineController;
 use Redmine\Client as RedmineClient;
@@ -128,13 +124,16 @@ class CreatedTasks extends Command
                 $redmineCreateIssueObj['subject'] = $ticket['name'];
                 $redmineCreateIssueObj['description'] = $ticket['description'];
                 $redmineCreateIssueObj['assigned_to'] = 'admin';
-                
-                $redmineApiResponse = $redmineControllerInstance->issue->create($redmineCreateIssueObj);
 
-                $this->writeLog("-- Task {$ticket['id']} sent to Redmine."); 
-                
+                if ($this->debug) {
+                    $this->writeLog("-- Task {$ticket['id']} NOT sent to Redmine due to debug mode."); 
+                } else {
+                    $redmineApiResponse = $redmineControllerInstance->issue->create($redmineCreateIssueObj);
+                    $this->writeLog("-- Task {$ticket['id']} sent to Redmine."); 
+                }
+
                 $redmineClubhouseTaskInstance = new RedmineClubhouseTask();
-                $redmineClubhouseTaskInstance->redmine_task = $redmineApiResponse->id;
+                $redmineClubhouseTaskInstance->redmine_task = $this->debug ? "debug mode" : $redmineApiResponse->id;
                 $redmineClubhouseTaskInstance->clubhouse_task = $ticket['id'];
                 $redmineClubhouseTaskInstance->source = 'Clubhouse';
                 
