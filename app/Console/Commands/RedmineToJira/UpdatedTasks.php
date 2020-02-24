@@ -32,7 +32,7 @@ class UpdatedTasks extends Command
      */
     protected $description = 'Syncs updated tickets from Redmine and Jira.';
 
-    private $debug = false;
+    private $debug = true;
 
     /**
      * Create a new command instance.
@@ -166,26 +166,32 @@ class UpdatedTasks extends Command
                                 $this->jiraDescription($created_on, $created_by, $_detail['new_value']);
                                 break;
                             case 'status_id':
-                                $this->jiraStatus     ($created_on, $created_by, $_detail['new_value']);
+                                $this->jiraStatus($created_on, $created_by, $_detail['new_value']);
                                 break;
                             case 'priority_id':
-                                $this->jiraPriority   ($created_on, $created_by, $_detail['new_value']);
+                                $this->jiraPriority($created_on, $created_by, $_detail['new_value']);
                                 break;
                             case 'start_date':
-                                $this->jiraStartDate  ($created_on, $created_by, $_detail['new_value']);
+                                $this->jiraStartDate($created_on, $created_by, $_detail['new_value']);
                                 break;
                             case 'due_date':
-                                $this->jiraDueDate    ($created_on, $created_by, $_detail['new_value']);
+                                $this->jiraDueDate($created_on, $created_by, $_detail['new_value']);
                                 break;
                             case 'estimated_hours':
-				if (isset($_detail['new_value']))
-	                                $this->jiraEstimated  ($created_on, $created_by, $_detail['new_value']);
+                                if (isset($_detail['new_value']))
+	                                $this->jiraEstimated($created_on, $created_by, $_detail['new_value']);
                                 break;
                             case 'assigned_to_id':
                                 // Don't change assignee if ticket status is "Feedback"
                                 //if ($_entry['issue']['status']['id'] == 4) break;
 
-                                $this->jiraAssignee   ($created_on, $created_by, $_detail['new_value']);
+                                if (empty($_detail['new_value'])) {
+                                    $this->writeLog("Missing new_value parameter from details:");
+                                    $this->writeLog(print_r($_detail, true));
+                                    breeak;
+                                }
+
+                                $this->jiraAssignee($created_on, $created_by, $_detail['new_value']);
                                 break;
                         }
                     }
