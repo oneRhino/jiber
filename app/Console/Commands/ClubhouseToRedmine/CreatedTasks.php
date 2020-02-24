@@ -119,10 +119,10 @@ class CreatedTasks extends Command
         foreach ($tickets as $ticket) {
             try {
                 
-                $redmineProjectName = RedmineClubhouseProject::where('clubhouse_id', $ticket['project_id'])->get(['redmine_name'])->first();
-                
+                $redmineClubhouseProject = RedmineClubhouseProject::where('clubhouse_id', $ticket['project_id'])->get(['redmine_name', 'content'])->first();
+
                 if ($this->debug) {
-                    $redmineProjectName = $redmineProjectName->redmine_name;
+                    $redmineProjectName = $redmineClubhouseProject->redmine_name;
                 } else {
                     $redmineProjectName = 'omg-test';
                 }
@@ -130,8 +130,11 @@ class CreatedTasks extends Command
                 $redmineCreateIssueObj = array ();
                 $redmineCreateIssueObj['project_id'] = $redmineProjectName;
                 $redmineCreateIssueObj['subject'] = $ticket['name'];
-                $redmineCreateIssueObj['description'] = $ticket['description'];
                 $redmineCreateIssueObj['assigned_to'] = 'admin';
+                $redmineCreateIssueObj['description'] = $ticket['description']; 
+                if ($redmineClubhouseProject->content) {
+		            $redmineCreateIssueObj['description'] .= "\n" . $redmineClubhouseProject->content;
+	            }
 
                 if ($this->debug) {
                     $this->writeLog("-- Task {$ticket['id']} NOT sent to Redmine due to debug mode."); 
