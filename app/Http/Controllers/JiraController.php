@@ -412,7 +412,7 @@ class JiraController extends Controller
                 $errors = [
                     'Reporter malformed:',
                     'app/Http/Controllers/JiraController.php:406',
-                    $reporter
+                    print_r($reporter, true)
                 ];
                 $this->errorEmail($errors);
                 die;
@@ -502,7 +502,7 @@ class JiraController extends Controller
 
             if ($errors) {
                 Log::debug('-- Errors found:');
-                Log::debug(print_r($errors));
+                Log::debug(print_r($errors, true));
                 $this->errorEmail($errors);
                 continue;
             }
@@ -602,7 +602,7 @@ class JiraController extends Controller
                     $errors = [
                         'Assignee malformed:',
                         'app/Http/Controllers/JiraController.php:585',
-                        $content->comment->author
+                        print_r($content->comment->author, true)
                     ];
                     $this->errorEmail($errors);
                     die;
@@ -729,7 +729,7 @@ class JiraController extends Controller
                 $errors = [
                     'Assignee malformed:',
                     'app/Http/Controllers/JiraController.php:705',
-                    $content->issue->fields->assignee
+                    print_r($content->issue->fields->assignee, true)
                 ];
                 $this->errorEmail($errors);
                 die;
@@ -883,7 +883,7 @@ class JiraController extends Controller
 
                         if (!$assignee) {
                             Log::debug('Assignee not found: '.print_r($content->issue->fields->assignee, true));
-                            $this->errorEmail("Assignee not found: {$content->issue->fields->assignee->key}");
+                            $this->errorEmail("Assignee not found: ".print_r($content->issue->fields->assignee, true));
                             die;
                         }
 
