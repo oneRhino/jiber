@@ -117,10 +117,18 @@ class CreatedTasks extends Command
         $redmineControllerInstance = $redmineController->connect();
         
         foreach ($tickets as $ticket) {
+            try {
+                
+                $redmineProjectName = RedmineClubhouseProject::where('clubhouse_id', $ticket['project_id'])->get(['redmine_name'])->first();
+                
+                if ($this->debug) {
+                    $redmineProjectName = $redmineProjectName->redmine_name;
+                } else {
+                    $redmineProjectName = 'omg-test';
+                }
 
-            try {            
                 $redmineCreateIssueObj = array ();
-                $redmineCreateIssueObj['project_id'] = 'omg-test'; // TODO: Change it to a real project.
+                $redmineCreateIssueObj['project_id'] = $redmineProjectName;
                 $redmineCreateIssueObj['subject'] = $ticket['name'];
                 $redmineCreateIssueObj['description'] = $ticket['description'];
                 $redmineCreateIssueObj['assigned_to'] = 'admin';
