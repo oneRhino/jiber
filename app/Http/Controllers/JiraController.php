@@ -718,7 +718,13 @@ class JiraController extends Controller
             $priority = RedmineJiraPriority::where('jira_name', $content->issue->fields->priority->name)->first();
             Log::debug('-- Redmine priority found');
 
-            if (!isset($content->issue->fields->assignee->key)) {
+            if (!empty($content->issue->fields->assignee->accountId)) {
+                $assignee = RedmineJiraUser::where('jira_code', $content->issue->fields->assignee->accountId)->first();
+            } elseif (!empty($content->issue->fields->assignee->key)) {
+                $assignee = RedmineJiraUser::where('jira_name', $content->issue->fields->assignee->key)->first();
+            }
+
+            if (empty($assignee)) {
                 Log::error($content->issue->fields->assignee);
                 $errors = [
                     'Assignee malformed:',
@@ -728,8 +734,6 @@ class JiraController extends Controller
                 $this->errorEmail($errors);
                 die;
             }
-
-            $assignee =     RedmineJiraUser::where('jira_name', $content->issue->fields->assignee->key)->first();
             Log::debug('-- Redmine assignee found');
 
             // Check data
