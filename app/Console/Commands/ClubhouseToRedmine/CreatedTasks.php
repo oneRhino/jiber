@@ -148,8 +148,13 @@ class CreatedTasks extends Command
                 $redmineClubhouseTaskInstance->clubhouse_task = $ticket['id'];
                 $redmineClubhouseTaskInstance->source = 'Clubhouse';
                 
-                $redmineClubhouseTaskInstance->save();
-                $this->writeLog("-- Task {$ticket['id']} saved on database."); 
+                if ($this->debug) {
+                    $this->writeLog("-- Task {$ticket['id']} NOT saved on database due to debug mode."); 
+                } else {
+                    $redmineClubhouseTaskInstance->save();
+                    $this->writeLog("-- Task {$ticket['id']} saved on database."); 
+                }
+
             } catch (\Exeption $e) { 
                 $this->writeLog("-- Task {$ticket['id']} could not be sent to Redmine, Error: {$e->getMessage()}"); 
             }
