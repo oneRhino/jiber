@@ -21,7 +21,7 @@
                             <col width="150"/>
                         </colgroup>
                         <thead>
-                            <th>Redmine Project ID</th>
+                            <th>Redmine Project</th>
                             <th>Clubhouse Project</th>
                             <th class="no-sort"></th>
                         </thead>
@@ -29,8 +29,8 @@
                         <tbody>
                             @foreach ($projects as $_project)
                                 <tr>
-                                    @if ($_project->redmine_id)
-                                    <td>{{ $_project->redmine_id }}</td>
+                                    @if ($_project->redmine_name)
+                                    <td>{{ $_project->redmine_name }}</td>
                                     @else
                                     <td>-</td>
                                     @endif

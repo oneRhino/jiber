@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Config;
 use Mikkelson\Clubhouse;
 
 use App\Http\Requests;
-use App\Http\Controllers\RedmineController;
 use App\RedmineClubhouseProject;
+use App\RedmineJiraProject;
 
 class RedmineClubhouseProjectsController extends Controller
 {
@@ -23,15 +23,24 @@ class RedmineClubhouseProjectsController extends Controller
 
     public function edit(RedmineClubhouseProject $project)
     {
+
+        $redmineProjectObj = new RedmineJiraProject();
+        $redmineProjects = $redmineProjectObj->orderBy('redmine_name', 'asc')->get(['redmine_id', 'redmine_name']);
+
         return view('redmine_clubhouse_projects.form', [
             'project' => $project,
+            'redmine_projects' => $redmineProjects
         ]);
     }
 
     public function update(RedmineClubhouseProject $project, Request $request)
     {
+        $redmineProjectObj = new RedmineJiraProject();
+        $redmineProject = $redmineProjectObj->where('redmine_id', $request->redmine_id)->first();
+
         // Save project
         $project->redmine_id = $request->redmine_id;
+        $project->redmine_name = $redmineProject->redmine_name;
         $project->clubhouse_name = $request->clubhouse_name;
         $project->content = $request->content;
         $project->save();

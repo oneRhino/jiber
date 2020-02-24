@@ -12,13 +12,20 @@
                         {{ csrf_field() }}
 
                         <fieldset class="form-group">
-                            <label for="clubhouse_name">Clubhouse Project name</label>
+                            <label for="clubhouse_name">Clubhouse Project Name</label>
                             <input type="text" name="clubhouse_name" readonly id="clubhouse_name" class="form-control" @if($project)value="{{ $project->clubhouse_name }}"@endif>
                         </fieldset>
 
                         <fieldset class="form-group">
-                            <label for="redmine_name">Redmine Project ID</label>
-                            <input type="text" name="redmine_id" id="redmine_id" class="form-control" @if($project)value="{{ $project->redmine_id }}"@endif>
+                            <label for="redmine_name">Redmine Project Name</label>
+                            <select name="redmine_id" class="form-control" id="redmine_id">
+                                @if ($redmine_projects->count())
+                                    <option value="0" {{ $project->redmine_id == 0 ? 'selected="selected"' : '' }}>NOT SET</option>
+                                    @foreach($redmine_projects as $redmine_project)
+                                        <option value="{{ $redmine_project->redmine_id }}" {{ $project->redmine_id == $redmine_project->redmine_id ? 'selected="selected"' : '' }}>{{ $redmine_project->redmine_name }}</option>
+                                    @endforeach
+                                @endif
+                            </select>
                         </fieldset>
 
                         <fieldset class="form-group">
