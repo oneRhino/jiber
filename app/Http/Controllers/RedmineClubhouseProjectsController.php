@@ -68,6 +68,11 @@ class RedmineClubhouseProjectsController extends Controller
         $projectsAsArray = $clubhouseApi->get('projects');
 
         foreach ($projectsAsArray as $project) {
+            
+            // Ignore ARCHIVED projects.
+            if ($project['archived']) {
+                continue;
+            }
 
             $projectObj = RedmineClubhouseProject::where('clubhouse_id', $project['id'])->get()->first();
 

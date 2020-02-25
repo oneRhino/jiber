@@ -75,6 +75,12 @@ class CreatedTasks extends Command
 
         foreach ($clubhouseProjects as $clubhouseProject) {
 
+            // Ignore ARCHIVED projects.
+            if ($clubhouseProject['archived']) {
+                $this->writeLog("-- Project {$clubhouseProject['id']} is already archived, CONTINUE");
+                continue;
+            }
+
             $isProjectSynced = RedmineClubhouseProject::where('clubhouse_id', $clubhouseProject['id'])->first();
 
             if (!$isProjectSynced) {
@@ -85,6 +91,13 @@ class CreatedTasks extends Command
             $projectTickets = $clubhouseControllerObj->getTickets($clubhouseProject['id']);
 
             foreach ($projectTickets as $projectTicket) {
+                
+                // Ignore ARCHIVED tickets.
+                if ($projectTicket['archived']) {
+                    $this->writeLog("-- Task {$projectTicket['id']} is already archived, CONTINUE");
+                    continue;
+                }
+
                 $isTicketSynced = RedmineClubhouseTask::where('clubhouse_task', $projectTicket['id'])->first(); 
             
                 if ($isTicketSynced) {
