@@ -245,9 +245,10 @@ class CreatedTasks extends Command
             }
 
             $project = RedmineJiraProject::where('redmine_name', $_ticket['project']['name'])->first();
-	    if ($project->content) {
-		$issue['description'] .= "\n".$project->content;
-	    }
+
+            if ($project->content) {
+                $issue['description'] .= "\n".$project->content;
+            }
 
             if (isset($_ticket['due_date']) && !empty($_ticket['due_date'])) {
                 $issue['duedate'] = $_ticket['due_date'];

@@ -610,19 +610,22 @@ class JiraController extends Controller
         switch ($event)
         {
             case 'issue_created':
-            $this->issue('created', $content, $request);
-            break;
+                $this->issue('created', $content, $request);
+                break;
+
             case 'issue_updated':
             case 'issue_assigned':
             case 'issue_generic':
-            $this->issue('updated', $content, $request);
-            break;
+                $this->issue('updated', $content, $request);
+                break;
+
             case 'jira:issue_deleted':
-            $this->issue('deleted', $content, $request);
-            break;
+                $this->issue('deleted', $content, $request);
+                break;
+
             case 'comment_created':
-            $this->comment('created', $content, $request);
-            break;
+                $this->comment('created', $content, $request);
+                break;
         }
     }
 
@@ -710,6 +713,10 @@ class JiraController extends Controller
             $description  = $this->transformDescription($content->issue->fields->description);
             $description .= "\n\nh1. Resources\n";
             $description .= "\n* JIRA Ticket: https://flypilot.atlassian.net/browse/{$content->issue->key}";
+
+            if ($project->content) {
+                $description .= "\n" . $project->content;
+            }
 
             // If there are attachments, add their links to the description
             if (!empty($content->issue->fields->attachment)) {
