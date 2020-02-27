@@ -22,7 +22,7 @@ class CreatedTasks extends Command
     *
     * @var string
     */
-    protected $signature = 'clubhouse-to-redmine:sync-created-tasks';
+    protected $signature = 'clubhouse-to-redmine:sync-created-tasks {--project=} {--limit=} {--debug}';
 
     /**
     * The console command description.
@@ -31,7 +31,7 @@ class CreatedTasks extends Command
     */
     protected $description = 'Syncs created tickets on Clubhouse and Redmine.';
 
-    private $debug = true;
+    private $debug = false;
 
     /**
     * Create a new command instance.
@@ -50,8 +50,11 @@ class CreatedTasks extends Command
     */
     public function handle()
     {
-
         $this->writeLog('***** INIT *****');
+
+        if ($this->option('debug')) {
+            $this->debug = true;
+        }
 
         // Grab tickets recently created on Clubhouse
         $tickets = $this->getClubhouseTickets();
@@ -75,6 +78,17 @@ class CreatedTasks extends Command
 
         foreach ($clubhouseProjects as $clubhouseProject) {
 
+            if ($this->option('project') && ($this->option('project') != $clubhouseProject['id'])) {
+                $this->writeLog("-- Project {$clubhouseProject['id']} ignored by argument, CONTINUE");
+                continue;
+            }
+
+            // Ignore ARCHIVED projects.
+            if ($clubhouseProject['archived']) {
+                $this->writeLog("-- Project {$clubhouseProject['id']} is already archived, CONTINUE");
+                continue;
+            }
+
             $isProjectSynced = RedmineClubhouseProject::where('clubhouse_id', $clubhouseProject['id'])->first();
 
             if (!$isProjectSynced) {
@@ -85,6 +99,13 @@ class CreatedTasks extends Command
             $projectTickets = $clubhouseControllerObj->getTickets($clubhouseProject['id']);
 
             foreach ($projectTickets as $projectTicket) {
+                
+                // Ignore ARCHIVED tickets.
+                if ($projectTicket['archived']) {
+                    $this->writeLog("-- Task {$projectTicket['id']} is already archived, CONTINUE");
+                    continue;
+                }
+
                 $isTicketSynced = RedmineClubhouseTask::where('clubhouse_task', $projectTicket['id'])->first(); 
             
                 if ($isTicketSynced) {
@@ -108,6 +129,10 @@ class CreatedTasks extends Command
 
         if (!$tickets) {
             return false;
+        }
+
+        if ($this->option('limit')) {
+            $tickets = array_slice ($tickets, 0, $this->option('limit'));
         }
 
         $user = User::find(7);
