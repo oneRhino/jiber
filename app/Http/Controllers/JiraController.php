@@ -1072,8 +1072,9 @@ class JiraController extends Controller
             }
 
             if ($send_comment && isset($content->comment)) {
-		// Build data array
-		$treated_content = $this->transformDescription($content->comment->body);
+                // Build data array
+                $treated_content = $this->transformDescription($content->comment->body);
+
                 $data = array(
                     'notes' => $treated_content,
                 );
@@ -1135,6 +1136,9 @@ class JiraController extends Controller
     }
 
     private function transformDescription($description) {
+        // Citation transformation
+        $description = $this->replaceCitation($description);
+
     	// HELPDESK Transformations
     	if (strpos($description, '{quote}') !== false) {
     		// Remove all {color*} tags
@@ -1206,6 +1210,30 @@ class JiraController extends Controller
 
         // Transform Special Chars
         //$description  = htmlspecialchars($description, ENT_XML1, 'UTF-8');
+
+        return $description;
+    }
+
+    private function replaceCitation($description) {
+        // Check if there's an account being mentioned in the description
+        $pattern = '|\[~accountid:([a-z0-9:-]*)]|i';
+
+        preg_match_all($pattern, $description, $matches);
+
+        // Check if it found any matches
+        if (empty($matches[1])) {
+            return $description;
+        }
+
+        // Run through all accounts found, and replace them with user's name, if any
+        foreach ($matches[1] as $_jira_code) {
+            $user = RedmineJiraUser::where('jira_code', $_jira_code)->first();
+
+            if ($user) {
+                $pattern = '|\[~accountid:'.$_jira_code.']|i';
+                $description = preg_replace($pattern, "*{$user->redmine_name}*", $description);
+            }
+        }
 
         return $description;
     }
