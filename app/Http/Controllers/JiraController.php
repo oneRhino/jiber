@@ -1231,7 +1231,7 @@ class JiraController extends Controller
 
             if ($user) {
                 $pattern = '|\[~accountid:'.$_jira_code.']|i';
-                $description = preg_replace($pattern, "*{$user->redmine_name}*", $description);
+                $description = preg_replace($pattern, "_{$user->redmine_name}_", $description);
             }
         }
 
