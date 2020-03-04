@@ -567,12 +567,13 @@ class JiraController extends Controller
         //Log::debug(print_r($content, true));
 
         // Check if project is supported by Jiber
-        if (!isset($_GET['project'])) {
+        if (empty($_GET['project'])) {
             Log::debug('-- ERROR - Project not found (GET)');
             die;
         }
 
         $project = RedmineJiraProject::where('jira_name', $_GET['project'])->first();
+
         if (!$project) {
             Log::debug('-- ERROR - Project not found');
             die;
@@ -580,7 +581,7 @@ class JiraController extends Controller
         Log::debug('- Project Found');
 
         // Check if user who is performing the action exists on Jiber
-        if (!isset($_GET['user_id'])) {
+        if (empty($_GET['user_id'])) {
             Log::error('-- ERROR - User not found:');
             Log::error(print_r($_GET, true));
             die;
@@ -590,32 +591,28 @@ class JiraController extends Controller
         // So if user isn't found on Jiber, try getting it by ticket's reporter
         $user = Setting::where('jira', $_GET['user_id'])->first();
 
-        if (!$user) {
+        if (empty($user)) {
             if (isset($content->issue) && isset($content->issue->fields->reporter)) {
-                if (!isset($content->issue->fields->reporter->key)) {
+                if (empty($content->issue->fields->reporter->key)) {
                     Log::debug(print_r($content->issue->fields->reporter, true));
                 } else {
                     $user = Setting::where('jira', $content->issue->fields->reporter->key)->first();
                 }
             } elseif (isset($content->comment)) {
-                if (!isset($content->comment->author->key)) {
-                    $errors = [
-                        'Assignee malformed:',
-                        'app/Http/Controllers/JiraController.php:585',
-                        print_r($content->comment->author, true)
-                    ];
-                    $this->errorEmail($errors);
-                    die;
-                }
+                if (isset($content->comment->author->accountId)) {
+                    $redmine_jira_user = RedmineJiraUser::where('jira_code', $content->comment->author->accountId)->first();
 
-                $user = Setting::where('jira', $content->comment->author->key)->first();
+                    $user = Setting::where('jira', $redmine_jira_user->jira_name);
+                } elseif (isset($content->comment->author->key)) {
+                    $user = Setting::where('jira', $content->comment->author->key)->first();
+                }
             }
 
-            if (!$user && $_GET['user_id'] == 'addon_zendesk_for_jira') {
+            if (empty($user) && $_GET['user_id'] == 'addon_zendesk_for_jira') {
                 $user = Setting::where('jira', 'klyon')->first();
             }
 
-            if (!$user) {
+            if (empty($user)) {
                 Log::debug('-- ERROR - User not found on Jiber ('.$_GET['user_id'].')');
                 die;
             }
