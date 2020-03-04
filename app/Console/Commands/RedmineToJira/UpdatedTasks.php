@@ -259,8 +259,9 @@ class UpdatedTasks extends Command
         // Get assignee based on Redmine user ID
         $user = RedmineJiraUser::where('redmine_id', $content)->first();
 
-	if ($user)
-	        $this->jira_updates[$created_by][$this->jira_id]['assignee'] = $user->jira_name;
+        if ($user) {
+            $this->jira_updates[$created_by][$this->jira_id]['assignee'] = $user->jira_code;
+        }
     }
 
     private function jiraComment($created_on, $created_by, $content)
@@ -313,7 +314,7 @@ class UpdatedTasks extends Command
                     {
                         case 'assignee':
                             //$this->writeLog('JIRA: Assignee');
-                            $args = array('fields' => array('assignee' => array('name' => $_content)));
+                            $args = array('fields' => array('assignee' => array('accountId' => $_content)));
                             $result = $Jira->editIssue($_jira_id, $args);
                             //$this->writeLog(print_r($result, true));
                             break;
