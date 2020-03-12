@@ -34,6 +34,31 @@ use Illuminate\Support\Facades\Config;
 
 class ClubhouseController extends Controller {
 
+    public function createStory ($storyDetails) {
+        
+        $token = Config::get('clubhouse.api_key');
+        $clubhouseApi = new Clubhouse($token);
+        
+        $clubhouseStory = $clubhouseApi->create('stories', $storyDetails);
+
+        return $clubhouseStory;
+    }
+
+    public function createComment ($storyId, $comment) {
+
+        $commentFields = array ();
+        $commentFields['text'] = $comment;
+
+        $token = Config::get('clubhouse.api_key');
+        $clubhouseApi = new Clubhouse($token);
+
+        $apiUri = "stories/{$storyId}/comments";
+
+        $clubhouseStoryComment = $clubhouseApi->create($apiUri, $commentFields);
+
+        return $clubhouseStoryComment;
+    }
+
     public function getProjects () {
         
         $token = Config::get('clubhouse.api_key');

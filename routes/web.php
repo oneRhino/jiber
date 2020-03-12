@@ -66,6 +66,13 @@ Route::group(['middleware' => 'auth'], function() {
     ]]);
 });
 
+Route::get('/redmine/clubhouse/users/import', ['middleware' => 'auth', 'uses' => 'RedmineClubhouseUsersController@import']);
+Route::group(['middleware' => 'auth'], function() {
+    Route::resource('/redmine/clubhouse/users', 'RedmineClubhouseUsersController', ['parameters' => [
+        'users' => 'user'
+    ]]);
+});
+
 Route::get('/redmine/clubhouse/projects/import', ['middleware' => 'auth', 'uses' => 'RedmineClubhouseProjectsController@import']);
 Route::group(['middleware' => 'auth'], function() {
     Route::resource('/redmine/clubhouse/projects', 'RedmineClubhouseProjectsController', ['parameters' => [
