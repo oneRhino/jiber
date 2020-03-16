@@ -158,14 +158,18 @@ class UpdatedTasks extends Command
             $comment = "(" . $newChange['user']['name'] . ") " . $newChange['notes'];
             
             // Send comment to Clubhouse Story.
-            $clubhouseControllerObj = new ClubhouseController();
-            $clubhouseComment = $clubhouseControllerObj->createComment($storyId, $comment);
+            if (!$this->debug) {
+                $clubhouseControllerObj = new ClubhouseController();
+                $clubhouseComment = $clubhouseControllerObj->createComment($storyId, $comment);
 
-            $redmineClubhouseChangeObj = new RedmineClubhouseChange;
-            $redmineClubhouseChangeObj->redmine_change_id = $newChange['id'];
-            $redmineClubhouseChangeObj->save();
-           
-            $this->writeLog('-- Change sent to Clubhouse: ' . $newChange['id']);
+                $redmineClubhouseChangeObj = new RedmineClubhouseChange;
+                $redmineClubhouseChangeObj->redmine_change_id = $newChange['id'];
+                $redmineClubhouseChangeObj->save();
+                
+                $this->writeLog('-- Change sent to Clubhouse: ' . $newChange['id']);
+            } else {
+                $this->writeLog('-- Change NOT sent to Clubhouse due to Debug Mode');
+            }
         }
     }
 
