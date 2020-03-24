@@ -355,8 +355,6 @@ class CreatedTasks extends Command
     }
 
     private function writeLog($message) {
-        if ($this->debug) {
-        	file_put_contents('redmine-create.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
-        }
+        file_put_contents('redmine-create.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
     }
 }

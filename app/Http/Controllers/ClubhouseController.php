@@ -59,6 +59,21 @@ class ClubhouseController extends Controller {
         return $clubhouseStoryComment;
     }
 
+    public function updateComment ($storyId, $commentId, $comment) {
+
+        $commentFields = array ();
+        $commentFields['text'] = $comment;
+
+        $token = Config::get('clubhouse.api_key');
+        $clubhouseApi = new Clubhouse($token);
+
+        $apiUri = "stories/{$storyId}/comments";
+
+        $clubhouseStoryComment = $clubhouseApi->update($apiUri, $commentId, $commentFields);
+
+        return $clubhouseStoryComment;
+    }
+
     public function getProjects () {
         
         $token = Config::get('clubhouse.api_key');
@@ -82,5 +97,18 @@ class ClubhouseController extends Controller {
         $ticketsAsArray = $clubhouseApi->get($apiUri);
 
         return $ticketsAsArray;
+    }
+
+    public function updateStory ($storyId, $updateData) {
+
+        if (!$storyId)
+            return false;
+
+        $token = Config::get('clubhouse.api_key');
+        $clubhouseApi = new Clubhouse($token);
+
+        $clubhouseStory = $clubhouseApi->update("stories", $storyId,  $updateData);
+
+        return $clubhouseStory;
     }
 }
