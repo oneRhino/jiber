@@ -34,16 +34,6 @@ use Illuminate\Support\Facades\Config;
 
 class ClubhouseController extends Controller {
 
-    public function createStory ($storyDetails) {
-        
-        $token = Config::get('clubhouse.api_key');
-        $clubhouseApi = new Clubhouse($token);
-        
-        $clubhouseStory = $clubhouseApi->create('stories', $storyDetails);
-
-        return $clubhouseStory;
-    }
-
     public function createComment ($storyId, $comment) {
 
         $commentFields = array ();
@@ -59,19 +49,14 @@ class ClubhouseController extends Controller {
         return $clubhouseStoryComment;
     }
 
-    public function updateComment ($storyId, $commentId, $comment) {
-
-        $commentFields = array ();
-        $commentFields['text'] = $comment;
-
+    public function createStory ($storyDetails) {
+        
         $token = Config::get('clubhouse.api_key');
         $clubhouseApi = new Clubhouse($token);
+        
+        $clubhouseStory = $clubhouseApi->create('stories', $storyDetails);
 
-        $apiUri = "stories/{$storyId}/comments";
-
-        $clubhouseStoryComment = $clubhouseApi->update($apiUri, $commentId, $commentFields);
-
-        return $clubhouseStoryComment;
+        return $clubhouseStory;
     }
 
     public function getProjects () {
@@ -97,6 +82,33 @@ class ClubhouseController extends Controller {
         $ticketsAsArray = $clubhouseApi->get($apiUri);
 
         return $ticketsAsArray;
+    }
+
+    public function getUsers () {
+
+        $token = Config::get('clubhouse.api_key');
+        $clubhouseApi = new Clubhouse($token);
+
+        $apiUri = "users";
+
+        $usersAsArray = $clubhouseApi->get($apiUri);
+
+        return $usersAsArray;
+    }
+
+    public function updateComment ($storyId, $commentId, $comment) {
+
+        $commentFields = array ();
+        $commentFields['text'] = $comment;
+
+        $token = Config::get('clubhouse.api_key');
+        $clubhouseApi = new Clubhouse($token);
+
+        $apiUri = "stories/{$storyId}/comments";
+
+        $clubhouseStoryComment = $clubhouseApi->update($apiUri, $commentId, $commentFields);
+
+        return $clubhouseStoryComment;
     }
 
     public function updateStory ($storyId, $updateData) {
