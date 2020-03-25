@@ -41,6 +41,8 @@ class Setting extends MainModel
 
     public static function getAllWithRedmine()
     {
-        return self::join('users', 'settings.id', '=', 'users.id')->whereNotNull('redmine')->where('users.enabled', true)->get();
+        return self::join('users', function($join) {
+            $join->on('settings.id', 'users.id')->whereNotNull('redmine');
+        })->where('users.enabled', true)->get();
     }
 }
