@@ -67,24 +67,20 @@ class RedmineClubhouseUsersController extends Controller
 
     public function import(Request $request)
     {
-        // TODO: We have only one Clubhouse user for now. We can get all of them in the API if needed in the future.
-        if (!RedmineClubhouseUser::where('clubhouse_name', Config::get('clubhouse.clubhouse_dev_user'))->first()) {
-            // DEV User.
-            $user = new RedmineClubhouseUser();
-            $user->clubhouse_name = Config::get('clubhouse.clubhouse_dev_user');
-            $user->redmine_names = "[]";
-            $user->save();
-        }
+        $clubhouseControllerObj = new ClubhouseController ();
+        $usersAsArray = $clubhouseControllerObj->getUsers();
 
-        // TODO: We have only one Clubhouse user for now. We can get all of them in the API if needed in the future.
-        if (!RedmineClubhouseUser::where('clubhouse_name', Config::get('clubhouse.clubhouse_pm_user'))->first()) {
-            // PM User.
-            $user = new RedmineClubhouseUser();
-            $user->clubhouse_name = Config::get('clubhouse.clubhouse_pm_user');
-            $user->redmine_names = "[]";
-            $user->save();
-        }
+        foreach ($usersAsArray as $user) {
 
+            if (!RedmineClubhouseUser::where('clubhouse_name', $user['username'])->first()) {
+                $redmineClubhouseUser = new RedmineClubhouseUser();
+                $redmineClubhouseUser->clubhouse_name = $user['username'];
+                $redmineClubhouseUser->redmine_names = "[]";
+                $redmineClubhouseUser->save();
+            }
+        }
+        
+        $request->session()->flash('alert-success', 'All users have been imported successfully!');
         return back()->withInput();
     }
 }
