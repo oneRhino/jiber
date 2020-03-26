@@ -7,7 +7,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <a href="{{ action('RedmineClubhouseProjectsController@import') }}" class="btn btn-default"><i class="glyphicon glyphicon-import"></i> Import/Merge Projects from Clubhouse</a>
+                <a href="{{ action('RedmineClubhouseProjectsController@import') }}" class="btn btn-default"><i class="glyphicon glyphicon-import"></i> Import/Merge Projects from Clubhouse and Redmine</a>
             </div>
         </div>
 
