@@ -292,13 +292,10 @@ class CreatedTasks extends Command
         
         foreach ($tickets as $ticket) {
             try {
-                
                 $redmineClubhouseProject = RedmineClubhouseProject::where('clubhouse_id', $ticket['project_id'])->get(['redmine_name', 'content'])->first();
-
-                if ($this->debug) {
-                    $redmineProjectName = $redmineClubhouseProject->redmine_name;
-                } else {
-                    $redmineProjectName = 'omg-test';
+                
+                if (!$redmineClubhouseProject->redmine_name ) {
+                    continue;
                 }
 
                 $redmineCreateIssueObj = array ();
