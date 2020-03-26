@@ -17,6 +17,7 @@ class RedmineClubhouseUsersController extends Controller
         $listOfUsers = array();
 
         $users = RedmineClubhouseUser::get();
+
         foreach ($users as $user) {
             $tmpArray = array();
             $tmpArray['id'] = $user->id;
@@ -34,7 +35,7 @@ class RedmineClubhouseUsersController extends Controller
     {
         $clubhouse_name = $user->clubhouse_name;
         $redmine_names = json_decode($user->redmine_names, true);
-        $redmine_names_list = RedmineJiraUser::select('redmine_name')->get();
+        $redmine_names_list = RedmineJiraUser::select('redmine_name')->orderBy('redmine_name', 'asc')->get();
 
         return view('redmine_clubhouse_users.form', [
             'user' => $user,
@@ -79,7 +80,7 @@ class RedmineClubhouseUsersController extends Controller
                 $redmineClubhouseUser->save();
             }
         }
-        
+
         $request->session()->flash('alert-success', 'All users have been imported successfully!');
         return back()->withInput();
     }
