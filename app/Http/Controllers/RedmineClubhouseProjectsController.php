@@ -37,10 +37,10 @@ class RedmineClubhouseProjectsController extends Controller
     public function update(RedmineClubhouseProject $project, Request $request)
     {
         $redmineProjectObj = new RedmineJiraProject();
-        $redmineProject = $redmineProjectObj->where('redmine_id', $request->redmine_id)->first();
+        $redmineProject = $redmineProjectObj->where('redmine_id', $request->project_id)->first();
 
         // Save project
-        $project->redmine_id = $request->redmine_id;
+        $project->redmine_id = $request->project_id;
         $project->redmine_name = $redmineProject->redmine_name;
         $project->clubhouse_name = $request->clubhouse_name;
         $project->content = $request->content;
