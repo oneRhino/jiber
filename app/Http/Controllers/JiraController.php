@@ -408,22 +408,23 @@ class JiraController extends Controller
             $reporter = $issue->getReporter();
             $jira_key = $issue->getKey();
 
-            if (!isset($reporter['name'])) {
-                $errors = [
-                    'Reporter malformed:',
-                    'app/Http/Controllers/JiraController.php:406',
-                    print_r($reporter, true)
-                ];
-                $this->errorEmail($errors);
-                die;
-            }
+            if (!empty($reporter['accountId'])) {
+                $redmine_jira_user = RedmineJiraUser::where('jira_code', $reporter['accountId'])->first();
 
-            if ($reporter['name'] == 'addon_zendesk_for_jira') {
-                $reporter['name'] = 'klyon';
+                $user = Setting::where('jira', $redmine_jira_user->jira_name)->first();
+            } else {
+                if ($reporter['name'] == 'addon_zendesk_for_jira') {
+                    $user = Setting::where('jira', 'klyon')->first();
+                } else {
+                    $errors = [
+                        'Reporter malformed:',
+                        'app/Http/Controllers/JiraController.php:406',
+                        print_r($reporter, true)
+                    ];
+                    $this->errorEmail($errors);
+                    die;
+                }
             }
-
-            // USER
-            $user = Setting::where('jira', $reporter['name'])->first();
 
             if (!$user) {
                 Log::debug('-- ERROR - User not found on Jiber ('.$reporter['name'].')');
