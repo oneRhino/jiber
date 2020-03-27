@@ -23,7 +23,7 @@ class CreatedTasks extends Command
     *
     * @var string
     */
-    protected $signature = 'clubhouse-to-redmine:sync-created-tasks {--project=} {--limit=} {--source=} {--debug}';
+    protected $signature = 'clubhouse-to-redmine:sync-created-tasks {--limit=} {--source=} {--debug}';
 
     /**
     * The console command description.
@@ -103,24 +103,26 @@ class CreatedTasks extends Command
 
         foreach ($clubhouseProjects as $clubhouseProject) {
 
-            if ($this->option('project') && ($this->option('project') != $clubhouseProject['id'])) {
-                $this->writeLog("-- Project {$clubhouseProject['id']} ignored by argument, CONTINUE");
-                continue;
-            }
-
             // Ignore ARCHIVED projects.
             if ($clubhouseProject['archived']) {
                 $this->writeLog("-- Project {$clubhouseProject['id']} is already archived, CONTINUE");
                 continue;
             }
 
-            $isProjectSynced = RedmineClubhouseProject::where('clubhouse_id', $clubhouseProject['id'])->first();
+            $redmineClubhouseProjectObj = RedmineClubhouseProject::where('clubhouse_id', $clubhouseProject['id'])->first();
 
-            if (!$isProjectSynced) {
+            // Ignore projects imported yet.
+            if (!$redmineClubhouseProjectObj) {
                 $this->writeLog("-- Project {$clubhouseProject['id']} was not yet imported to Jiber, CONTINUE");
                 continue;
             }
-
+            
+            // Ignore projects that has no relation with a Redmine project.
+            if (!$redmineClubhouseProjectObj->redmine_id) {
+                $this->writeLog("-- Project {$clubhouseProject['id']} is not related to any project on Redmine, CONTINUE");
+                continue;
+            }
+            
             $projectTickets = $clubhouseControllerObj->getTickets($clubhouseProject['id']);
 
             foreach ($projectTickets as $projectTicket) {
@@ -255,7 +257,6 @@ class CreatedTasks extends Command
                 $redmineClubhouseTaskInstance->source = 'Redmine';
                 
                 if ($this->debug) {
-                    $redmineClubhouseTaskInstance->save();
                     $this->writeLog("-- Task {$redmineTicket['id']} NOT saved on database due to debug mode."); 
                 } else {
                     $redmineClubhouseTaskInstance->save();
@@ -291,13 +292,10 @@ class CreatedTasks extends Command
         
         foreach ($tickets as $ticket) {
             try {
-                
                 $redmineClubhouseProject = RedmineClubhouseProject::where('clubhouse_id', $ticket['project_id'])->get(['redmine_name', 'content'])->first();
-
-                if ($this->debug) {
-                    $redmineProjectName = $redmineClubhouseProject->redmine_name;
-                } else {
-                    $redmineProjectName = 'omg-test';
+                
+                if (!$redmineClubhouseProject->redmine_name ) {
+                    continue;
                 }
 
                 $redmineCreateIssueObj = array ();
@@ -322,7 +320,6 @@ class CreatedTasks extends Command
                 $redmineClubhouseTaskInstance->source = 'Clubhouse';
                 
                 if ($this->debug) {
-                    $redmineClubhouseTaskInstance->save();
                     $this->writeLog("-- Task {$ticket['id']} NOT saved on database due to debug mode."); 
                 } else {
                     $redmineClubhouseTaskInstance->save();
