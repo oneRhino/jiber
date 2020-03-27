@@ -110,4 +110,4 @@ Route::post('/jira/send'         , ['middleware' => 'auth', 'uses' => 'JiraContr
 
 Route::get ('/jira/legacy/{project}', ['middleware' => 'auth', 'uses' => 'JiraController@legacy']);
 
-Route::match(['get','post'], '/jira/webhook', ['uses' => 'JiraController@webhook']);
+Route::any('/jira/webhook', ['uses' => 'JiraController@webhook']);
