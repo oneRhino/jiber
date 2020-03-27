@@ -111,3 +111,6 @@ Route::post('/jira/send'         , ['middleware' => 'auth', 'uses' => 'JiraContr
 Route::get ('/jira/legacy/{project}', ['middleware' => 'auth', 'uses' => 'JiraController@legacy']);
 
 Route::any('/jira/webhook', ['uses' => 'JiraController@webhook']);
+
+// Clubhouse Routes
+Route::any('/clubhouse/webhook', ['uses' => 'ClubhouseController@webhook']);

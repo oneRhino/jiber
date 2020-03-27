@@ -30,7 +30,9 @@
 namespace App\Http\Controllers;
 
 use Mikkelson\Clubhouse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
+use Log;
 
 class ClubhouseController extends Controller {
 
@@ -50,25 +52,25 @@ class ClubhouseController extends Controller {
     }
 
     public function createStory ($storyDetails) {
-        
+
         $token = Config::get('clubhouse.api_key');
         $clubhouseApi = new Clubhouse($token);
-        
+
         $clubhouseStory = $clubhouseApi->create('stories', $storyDetails);
 
         return $clubhouseStory;
     }
 
     public function getProjects () {
-        
+
         $token = Config::get('clubhouse.api_key');
         $clubhouseApi = new Clubhouse($token);
-        
+
         $projectsAsArray = $clubhouseApi->get('projects');
 
         return $projectsAsArray;
     }
-    
+
     public function getTickets ($projectId) {
 
         if (!$projectId)
@@ -122,5 +124,21 @@ class ClubhouseController extends Controller {
         $clubhouseStory = $clubhouseApi->update("stories", $storyId,  $updateData);
 
         return $clubhouseStory;
+    }
+
+    /**
+     * Receives the request from Clubhouse, and delegates depending on the data received.
+     *
+     * @param Request $request
+     */
+    public function webhook(Request $request) {
+        Log::debug('CLUBHOUSE WEBHOOK ACTIVATED');
+
+        $content = $request->getContent();
+        $content = json_decode($content);
+
+        Log::debug(print_r($content, true));
+
+        if (!$content) die;
     }
 }
