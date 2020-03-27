@@ -136,9 +136,69 @@ class ClubhouseController extends Controller {
 
         $content = $request->getContent();
         $content = json_decode($content);
-
-        Log::debug(print_r($content, true));
-
         if (!$content) die;
+
+        // Get first action - the main one
+        $action = $content->actions[0];
+
+        // Create method name using entity and action
+        $method = "{$action->entity_type}_$action->action";
+        $method = str_replace('-', '_', $method);
+
+        if (!method_exists($this, $method)) {
+
+        }
+
+        $this->$method();
+    }
+
+    private function story_create() {
+
+    }
+
+    private function story_update() {
+
+    }
+
+    private function epic_create() {
+
+    }
+
+    private function epic_update() {
+
+    }
+
+    private function story_comment_create() {
+
+    }
+
+    private function story_comment_update() {
+
+    }
+
+    private function story_comment_delete() {
+
+    }
+
+    /**
+     * Send email when something goes wrong.
+     *
+     * @param array|string $errors List of errors to be sent
+     * @param string $level Error Level
+     */
+    private function errorEmail($errors, string $level = 'error') {
+        if (!$errors) die;
+
+        if (!is_array($errors)) {
+            $errors = array($errors);
+        }
+
+        $subject = 'Redmine/Clubhouse (Clubhouse Webhook) sync '.$level;
+
+        Mail::send('emails.error', ['errors' => $errors], function ($m) use($subject) {
+            $m->from('jiber@onerhino.com', 'Jiber');
+            // $m->cc(['a.bastos@onerhino.com', 'pablo@onerhino.com', 'billy@onerhino.com']);
+            $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
+        });
     }
 }

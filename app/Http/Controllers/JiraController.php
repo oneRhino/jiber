@@ -1127,7 +1127,7 @@ class JiraController extends Controller
         $subject = 'Redmine/Jira (Jira Webhook) sync '.$level;
 
         Mail::send('emails.error', ['errors' => $errors], function ($m) use($subject) {
-            $m->from('jiber@tmisoft.com', 'Jiber');
+            $m->from('jiber@onerhino.com', 'Jiber');
             $m->cc(['a.bastos@onerhino.com', 'pablo@onerhino.com', 'billy@onerhino.com']);
             $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
         });
