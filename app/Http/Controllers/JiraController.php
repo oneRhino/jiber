@@ -486,7 +486,7 @@ class JiraController extends Controller
             Log::debug('-- Redmine priority found');
 
             $jira_assignee = $issue->getAssignee();
-            $assignee = RedmineJiraUser::where('jira_name', $jira_assignee['key'])->first();
+            $assignee = RedmineJiraUser::where('jira_code', $jira_assignee['accountId'])->first();
             Log::debug('-- Redmine assignee found');
 
             // Check data
