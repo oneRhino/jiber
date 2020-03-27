@@ -499,7 +499,7 @@ class JiraController extends Controller
             if (!$priority)
             $errors[] = "Priority not found: {$jira_priority['name']}";
             if (!$assignee)
-            $errors[] = "Assignee not found: {$jira_assignee['key']}";
+            $errors[] = "Assignee not found: {$jira_assignee['email']}";
 
             if ($errors) {
                 Log::debug('-- Errors found:');
@@ -750,7 +750,7 @@ class JiraController extends Controller
                 $errors[] = "Priority not found: {$content->issue->fields->priority->name}";
             }
             if (!$assignee) {
-                $errors[] = "Assignee not found: {$content->issue->fields->assignee->key}";
+                $errors[] = "Assignee not found: {$content->issue->fields->assignee->email}";
             }
 
             if ($errors) {
