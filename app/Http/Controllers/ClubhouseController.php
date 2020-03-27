@@ -151,35 +151,85 @@ class ClubhouseController extends Controller {
             die;
         }
 
-        $this->$method();
+        $this->$method($content);
     }
 
-    private function story_create() {
+    private function epic_create($content) {
+        // "Epic" will be a simple ticket on Redmine. We should record the Epic ID
+        // with the Redmine ticket ID created, so, when a story is added to this
+        // Epic, we can create that story as a child ticket on Redmine.
 
+        // So, this method should:
+        // 1. Check if this "Epic" has already been created, just in case, by
+        // trying to get its ID from clubhouse_epics table
+        // 2. If it hasn't been created:
+        // 2.1. Create ticket on redmine
+        // 2.2. Save Epic ID + Redmine Ticket (the one we just created) to clubhouse_epics table
+        // 3. If it has been created, ignore.
     }
 
-    private function story_update() {
-
+    private function epic_update($content) {
+        // This method should:
+        // 1. Check if this "Epic" has already been created, by trying to get its
+        // ID from clubhouse_epics table
+        // 2. If it hasn't been created, send data to "epic_create" method, so it's created
+        // 3. If it has been created:
+        // 3.1. Update whatever data needed (it's inside action's "changes" property)
     }
 
-    private function epic_create() {
+    private function story_create($content) {
+        // "Story" will be a simple ticket on Redmine. We should record the Story ID
+        // with the Redmine ticket ID created.
+        // If this "Story" has a "epic_id" property, then we should make this ticket
+        // child of the one related to that epic_id: we have the epic_id/redmine
+        // ticket id relationship on clubhouse_epics table.
 
+        // So, this method should:
+        // 1. Check if this "Story" has already been created, just in case, by
+        // trying to get its ID from clubhouse_stories table
+        // 2. If it has been created, ignore.
+        // 3. If it hasn't been created:
+        // 3.1. Create ticket on redmine
+        // 3.2. Save Story ID + Redmine Ticket (the one we just created) to clubhouse_stories table
     }
 
-    private function epic_update() {
-
+    private function story_update($content) {
+        // This method should:
+        // 1. Check if this "Story" has already been created, by trying to get its
+        // ID from clubhouse_stories table
+        // 2. If it hasn't been created, send data to "story_create" method, so it's created
+        // 3. If it has been created:
+        // 3.1. Update whatever data needed (it's inside action's "changes" property)
     }
 
-    private function story_comment_create() {
-
+    private function story_comment_create($content) {
+        // This method should:
+        // 1. Check if this "Comment" has already been created, by trying to get its
+        // ID from clubhouse_comments table
+        // 2. If it has been created, ignore
+        // 3. If it hasn't been created:
+        // 3.1. Create comment on redmine (get redmine ticket id from clubhouse_stories
+        // table, using "story_id" property to match redmine ticket)
+        // 3.2. Save Clubhouse Comment ID + Redmine Comment ID (the one we just created) to clubhouse_comments table
     }
 
-    private function story_comment_update() {
-
+    private function story_comment_update($content) {
+        // This method should:
+        // 1. Check if this "Comment" has already been created, by trying to get its
+        // ID from clubhouse_comments table
+        // 2. If it hasn't been created, send data to story_comment_create, so it gets created
+        // 3. If it has been created:
+        // 3.1. Update comment on redmine (get redmine comment id from clubhouse_comments table)
     }
 
-    private function story_comment_delete() {
-
+    private function story_comment_delete($content) {
+        // This method should:
+        // 1. Check if this "Comment" exists on redmine, by trying to get its
+        // ID from clubhouse_comments table
+        // 2. If it hasn't been created, ignore
+        // 3. If it has been created:
+        // CHECK WITH BILLY, IF WE SHOULD DELETE COMMENT, OR EDIT IT MARKING IT AS "DELETED" SOMEHOW
+        // 3.1. Delete comment on redmine (get redmine comment id from clubhouse_comments table)
     }
 
     /**
