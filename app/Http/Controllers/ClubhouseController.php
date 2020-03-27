@@ -146,7 +146,9 @@ class ClubhouseController extends Controller {
         $method = str_replace('-', '_', $method);
 
         if (!method_exists($this, $method)) {
-
+            $error = "Method {$method} needs to be created on Clubhouse Controller.";
+            $this->errorEmail($error, 'missing method error');
+            die;
         }
 
         $this->$method();
@@ -198,6 +200,7 @@ class ClubhouseController extends Controller {
         Mail::send('emails.error', ['errors' => $errors], function ($m) use($subject) {
             $m->from('jiber@onerhino.com', 'Jiber');
             // $m->cc(['a.bastos@onerhino.com', 'pablo@onerhino.com', 'billy@onerhino.com']);
+            $m->cc(['j.cortela@onerhino.com']);
             $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
         });
     }
