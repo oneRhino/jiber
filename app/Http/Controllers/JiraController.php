@@ -29,7 +29,7 @@
 
 namespace App\Http\Controllers;
 
-use App\{JiraSent, RedmineChange, RedmineJiraPriority, RedmineJiraProject, RedmineJiraStatus, RedmineJiraTask, RedmineJiraTracker, RedmineJiraUser, Report, Setting, TimeEntry, User};
+use App\{JiraSent, RedmineChange, RedmineJiraPriority, RedmineProject, RedmineJiraStatus, RedmineJiraTask, RedmineJiraTracker, RedmineJiraUser, Report, Setting, TimeEntry, User};
 use App\Http\Controllers\RedmineController;
 use chobie\Jira\Api;
 use chobie\Jira\Api\Authentication\Basic;
@@ -444,7 +444,7 @@ class JiraController extends Controller
             Log::debug('- User Authenticated');
 
             $jira_project = $issue->getProject();
-            $project =  RedmineJiraProject::where('jira_name', $jira_project['key'])->first();
+            $project =  RedmineProject::where('third_party_project_name', $jira_project['key'])->where('third_party', 'jira')->first();
             Log::debug('-- Redmine project found');
 
             // First, check if it hasn't already been created on Redmine
@@ -455,7 +455,7 @@ class JiraController extends Controller
                 'limit' => 1,
                 'sort'  => 'created_on:desc',
                 'cf_9'  => $jira_key,
-                'project_id' => $project->redmine_id,
+                'project_id' => $project->project_id,
             );
             $redmine_entries = $redmine->issue->all($args);
 
@@ -510,7 +510,7 @@ class JiraController extends Controller
 
             // Create data array
             $data = array(
-                'project_id'      =>  $project->redmine_id,
+                'project_id'      =>  $project->project_id,
                 'tracker_id'      =>  $tracker->redmine_id,
                 'status_id'       =>   $status->redmine_id,
                 'priority_id'     => $priority->redmine_id,
@@ -536,7 +536,7 @@ class JiraController extends Controller
                 'limit' => 1,
                 'sort'  => 'created_on:desc',
                 'cf_9'  => $jira_key,
-                'project_id' => $project->redmine_id,
+                'project_id' => $project->project_id,
             );
             $redmine_entries = $redmine->issue->all($args);
 
@@ -573,7 +573,7 @@ class JiraController extends Controller
             die;
         }
 
-        $project = RedmineJiraProject::where('jira_name', $_GET['project'])->first();
+        $project = RedmineProject::where('third_party_project_name', $_GET['project'])->where('third_party', 'jira')->first();
 
         if (!$project) {
             Log::debug('-- ERROR - Project not found');
@@ -710,7 +710,7 @@ class JiraController extends Controller
             }
 
             // Get data
-            $project  =  RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
+            $project  =  RedmineProject::where('third_party_project_name', $content->issue->fields->project->key)->where('third_party', 'jira')->first();
             Log::debug('-- Redmine project found');
             $tracker  =  RedmineJiraTracker::where('jira_name', 'like', '%' . $content->issue->fields->issuetype->name . '%')->first();
             Log::debug('-- Redmine tracker found');
@@ -778,7 +778,7 @@ class JiraController extends Controller
 
             // Create data array
             $data = array(
-                'project_id'       => $project->redmine_id,
+                'project_id'       => $project->project_id,
                 'tracker_id'       => $tracker->redmine_id,
                 'status_id'        => $status->redmine_id,
                 'priority_id'      => $priority->redmine_id,
@@ -805,7 +805,7 @@ class JiraController extends Controller
                 'limit' => 1,
                 'sort'  => 'created_on:desc',
                 'cf_9'  => $content->issue->key,
-                'project_id' => $project->redmine_id,
+                'project_id' => $project->project_id,
             );
             $redmine_entries = $redmine->issue->all($args);
 
@@ -827,7 +827,7 @@ class JiraController extends Controller
             if (!isset($content->changelog)) die;
 
             // Get Redmine Project
-            $project  =  RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
+            $project = RedmineProject::where('third_party_project_name', $content->issue->fields->project->key)->where('third_party', 'jira')->first();
             Log::debug('-- Redmine project found');
 
             // Search task on Redmine based on Jira ID
@@ -835,7 +835,7 @@ class JiraController extends Controller
                 'limit' => 100,
                 'sort'  => 'created_on:desc',
                 'cf_9'  => $_GET['issue'],
-                'project_id' => $project->redmine_id,
+                'project_id' => $project->project_id,
             );
             Log::debug(print_r($args, true));
             $redmine_entries = $redmine->issue->all($args);
@@ -976,7 +976,7 @@ class JiraController extends Controller
         elseif ($action == 'deleted')
         {
             // Get Redmine Project
-            $project = RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
+            $project = RedmineProject::where('third_party_project_name', $content->issue->fields->project->key)->where('third_party', 'jira')->first();
             Log::debug('-- Redmine project found');
 
             // Search task on Redmine based on Jira ID
@@ -984,7 +984,7 @@ class JiraController extends Controller
                 'limit' => 100,
                 'sort'  => 'created_on:desc',
                 'cf_9'  => $_GET['issue'],
-                'project_id' => $project->redmine_id,
+                'project_id' => $project->project_id,
             );
             Log::debug(print_r($args, true));
             $redmine_entries = $redmine->issue->all($args);
@@ -1027,7 +1027,7 @@ class JiraController extends Controller
         if ($action == 'created')
         {
             // Get Redmine Project
-            $project  =  RedmineJiraProject::where('jira_name', $content->issue->fields->project->key)->first();
+            $project = RedmineProject::where('third_party_project_name', $content->issue->fields->project->key)->where('third_party', 'jira')->first();
             Log::debug('-- Redmine project found');
 
             // Search task on Redmine based on Jira ID
@@ -1035,7 +1035,7 @@ class JiraController extends Controller
                 'limit' => 100,
                 'sort'  => 'created_on:desc',
                 'cf_9'  => $_GET['issue'],
-                'project_id' => $project->redmine_id,
+                'project_id' => $project->project_id,
             );
             Log::debug(print_r($args, true));
             $redmine_entries = $redmine->issue->all($args);

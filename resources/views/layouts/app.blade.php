@@ -43,12 +43,11 @@
                             <li><a href="{{ action('RedmineReportController@index') }}">Reports</a></li>
                             @if (!Auth::guest() && Auth::user()->administrator)
                                 <li><a href="{{ action('RedmineJiraUsersController@index') }}">Redmine/Jira Users</a></li>
-                                <li><a href="{{ action('RedmineJiraProjectsController@index') }}">Redmine/Jira Projects</a></li>
+                                <li><a href="{{ action('RedmineProjectsController@index') }}">Redmine Projects</a></li>
                                 <li><a href="{{ action('RedmineJiraTrackersController@index') }}">Redmine/Jira Trackers</a></li>
                                 <li><a href="{{ action('RedmineJiraStatusesController@index') }}">Redmine/Jira Statuses</a></li>
                                 <li><a href="{{ action('RedmineJiraPrioritiesController@index') }}">Redmine/Jira Priorities</a></li>
                                 <li><a href="{{ action('RedmineClubhouseUsersController@index') }}">Redmine/Clubhouse Users</a></li>
-                                <li><a href="{{ action('RedmineClubhouseProjectsController@index') }}">Redmine/Clubhouse Projects</a></li>
                             @endif
                         </ul>
                     </li>

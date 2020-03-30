@@ -59,9 +59,11 @@ Route::group(['middleware' => 'auth'], function() {
     ]]);
 });
 
-Route::get('/redmine/jira/projects/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraProjectsController@import']);
+Route::get('/redmine/projects/import', ['middleware' => 'auth', 'uses' => 'RedmineProjectsController@import']);
+Route::get('/clubhouse/projects/import', ['middleware' => 'auth', 'uses' => 'ClubhouseProjectsController@import']);
+
 Route::group(['middleware' => 'auth'], function() {
-    Route::resource('/redmine/jira/projects', 'RedmineJiraProjectsController', ['parameters' => [
+    Route::resource('/redmine/projects', 'RedmineProjectsController', ['parameters' => [
         'projects' => 'project'
     ]]);
 });
@@ -73,12 +75,6 @@ Route::group(['middleware' => 'auth'], function() {
     ]]);
 });
 
-Route::get('/redmine/clubhouse/projects/import', ['middleware' => 'auth', 'uses' => 'RedmineClubhouseProjectsController@import']);
-Route::group(['middleware' => 'auth'], function() {
-    Route::resource('/redmine/clubhouse/projects', 'RedmineClubhouseProjectsController', ['parameters' => [
-        'projects' => 'project'
-    ]]);
-});
 
 Route::get('/redmine/jira/trackers/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraTrackersController@import']);
 Route::group(['middleware' => 'auth'], function() {
