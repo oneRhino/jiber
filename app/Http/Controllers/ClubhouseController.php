@@ -29,12 +29,17 @@
 
 namespace App\Http\Controllers;
 
+use App\{Setting, RedmineClubhouseUser, User};
 use Mikkelson\Clubhouse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\{Auth, Config};
 use Log;
 
 class ClubhouseController extends Controller {
+    /**
+     * Used by webhook, to hold redmine link object
+     */
+    private $redmine;
 
     public function createComment ($storyId, $comment) {
 
@@ -151,21 +156,93 @@ class ClubhouseController extends Controller {
             die;
         }
 
-        $this->$method($content);
+        try {
+            $content = new \stdClass();
+            $content->member_id = '5d895610-422a-461d-8b9c-536ceed75e45';
+            $this->userLogin($content);
+
+            $RedmineController = new RedmineController;
+            $this->redmine = $RedmineController->connect();
+
+            $this->$method($content);
+        } catch (Exception $e) {
+            $this->errorEmail($e->getMessage());
+        }
     }
 
-    private function epic_create($content) {
-        // "Epic" will be a simple ticket on Redmine. We should record the Epic ID
-        // with the Redmine ticket ID created, so, when a story is added to this
-        // Epic, we can create that story as a child ticket on Redmine.
+    private function userLogin($content) {
+        $clubhouse_user_id = $this->getUserFromContent($content);
 
-        // So, this method should:
-        // 1. Check if this "Epic" has already been created, just in case, by
-        // trying to get its ID from clubhouse_epics table
-        // 2. If it hasn't been created:
-        // 2.1. Create ticket on redmine
-        // 2.2. Save Epic ID + Redmine Ticket (the one we just created) to clubhouse_epics table
-        // 3. If it has been created, ignore.
+        // Get RedmineClubhouseUser based on clubhouse user id
+        $user = RedmineClubhouseUser::where('clubhouse_user_id', $clubhouse_user_id)->first();
+
+        if (!$user) {
+            throw new Exception("User {$user_id} not found. Please re-import clubhouse users.");
+        }
+
+        // Get redmine user
+        $user = $this->getRedmineUser($user);
+
+        // Connect on Redmine using this user
+        $request = new Request();
+        $request->merge(['user' => $user]);
+        $request->setUserResolver(function () use ($user) {
+            return $user;
+        });
+        Auth::setUser($user);
+    }
+
+    private function getRedmineUser($redmine_clubhouse_user) {
+        if (!$redmine_clubhouse_user->redmine_names) {
+            throw new Exception("User {$redmine_clubhouse_user->clubhouse_name} does not have a redmine user associated.");
+        }
+
+        $redmine_names = json_decode($redmine_clubhouse_user->redmine_names);
+        $redmine_user  = reset($redmine_names); // First user by default
+
+        // Check if there is more than one redmine user associated
+        if (count($redmine_names) > 1) {
+            // If geisermenoia, get geiser's user
+            if ('geisermenoia' === $redmine_clubhouse_user->clubhouse_name) {
+                $redmine_user = 'geiser';
+            }
+        }
+
+        // Get user settings
+        $settings = Setting::where('redmine_user', $redmine_user)->first();
+
+        if (!$settings) {
+            throw new Exception("Settings not found for {$redmine_user}.");
+        }
+
+        $user = User::find($settings->id);
+
+        return $user;
+    }
+
+    private function getUserFromContent($content) {
+        if (empty($content->member_id)) {
+            throw new Exception("User (member_id) not found on json content: ".print_r($content, true));
+        }
+
+        return $content->member_id;
+    }
+
+    /**
+     * "Epic" will be a simple ticket on Redmine. We should record the Epic ID
+     * with the Redmine ticket ID created, so, when a story is added to this
+     * Epic, we can create that story as a child ticket on Redmine.
+
+     * So, this method should:
+     * 1. Check if this "Epic" has already been created, just in case, by
+     * trying to get its ID from clubhouse_epics table
+     * 2. If it hasn't been created:
+     * 2.1. Create ticket on redmine
+     * 2.2. Save Epic ID + Redmine Ticket (the one we just created) to clubhouse_epics table
+     * 3. If it has been created, ignore.
+     */
+    private function epic_create($content) {
+
     }
 
     private function epic_update($content) {
