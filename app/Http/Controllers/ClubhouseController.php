@@ -29,7 +29,7 @@
 
 namespace App\Http\Controllers;
 
-use App\{Setting, RedmineClubhouseUser, User};
+use App\{Setting, RedmineClubhouseUser, RedmineClubhouseTask, ClubhouseComment, User};
 use Mikkelson\Clubhouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Config};
@@ -157,10 +157,6 @@ class ClubhouseController extends Controller {
         }
 
         try {
-            $content = new \stdClass();
-            $content->member_id = '5d895610-422a-461d-8b9c-536ceed75e45';
-            $this->userLogin($content);
-
             $RedmineController = new RedmineController;
             $this->redmine = $RedmineController->connect();
 
@@ -280,14 +276,42 @@ class ClubhouseController extends Controller {
     }
 
     private function story_comment_create($content) {
-        // This method should:
-        // 1. Check if this "Comment" has already been created, by trying to get its
-        // ID from clubhouse_comments table
-        // 2. If it has been created, ignore
-        // 3. If it hasn't been created:
-        // 3.1. Create comment on redmine (get redmine ticket id from clubhouse_stories
-        // table, using "story_id" property to match redmine ticket)
-        // 3.2. Save Clubhouse Comment ID + Redmine Comment ID (the one we just created) to clubhouse_comments table
+        
+        $contentActions = $content->actions;
+        
+        $commentId = $contentActions[0]->id;
+        $storyId = $contentActions[1]->id;
+
+        // Checks if the story/ticket exists.
+        $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
+        if (!$redmineClubhouseTaskObj) {
+            $this->writeLog("-- Story {$storyId} not created on Redmine."); 
+            die ("-- Story {$storyId} not created on Redmine.");
+        }
+
+        // Checks if the comment was already sent to Redmine.
+        $clubhouseCommentObj = ClubhouseComment::where('comment_id', $commentId)->first();
+        if ($clubhouseCommentObj) {
+            $this->writeLog("-- Comment {$commentId} already created on Redmine."); 
+            die ("-- Comment {$commentId} already created on Redmine.");
+        }
+
+        try {
+            $redmineTicketId = $redmineClubhouseTaskObj->redmine_task;
+            $commentBody = $contentActions[0]->text;
+
+            // This method does not return anything (no comment ID).
+            $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
+
+            $clubhouseCommentObj = new ClubhouseComment ();
+            $clubhouseCommentObj->comment_id = $commentId;
+            $clubhouseCommentObj->redmine_comment_id = 0;
+            $clubhouseCommentObj->save();
+
+            die ("-- Comment {$commentId} sent to Redmine.");
+        } catch (\Exception $e) {
+            die ("-- Exception: " . $e->getMessage());
+        }
     }
 
     private function story_comment_update($content) {
@@ -330,5 +354,10 @@ class ClubhouseController extends Controller {
             $m->cc(['j.cortela@onerhino.com']);
             $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
         });
+    }
+    
+    private function writeLog($message) {
+
+        file_put_contents('clubhouse-webhook.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
     }
 }
