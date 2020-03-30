@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Config;
 use App\User;
 use App\Setting;
 use App\RedmineJiraPriority;
-use App\RedmineJiraProject;
+use App\RedmineProject;
 use App\RedmineJiraTask;
 use App\RedmineJiraTracker;
 use App\RedmineJiraUser;
@@ -68,7 +68,7 @@ class CreatedTasks extends Command
 
     /**
     * Get all Redmine today tickets, except the ones
-    * with Jira ID or project not on RedmineJiraProjects
+    * with Jira ID or project not on RedmineProjects
     */
     private function getRedmineTickets()
     {
@@ -112,10 +112,10 @@ class CreatedTasks extends Command
                 continue;
             }
 
-            // Check if project exists on Redmine/Jira Projects
-            $project = RedmineJiraProject::where('redmine_name', $_issue['project']['name'])->first();
+            // Check if project exists on Redmine Projects
+            $project = RedmineProject::where('project_name', $_issue['project']['name'])->first();
 
-            if (!$project) {
+            if (!$project || $project->third_party !== 'jira' || !$project->third_party_project_name) {
                 $this->writeLog('-- Project doesnt match Jira, CONTINUE');
                 continue;
             }
@@ -244,7 +244,7 @@ class CreatedTasks extends Command
                 $issue['description'] = 'TODO';
             }
 
-            $project = RedmineJiraProject::where('redmine_name', $_ticket['project']['name'])->first();
+            $project = RedmineProject::where('project_name', $_ticket['project']['name'])->first();
 
             if ($project->content) {
                 $issue['description'] .= "\n".$project->content;

@@ -29,7 +29,7 @@
 
 namespace App\Http\Controllers;
 
-use App\{Setting, RedmineClubhouseUser, User};
+use App\{ClubhouseEpic, ClubhouseStory, Setting, RedmineClubhouseProject, RedmineClubhouseUser, User};
 use Mikkelson\Clubhouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Config};
@@ -40,6 +40,11 @@ class ClubhouseController extends Controller {
      * Used by webhook, to hold redmine link object
      */
     private $redmine;
+
+    /**
+     * Content being processed by webhook
+     */
+    private $content;
 
     public function createComment ($storyId, $comment) {
 
@@ -139,12 +144,12 @@ class ClubhouseController extends Controller {
     public function webhook(Request $request) {
         Log::debug('CLUBHOUSE WEBHOOK ACTIVATED');
 
-        $content = $request->getContent();
-        $content = json_decode($content);
-        if (!$content) die;
+        $this->content = $request->getContent();
+        $this->content = json_decode($this->content);
+        if (!$this->content) die;
 
         // Get first action - the main one
-        $action = $content->actions[0];
+        $action = $this->content->actions[0];
 
         // Create method name using entity and action
         $method = "{$action->entity_type}_$action->action";
@@ -157,21 +162,19 @@ class ClubhouseController extends Controller {
         }
 
         try {
-            $content = new \stdClass();
-            $content->member_id = '5d895610-422a-461d-8b9c-536ceed75e45';
-            $this->userLogin($content);
+            $this->userLogin();
 
             $RedmineController = new RedmineController;
             $this->redmine = $RedmineController->connect();
 
-            $this->$method($content);
+            $this->$method();
         } catch (Exception $e) {
             $this->errorEmail($e->getMessage());
         }
     }
 
-    private function userLogin($content) {
-        $clubhouse_user_id = $this->getUserFromContent($content);
+    private function userLogin() {
+        $clubhouse_user_id = $this->getUserFromContent();
 
         // Get RedmineClubhouseUser based on clubhouse user id
         $user = RedmineClubhouseUser::where('clubhouse_user_id', $clubhouse_user_id)->first();
@@ -220,12 +223,12 @@ class ClubhouseController extends Controller {
         return $user;
     }
 
-    private function getUserFromContent($content) {
-        if (empty($content->member_id)) {
-            throw new Exception("User (member_id) not found on json content: ".print_r($content, true));
+    private function getUserFromContent() {
+        if (empty($this->content->member_id)) {
+            throw new Exception("User (member_id) not found on json content: ".print_r($this->content, true));
         }
 
-        return $content->member_id;
+        return $this->content->member_id;
     }
 
     /**
@@ -241,8 +244,68 @@ class ClubhouseController extends Controller {
      * 2.2. Save Epic ID + Redmine Ticket (the one we just created) to clubhouse_epics table
      * 3. If it has been created, ignore.
      */
-    private function epic_create($content) {
+    private function epic_create() {
+        $epic_id = $this->content->actions[0]->id;
 
+        // Check if epic has been created
+        $epic = ClubhouseEpic::where('epic_id', $epic_id)->first();
+
+        if ($epic) {
+            return true; // Epic has already been created
+        }
+
+
+    }
+
+    private function getProjectId() {
+        if (empty($this->content->actions[0]) || empty($this->content->actions[0]->project_id)) {
+            throw new Exception('Project not found: '.print_r($this->content->actions[0], true));
+        }
+
+        $clubhouse_project_id = $this->content->actions[0]->project_id;
+
+        $redmine_clubhouse_project = RedmineClubhouseProject::where('clubhouse_id', $clubhouse_project_id)->first();
+
+        if (empty($redmine_clubhouse_project)) {
+            throw new Exception('Clubhouse Project not found: '.$clubhouse_project_id);
+        }
+
+        if (empty($redmine_clubhouse_project->redmine_id)) {
+            throw new Exception('Clubhouse Project not linked to a Redmine Project: '.$clubhouse_project_id);
+        }
+
+        return $redmine_clubhouse_project->redmine_id;
+    }
+
+    private function createRedmineTicket() {
+        try {
+
+            $project = $this->getProjectId();
+            // $tracker = $this->getProjectId();
+
+        } catch (Exception $e) {
+            $this->errorEmail($e->getMessage());
+        }
+
+        
+
+        // $data = array(
+        //     'project_id'       => $project->redmine_id,
+        //     'tracker_id'       => $tracker->redmine_id,
+        //     'status_id'        => $status->redmine_id,
+        //     'priority_id'      => $priority->redmine_id,
+        //     'assigned_to_id'   => $assignee->redmine_id,
+        //     'subject'          => $subject,
+        //     'description'      => $description,
+        //     'due_date'         => $content->issue->fields->duedate,
+        //     'custom_fields'     => array(
+        //         'custom_value' => array(
+        //             'id'       => Config::get('redmine.jira_id'),
+        //             'value'    => $content->issue->key,
+        //         )
+        //     ),
+        //     'watcher_user_ids' => [1, 105, 89], // Billy, Alejandro, Pablo
+        // );
     }
 
     private function epic_update($content) {
@@ -254,20 +317,32 @@ class ClubhouseController extends Controller {
         // 3.1. Update whatever data needed (it's inside action's "changes" property)
     }
 
-    private function story_create($content) {
-        // "Story" will be a simple ticket on Redmine. We should record the Story ID
-        // with the Redmine ticket ID created.
-        // If this "Story" has a "epic_id" property, then we should make this ticket
-        // child of the one related to that epic_id: we have the epic_id/redmine
-        // ticket id relationship on clubhouse_epics table.
+    /**
+     * "Story" will be a simple ticket on Redmine. We should record the Story ID
+     * with the Redmine ticket ID created.
+     * If this "Story" has a "epic_id" property, then we should make this ticket
+     * child of the one related to that epic_id: we have the epic_id/redmine
+     * ticket id relationship on clubhouse_epics table.
 
-        // So, this method should:
-        // 1. Check if this "Story" has already been created, just in case, by
-        // trying to get its ID from clubhouse_stories table
-        // 2. If it has been created, ignore.
-        // 3. If it hasn't been created:
-        // 3.1. Create ticket on redmine
-        // 3.2. Save Story ID + Redmine Ticket (the one we just created) to clubhouse_stories table
+     * So, this method should:
+     * 1. Check if this "Story" has already been created, just in case, by
+     * trying to get its ID from clubhouse_stories table
+     * 2. If it has been created, ignore.
+     * 3. If it hasn't been created:
+     * 3.1. Create ticket on redmine
+     * 3.2. Save Story ID + Redmine Ticket (the one we just created) to clubhouse_stories table
+     */
+    private function story_create($content) {
+        // Check if story has already been created
+        $story_id = $content->actions[0]->id;
+
+        $story = ClubhouseStory::where('story_id', $story_id)->first();
+
+        if ($story) {
+            return true; // Story has already been created
+        }
+
+        $this->createRedmineTicket($content);
     }
 
     private function story_update($content) {
