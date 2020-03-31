@@ -202,12 +202,12 @@ class CreatedTasks extends Command
                 $clubhouseProjectId = $ticket['clubhouse_project_id'];
                 $redmineTicket = $ticket['ticket_details'];
                 $redmineTicketName = '(' .  $redmineTicket['author']['name'] . ') ' . $redmineTicket['subject'];
-                $redmineTicketType = RedmineClubhouseTracker::where('redmine_name', $redmineTicket['tracker']['name'])->select('clubhouse_name')->first();
+                $redmineTicketType = RedmineClubhouseTracker::where('redmine_name', $redmineTicket['tracker']['name'])->select('third_party_project_name')->first();
 
-                $clubhouseCreateIssueObj = array ();
-                $clubhouseCreateIssueObj['project_id'] = $clubhouseProjectId;
-                $clubhouseCreateIssueObj['name'] = $redmineTicketName;
-                $clubhouseCreateIssueObj['story_type'] = $redmineTicketType->clubhouse_name;
+                $clubhouseCreateIssueObj                = array ();
+                $clubhouseCreateIssueObj['project_id']  = $clubhouseProjectId;
+                $clubhouseCreateIssueObj['name']        = $redmineTicketName;
+                $clubhouseCreateIssueObj['story_type']  = $redmineTicketType->third_party_project_name;
                 $clubhouseCreateIssueObj['description'] = $redmineTicket['description'];
 
                 if ($this->debug) {
