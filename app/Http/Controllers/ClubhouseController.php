@@ -34,6 +34,7 @@ use Mikkelson\Clubhouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Config};
 use Log;
+use Mail;
 
 class ClubhouseController extends Controller {
     /**
@@ -260,10 +261,10 @@ class ClubhouseController extends Controller {
      * 3. If it has been created, ignore.
      */
     private function epic_create() {
-        
-        die ('Epic Create'); 
+
+        die ('Epic Create');
         $epicId = $this->content->actions[0]->id;
-        
+
         // Check if epic has been created
         $clubhouseEpicObj = ClubhouseEpic::where('epic_id', $epicId)->first();
         if ($clubhouseEpicObj) {
@@ -303,7 +304,7 @@ class ClubhouseController extends Controller {
      * Only 'stories' so far, 'epics' are not related to any project.
      */
     private function createRedmineTicket() {
-        
+
         try {
             $clubhouseDetails = $this->content->actions[0];
 
@@ -317,7 +318,7 @@ class ClubhouseController extends Controller {
             $redmineCreateIssueObj['project_id'] = $redmineProjectObj->project_name;
             $redmineCreateIssueObj['subject'] = $clubhouseDetails->name;
             $redmineCreateIssueObj['assigned_to_id'] = '1';
-            $redmineCreateIssueObj['description'] = $clubhouseDetails->description; 
+            $redmineCreateIssueObj['description'] = $clubhouseDetails->description;
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
             if ($redmineProjectObj->content) {
                 $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
@@ -327,7 +328,7 @@ class ClubhouseController extends Controller {
 
             return $redmineApiResponse;
 
-        } catch (\Exeption $e) { 
+        } catch (\Exeption $e) {
             $this->errorEmail($e->getMessage());
         }
     }
@@ -343,10 +344,10 @@ class ClubhouseController extends Controller {
      * 2. If it hasn't been created, send data to "epic_create" method, so it's create
      * 3. If it has been created:
      * 3.1. Update whatever data needed (it's inside action's "changes" property)
-     */ 
+     */
     private function epic_update($content) {
 
-        die ("Epic Update"); 
+        die ("Epic Update");
     }
 
     /**
@@ -623,7 +624,7 @@ class ClubhouseController extends Controller {
             die ("-- Exception: " . $e->getMessage());
         }
     }
-    
+
     /**
      * Send email when something goes wrong.
      *

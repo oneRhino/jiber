@@ -4,6 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class RedmineJiraTracker extends Model
+class ClubhouseStatus extends Model
 {
+    //
 }

@@ -6,39 +6,44 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use App\Http\Controllers\RedmineController;
-use App\RedmineJiraStatus;
+use App\{ClubhouseStatus, RedmineStatus};
 
-class RedmineJiraStatusesController extends Controller
+class RedmineStatusesController extends Controller
 {
     public function index()
     {
-        $statuses = RedmineJiraStatus::get();
+        $statuses = RedmineStatus::get();
 
-        return view('redmine_jira_statuses.index', [
+        return view('redmine_statuses.index', [
             'statuses' => $statuses,
         ]);
     }
 
-    public function edit(RedmineJiraStatus $status)
+    public function edit(RedmineStatus $status)
     {
-        return view('redmine_jira_statuses.form', [
-            'status' => $status,
+        $clubhouse_statuses = ClubhouseStatus::orderby('clubhouse_name')->get();
+
+        return view('redmine_statuses.form', [
+            'status'             => $status,
+            'clubhouse_statuses' => $clubhouse_statuses,
+            'clubhouse_selected' => json_decode($status->clubhouse_name, true) ?? [],
         ]);
     }
 
-    public function update(RedmineJiraStatus $status, Request $request)
+    public function update(RedmineStatus $status, Request $request)
     {
         // Save status
-        $status->redmine_name = $request->redmine_name;
-        $status->jira_name    = $request->jira_name;
+        $status->redmine_name   = $request->redmine_name;
+        $status->jira_name      = $request->jira_name;
+        $status->clubhouse_name = json_encode($request->clubhouse_name);
         $status->save();
 
         $request->session()->flash('alert-success', 'Status updated successfully!');
 
-        return redirect()->action('RedmineJiraStatusesController@index');
+        return redirect()->action('RedmineStatusesController@index');
     }
 
-    public function destroy(RedmineJiraStatus $status, Request $request)
+    public function destroy(RedmineStatus $status, Request $request)
     {
         $status->delete();
 
@@ -58,10 +63,10 @@ class RedmineJiraStatusesController extends Controller
         foreach ($statuses['issue_statuses'] as $_status)
         {
             // Sync status
-            $status = RedmineJiraStatus::where('redmine_name', $_status['name'])->get()->first();
+            $status = RedmineStatus::where('redmine_name', $_status['name'])->get()->first();
 
             if (!$status) {
-                $status = new RedmineJiraStatus();
+                $status = new RedmineStatus();
                 $status->redmine_name = $_status['name'];
             }
 

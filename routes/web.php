@@ -76,16 +76,19 @@ Route::group(['middleware' => 'auth'], function() {
 });
 
 
-Route::get('/redmine/jira/trackers/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraTrackersController@import']);
+Route::get('/redmine/trackers/import', ['middleware' => 'auth', 'uses' => 'RedmineTrackersController@import']);
+
 Route::group(['middleware' => 'auth'], function() {
-    Route::resource('/redmine/jira/trackers', 'RedmineJiraTrackersController', ['parameters' => [
+    Route::resource('/redmine/trackers', 'RedmineTrackersController', ['parameters' => [
         'trackers' => 'tracker'
     ]]);
 });
 
-Route::get('/redmine/jira/statuses/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraStatusesController@import']);
+Route::get('/redmine/statuses/import', ['middleware' => 'auth', 'uses' => 'RedmineStatusesController@import']);
+Route::get('/clubhouse/statuses/import', ['middleware' => 'auth', 'uses' => 'ClubhouseStatusesController@import']);
+
 Route::group(['middleware' => 'auth'], function() {
-    Route::resource('/redmine/jira/statuses', 'RedmineJiraStatusesController', ['parameters' => [
+    Route::resource('/redmine/statuses', 'RedmineStatusesController', ['parameters' => [
         'statuses' => 'status'
     ]]);
 });
