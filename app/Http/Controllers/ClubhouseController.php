@@ -395,9 +395,6 @@ class ClubhouseController extends Controller {
     private function userLogin() {
         $clubhouse_user_id = $this->getUserFromContent();
 
-        // TODO: REMOVE THIS (TEST ONLY)
-        // $clubhouse_user_id = '5d818d54-4b45-4532-9ab3-8d29fc300a10';
-
         // Get RedmineClubhouseUser based on clubhouse user id
         $user = RedmineClubhouseUser::where('clubhouse_user_id', $clubhouse_user_id)->first();
 
