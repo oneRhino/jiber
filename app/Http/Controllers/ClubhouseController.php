@@ -29,7 +29,7 @@
 
 namespace App\Http\Controllers;
 
-use App\{RedmineClubhouseTask, RedmineProject, ClubhouseComment, ClubhouseEpic, ClubhouseStory, Setting, RedmineClubhouseProject, RedmineClubhouseUser, User};
+use App\{RedmineClubhouseTask, RedmineJiraUser, RedmineProject, ClubhouseComment, ClubhouseEpic, ClubhouseStory, Setting, RedmineClubhouseProject, RedmineClubhouseUser, User};
 use Mikkelson\Clubhouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Config};
@@ -429,10 +429,77 @@ class ClubhouseController extends Controller {
      */
     private function story_update() {
 
-        die ("Story Update");
-
         $storyId = $this->content->actions[0]->id;
         $changesOnStory = $this->content->actions[0]->changes;
+
+        // Checks if the story/ticket exists.
+        $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
+        if (!$clubhouseStoryObj) {
+            $this->writeLog("-- Story {$storyId} not created on Redmine.");
+            die ("-- Story {$storyId} not created on Redmine.");
+        }
+
+        $updatesAsIssueUpdateArray = array();
+        $listOfFollowersToAdd = array();
+        $listOfFollowersToRemove = array();
+
+        foreach ($changesOnStory as $key => $changeOnStory) {
+
+            switch ($key) {
+                case "started":
+                    $updatesAsIssueUpdateArray['status'] = $changeOnStory->new ? 'In Progress' : 'Assigned'; 
+                    break;
+                case "workflow_state_id":
+                    $workflowStateId = $this->getWorkflowStateId($changeOnStory->new);
+                    if ($workflowStateId)
+                        $updatesAsIssueUpdateArray['status'] = $workflowStateId; 
+                    break;
+                case "story_type":
+                    $storyTypeId = $this->getStoryType($changeOnStory->new);
+                    if ($storyTypeId)
+                        $updatesAsIssueUpdateArray['tracker'] = $storyTypeId; 
+                    break;
+                case "started_at":
+                    $startDate = strtotime($changeOnStory->new);
+                    $updatesAsIssueUpdateArray['start_date'] = date('Y-m-d', $startDate); 
+                    break;
+                case "deadline":
+                    $deadlineDate = strtotime($changeOnStory->new);
+                    $updatesAsIssueUpdateArray['due_date'] = date('Y-m-d', $deadlineDate); 
+                    break;
+                case "follower_ids":
+                    if (isset($changeOnStory->adds)) {
+                        foreach ($changeOnStory->adds as $followerId) {
+                            $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
+                            $listOfFollowersToAdd = json_decode($followersRedmineIds->redmine_names, TRUE); 
+                        }
+                    }
+                    if (isset($changeOnStory->removes)) {
+                        foreach ($changeOnStory->removes as $followerId) {
+                            $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
+                            $listOfFollowersToRemove = json_decode($followersRedmineIds->redmine_names, TRUE); 
+                        }
+                        break;
+                    }
+            } 
+        }
+
+        /* NOTE: Not in use so far, API returns FALSE, don't know why yet.
+        // Add follow users to ticket    
+        if ($listOfFollowersToAdd)
+            $this->addFollowersToIssue ($clubhouseStoryObj->redmine_ticket_id, $listOfFollowersToAdd);
+
+        // Remove follow users from ticket    
+        if ($listOfFollowersToRemove)
+            $this->removeFollowersFromIssue ($clubhouseStoryObj->redmine_ticket_id, $listOfFollowersToRemove);
+        */
+
+        if ($updatesAsIssueUpdateArray) {
+            $redmineTicketId = $clubhouseStoryObj->redmine_ticket_id;
+            $redmineTicket = $this->redmine->issue->update($redmineTicketId, $updatesAsIssueUpdateArray); 
+        }
+
+        die ("-- Story {$storyId} was updated on Redmine.");
     }
 
     /**
@@ -583,5 +650,62 @@ class ClubhouseController extends Controller {
     private function writeLog($message) {
 
         file_put_contents('clubhouse-webhook.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
+    }
+
+    private function getWorkflowStateId ($workflowStateId) {
+
+        $workflowStates = array();
+        $workflowStates['500000008'] = 'New'; // Uncheduled
+        $workflowStates['500000007'] = 'Assigned'; // Ready for Development
+        $workflowStates['500000006'] = 'In Progress'; // In Progress
+        $workflowStates['500000604'] = 'In Review'; // QA Dev
+        $workflowStates['500000010'] = 'In Review'; // QA Staging
+        $workflowStates['500000009'] = 'In Review'; // Ready for Deploy
+        $workflowStates['500000011'] = 'Resolved'; // Completed
+
+        if (array_key_exists($workflowStateId, $workflowStates))
+            return $workflowStates[$workflowStateId];
+        else
+            return FALSE;
+
+    }
+
+    private function getStoryType ($storyTypeId) {
+        
+        $storyTypes = array();
+        $storyTypes['bug'] = 'Bug'; // Uncheduled
+        $storyTypes['feature'] = 'Feature'; // Ready for Development
+        $storyTypes['chore'] = 'Support'; // Ready for Development
+
+        if (array_key_exists($storyTypeId, $storyTypes))
+            return $storyTypes[$storyTypeId];
+        else
+            return FALSE;
+    }
+
+    private function addFollowersToIssue ($issueId, $listOfFollowers) {
+
+        $listOfFollowersIds = array();
+
+        foreach ($listOfFollowers as $follower) {
+            
+            $redmineJiraUserObj = RedmineJiraUser::where('redmine_name', $follower)->select('redmine_id')->first();
+            $userAsArray = $redmineJiraUserObj->toArray();
+
+            $this->addWatcher($issueId, $userAsArray['redmine_id']);
+        }
+    }
+    
+    private function removeFollowersFromIssue ($issueId, $listOfFollowers) {
+
+        $listOfFollowersIds = array();
+
+        foreach ($listOfFollowers as $follower) {
+            
+            $redmineJiraUserObj = RedmineJiraUser::where('redmine_name', $follower)->select('redmine_id')->first();
+            $userAsArray = $redmineJiraUserObj->toArray();
+
+            $this->removeWatcher($issueId, $userAsArray['redmine_id']);
+        }
     }
 }
