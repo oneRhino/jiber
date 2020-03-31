@@ -161,12 +161,12 @@ class CreatedTasks extends Command
                 ];
 
                 if ($this->debug) {
-                    $this->writeLog("-- Task {$redmineTicket['id']} NOT sent to Clubhouse due to debug mode.");
+                    $this->writeLog("-- Task {$ticket['ticket_details']['id']} NOT sent to Clubhouse due to debug mode.");
                 } else {
                     $clubhouseControllerObj = new clubhouseController() ;
                     $clubhouseStory         = $clubhouseControllerObj->createStory($clubhouseCreateIssueObj);
 
-                    $this->writeLog("-- Task {$redmineTicket['id']} sent to Clubhouse.");
+                    $this->writeLog("-- Task {$ticket['ticket_details']['id']} sent to Clubhouse.");
                 }
 
                 $redmineClubhouseTaskInstance = new RedmineClubhouseTask();
