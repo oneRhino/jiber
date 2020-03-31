@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\ClubhouseToRedmine;
+namespace App\Console\Commands\RedmineToClubhouse;
 
 use Mail;
 use Illuminate\Console\Command;
