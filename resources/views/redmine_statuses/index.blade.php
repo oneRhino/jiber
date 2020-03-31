@@ -7,7 +7,8 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <a href="{{ action('RedmineStatusesController@import') }}" class="btn btn-default"><i class="glyphicon glyphicon-import"></i> Import/Merge Statuses from Redmine</a>
+                <a href="{{ action('RedmineStatusesController@import') }}" class="btn btn-default"><i class="glyphicon glyphicon-import"></i> Import Statuses from Redmine</a>
+                <a href="{{ action('ClubhouseStatusesController@import') }}" class="btn btn-default"><i class="glyphicon glyphicon-import"></i> Import Statuses from Clubhouse</a>
             </div>
         </div>
 

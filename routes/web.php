@@ -85,6 +85,7 @@ Route::group(['middleware' => 'auth'], function() {
 });
 
 Route::get('/redmine/statuses/import', ['middleware' => 'auth', 'uses' => 'RedmineStatusesController@import']);
+Route::get('/clubhouse/statuses/import', ['middleware' => 'auth', 'uses' => 'ClubhouseStatusesController@import']);
 
 Route::group(['middleware' => 'auth'], function() {
     Route::resource('/redmine/statuses', 'RedmineStatusesController', ['parameters' => [
