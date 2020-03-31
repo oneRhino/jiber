@@ -287,11 +287,12 @@ class CreatedTasks extends Command
                     continue;
                 }
 
-                $redmineCreateIssueObj = array ();
-                $redmineCreateIssueObj['project_id'] = $redmineProjectName;
-                $redmineCreateIssueObj['subject'] = $ticket['name'];
+                $redmineCreateIssueObj                = array ();
+                $redmineCreateIssueObj['project_id']  = $redmineProject->project_id;
+                $redmineCreateIssueObj['subject']     = $ticket['name'];
                 $redmineCreateIssueObj['assigned_to'] = 'admin';
                 $redmineCreateIssueObj['description'] = $ticket['description'];
+                
                 if ($redmineProject->content) {
 		            $redmineCreateIssueObj['description'] .= "\n" . $redmineProject->content;
 	            }
