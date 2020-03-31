@@ -215,7 +215,7 @@ class CreatedTasks extends Command
                 } else {
                     $clubhouseControllerObj = new clubhouseController() ;
                     $clubhouseStory = $clubhouseControllerObj->createStory($clubhouseCreateIssueObj);
-                    $this->writeLog("-- Task {$redmineStory['id']} sent to Clubhouse.");
+                    $this->writeLog("-- Task {$redmineTicket['id']} sent to Clubhouse.");
                 }
 
                 $redmineClubhouseTaskInstance = new RedmineClubhouseTask();
