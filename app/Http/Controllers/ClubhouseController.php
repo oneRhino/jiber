@@ -29,7 +29,7 @@
 
 namespace App\Http\Controllers;
 
-use App\{RedmineClubhouseTask, RedmineJiraUser, RedmineProject, ClubhouseComment, ClubhouseEpic, ClubhouseStory, Setting, RedmineClubhouseProject, RedmineClubhouseUser, User};
+use App\{RedmineClubhouseTask, RedmineJiraUser, RedmineProject, ClubhouseComment, ClubhouseTask, ClubhouseEpic, ClubhouseStory, Setting, RedmineClubhouseProject, RedmineClubhouseUser, User};
 use Mikkelson\Clubhouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Config};
@@ -260,23 +260,30 @@ class ClubhouseController extends Controller {
      * 2.2. Save Epic ID + Redmine Ticket (the one we just created) to clubhouse_epics table
      * 3. If it has been created, ignore.
      */
-    private function epic_create() {
+    private function epic_create($storyReferenceId) {
 
-        die ('Epic Create');
-        $epicId = $this->content->actions[0]->id;
+        $projectId = $this->content->actions[0]->project_id;
 
-        // Check if epic has been created
-        $clubhouseEpicObj = ClubhouseEpic::where('epic_id', $epicId)->first();
-        if ($clubhouseEpicObj) {
-            die ("-- Epic {$epicId} has already been created on Redmine.");
+        $redmineProjectObj = RedmineProject::where('third_party_project_id', $projectId)->first();
+        $epicDetails = $this->getEpic($storyReferenceId);
+
+        // Send epic to Redmine.
+        $redmineCreateIssueObj = array ();
+        $redmineCreateIssueObj['project_id'] = $projectId;
+        $redmineCreateIssueObj['subject'] = "(Epic)" . $epicDetails['name'];
+        $redmineCreateIssueObj['assigned_to_id'] = '1';
+        $redmineCreateIssueObj['description'] = $epicDetails['description'];
+        $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
+        if ($redmineProjectObj->content) {
+            $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
         }
+        $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
 
-        $redmineApiResponse = $this->createRedmineTicket();
-
-        $clubhouseEpicObj = new ClubhouseEpic();
-        $clubhouseEpicObj->redmine_ticket_id = $redmineApiResponse->id;
-        $clubhouseEpicObj->epic_id = $clubhouseEpicDetails->id;
-        $clubhouseEpicObj->save();
+        // Save Redmine/Clubhouse epic relationship.
+        $clubhouseStoryObj = new ClubhouseEpic();
+        $clubhouseStoryObj->redmine_ticket_id = $redmineApiResponse->id;
+        $clubhouseStoryObj->epic_id = $storyReferenceId;
+        $clubhouseStoryObj->save();
     }
 
     private function getProjectId() {
@@ -332,6 +339,42 @@ class ClubhouseController extends Controller {
             $this->errorEmail($e->getMessage());
         }
     }
+    
+    /**
+     * Create a sub ticket on Redmine.
+     */
+    private function createRedmineSubTicket() {
+
+        try {
+            $clubhouseDetails = $this->content->actions[0];
+            $storyId = $this->content->actions[1]->id;
+
+            $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
+
+            if (!$clubhouseStoryObj) {
+                die ("Clubhouse story {$storyId} is not mapped to any Redmine project.");
+            }
+
+            // Gets parent ticket.
+            $redmineParentTicketId = $clubhouseStoryObj->redmine_ticket_id;
+            $redmineParentTicket = $this->redmine->issue->show($redmineParentTicketId);
+
+            $redmineCreateIssueObj = array ();
+            $redmineCreateIssueObj['project_id'] = $redmineParentTicket['issue']['project']['id'];
+            $redmineCreateIssueObj['parent_issue_id'] = $redmineParentTicketId;
+            $redmineCreateIssueObj['subject'] = $clubhouseDetails->description;
+            $redmineCreateIssueObj['assigned_to_id'] = $redmineParentTicket['issue']['assigned_to']['id'];
+            $redmineCreateIssueObj['description'] = $clubhouseDetails->description;
+            $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
+            
+            $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
+            
+            return $redmineApiResponse;
+
+        } catch (\Exeption $e) {
+            $this->errorEmail($e->getMessage());
+        }
+    }
 
     /**
      * Epic update JSON is not available for development. Skipping for now.
@@ -366,7 +409,7 @@ class ClubhouseController extends Controller {
      * 3.2. Save Story ID + Redmine Ticket (the one we just created) to clubhouse_stories table
      */
     private function story_create() {
-
+        
         $storyId = $this->content->actions[0]->id;
 
         // Check if story has been created
@@ -375,47 +418,22 @@ class ClubhouseController extends Controller {
             die ("-- Story {$storyId} has already been created on Redmine.");
         }
 
-        // START - Create story ticket.
         $redmineApiResponse = $this->createRedmineTicket();
 
         $clubhouseStoryObj = new ClubhouseStory();
         $clubhouseStoryObj->redmine_ticket_id = $redmineApiResponse->id;
         $clubhouseStoryObj->story_id = $storyId;
         $clubhouseStoryObj->save();
-        // END - Create story ticket.
 
-        // START - Create epic ticket.
+        // Check if story has epics related to it and create them on Redmine as tickets.
         $storyReferences = $this->content->references;
-
         foreach ($storyReferences as $storyReference) {
             $entityType = $storyReference->entity_type;
             if ($entityType != 'epic')
                 continue;
 
-            $projectId = $this->content->actions[0]->project_id;
-
-            $redmineProjectObj = RedmineProject::where('third_party_project_id', $projectId)->first();
-            $epicDetails = $this->getEpic($storyReference->id);
-
-            // Send epic to Redmine.
-            $redmineCreateIssueObj = array ();
-            $redmineCreateIssueObj['project_id'] = $projectId;
-            $redmineCreateIssueObj['subject'] = "(Epic)" . $epicDetails['name'];
-            $redmineCreateIssueObj['assigned_to_id'] = '1';
-            $redmineCreateIssueObj['description'] = $epicDetails['description'];
-            $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
-            if ($redmineProjectObj->content) {
-                $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
-            }
-            $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
-
-            // Save Redmine/Clubhouse epic relationship.
-            $clubhouseStoryObj = new ClubhouseEpic();
-            $clubhouseStoryObj->redmine_ticket_id = $redmineApiResponse->id;
-            $clubhouseStoryObj->epic_id = $storyReference->id;
-            $clubhouseStoryObj->save();
+            $this->epic_create($storyReference->id);
         }
-        // END - Create epic ticket.
 
         die ("-- Story {$storyId} has been created on Redmine.");
     }
@@ -430,6 +448,111 @@ class ClubhouseController extends Controller {
      */
     private function story_update() {
 
+        $storyId = $this->content->actions[0]->id;
+        $changesOnStory = $this->content->actions[0]->changes;
+
+        // Checks if the story/ticket exists.
+        $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
+        if (!$clubhouseStoryObj) {
+            $this->writeLog("-- Story {$storyId} not created on Redmine.");
+            die ("-- Story {$storyId} not created on Redmine.");
+        }
+
+        $updatesAsIssueUpdateArray = array();
+        $listOfFollowersToAdd = array();
+        $listOfFollowersToRemove = array();
+
+        foreach ($changesOnStory as $key => $changeOnStory) {
+
+            switch ($key) {
+                case "started":
+                    $updatesAsIssueUpdateArray['status'] = $changeOnStory->new ? 'In Progress' : 'Assigned'; 
+                    break;
+                case "workflow_state_id":
+                    $workflowStateId = $this->getWorkflowStateId($changeOnStory->new);
+                    if ($workflowStateId)
+                        $updatesAsIssueUpdateArray['status'] = $workflowStateId; 
+                    break;
+                case "story_type":
+                    $storyTypeId = $this->getStoryType($changeOnStory->new);
+                    if ($storyTypeId)
+                        $updatesAsIssueUpdateArray['tracker'] = $storyTypeId; 
+                    break;
+                case "started_at":
+                    $startDate = strtotime($changeOnStory->new);
+                    $updatesAsIssueUpdateArray['start_date'] = date('Y-m-d', $startDate); 
+                    break;
+                case "deadline":
+                    $deadlineDate = strtotime($changeOnStory->new);
+                    $updatesAsIssueUpdateArray['due_date'] = date('Y-m-d', $deadlineDate); 
+                    break;
+                case "follower_ids":
+                    if (isset($changeOnStory->adds)) {
+                        foreach ($changeOnStory->adds as $followerId) {
+                            $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
+                            $listOfFollowersToAdd = json_decode($followersRedmineIds->redmine_names, TRUE); 
+                        }
+                    }
+                    if (isset($changeOnStory->removes)) {
+                        foreach ($changeOnStory->removes as $followerId) {
+                            $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
+                            $listOfFollowersToRemove = json_decode($followersRedmineIds->redmine_names, TRUE); 
+                        }
+                    }
+                    break;
+            } 
+        }
+
+        /* NOTE: Not in use so far, API returns FALSE, don't know why yet.
+        // Add follow users to ticket    
+        if ($listOfFollowersToAdd)
+            $this->addFollowersToIssue ($clubhouseStoryObj->redmine_ticket_id, $listOfFollowersToAdd);
+
+        // Remove follow users from ticket    
+        if ($listOfFollowersToRemove)
+            $this->removeFollowersFromIssue ($clubhouseStoryObj->redmine_ticket_id, $listOfFollowersToRemove);
+        */
+
+        if ($updatesAsIssueUpdateArray) {
+            $redmineTicketId = $clubhouseStoryObj->redmine_ticket_id;
+            $redmineTicket = $this->redmine->issue->update($redmineTicketId, $updatesAsIssueUpdateArray); 
+        }
+
+        die ("-- Story {$storyId} was updated on Redmine.");
+    }
+
+    private function story_task_create() {
+
+        $storyId = $this->content->actions[1]->id;
+        $taskId = $this->content->actions[0]->id;
+
+        // Check if story exists on Redmine
+        $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
+        if (!$clubhouseStoryObj) {
+            die ("-- Story {$storyId} was not created on Redmine.");
+        }
+        
+        // Check if task has been created already
+        $clubhouseTaskObj = ClubhouseTask::where('task_id', $taskId)->first();
+        if ($clubhouseTaskObj) {
+            die ("-- Task {$taskId} has already been created on Redmine.");
+        }
+
+        $redmineApiResponse = $this->createRedmineSubTicket();
+
+        $clubhouseTaskObj = new ClubhouseTask();
+        $clubhouseTaskObj->redmine_ticket_id = $redmineApiResponse->id;
+        $clubhouseTaskObj->task_id = $taskId;
+        $clubhouseTaskObj->save();
+
+        die ("-- Task {$taskId} has been created on Redmine as a child ticket.");
+    }
+    
+    private function story_task_update() {
+
+        die ('Story Task Update');
+
+        // Code from story_update
         $storyId = $this->content->actions[0]->id;
         $changesOnStory = $this->content->actions[0]->changes;
 
@@ -693,7 +816,7 @@ class ClubhouseController extends Controller {
             $redmineJiraUserObj = RedmineJiraUser::where('redmine_name', $follower)->select('redmine_id')->first();
             $userAsArray = $redmineJiraUserObj->toArray();
 
-            $this->addWatcher($issueId, $userAsArray['redmine_id']);
+            $this->redmine->issue->addWatcher($issueId, $userAsArray['redmine_id']);
         }
     }
     
@@ -706,7 +829,7 @@ class ClubhouseController extends Controller {
             $redmineJiraUserObj = RedmineJiraUser::where('redmine_name', $follower)->select('redmine_id')->first();
             $userAsArray = $redmineJiraUserObj->toArray();
 
-            $this->removeWatcher($issueId, $userAsArray['redmine_id']);
+            $this->redmine->issue->removeWatcher($issueId, $userAsArray['redmine_id']);
         }
     }
 }
