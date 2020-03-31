@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Config};
 use App\{Setting, User};
-use App\{RedmineProject, RedmineClubhouseTask, RedmineClubhouseTracker};
+use App\{RedmineProject, RedmineTracker, RedmineClubhouseTask};
 use App\Http\Controllers\{ClubhouseController, RedmineController};
 use Redmine\Client as RedmineClient;
 
@@ -202,7 +202,7 @@ class CreatedTasks extends Command
                 $clubhouseProjectId = $ticket['clubhouse_project_id'];
                 $redmineTicket = $ticket['ticket_details'];
                 $redmineTicketName = '(' .  $redmineTicket['author']['name'] . ') ' . $redmineTicket['subject'];
-                $redmineTicketType = RedmineClubhouseTracker::where('redmine_name', $redmineTicket['tracker']['name'])->select('clubhouse_name')->first();
+                $redmineTicketType = RedmineTracker::where('redmine_name', $redmineTicket['tracker']['name'])->select('clubhouse_name')->first();
 
                 $clubhouseCreateIssueObj                = array ();
                 $clubhouseCreateIssueObj['project_id']  = $clubhouseProjectId;
