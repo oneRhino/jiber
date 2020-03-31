@@ -1,19 +1,14 @@
 <?php
 
-namespace App\Console\Commands\ClubhouseToRedmine;
+namespace App\Console\Commands\RedmineToClubhouse;
 
 //use Log;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
-use App\User;
-use App\Setting;
-use App\RedmineClubhouseChange;
-use App\RedmineClubhouseProject;
-use App\RedmineClubhouseTask;
-use App\Http\Controllers\ClubhouseController;
-use App\Http\Controllers\RedmineController;
+use Illuminate\Support\Facades\{Auth, Config};
+use App\{Setting, User};
+use App\{RedmineProject, RedmineClubhouseChange, RedmineClubhouseTask};
+use App\Http\Controllers\{ClubhouseController, RedmineController};
 
 class UpdatedTasks extends Command
 {
@@ -78,17 +73,17 @@ class UpdatedTasks extends Command
         $RedmineController = new RedmineController;
         $Redmine = $RedmineController->connect();
 
-        $redmineClubhouseProjectObjs = RedmineClubhouseProject::get();
+        $redmineProjectObjs = RedmineProject::get();
 
         $newChanges = array();
 
-        foreach ($redmineClubhouseProjectObjs as $redmineClubhouseProjectObj) {
-            if (!$redmineClubhouseProjectObj->redmine_id) {
-                $this->writeLog('-- No Redmine project related to: ' . $redmineClubhouseProjectObj->clubhouse_name);
+        foreach ($redmineProjectObjs as $redmineProjectObj) {
+            if (!$redmineProjectObj->redmine_id) {
+                $this->writeLog('-- No Redmine project related to: ' . $redmineProjectObj->third_party_project_name);
                 continue;
             }
 
-            $this->writeLog('-- Checking for new changes on project: ' . $redmineClubhouseProjectObj->redmine_name);
+            $this->writeLog('-- Checking for new changes on project: ' . $redmineProjectObj->project_name);
 
             // Current date
 	        $date = date('Y-m-d', strtotime("-20 minutes"));;
@@ -98,7 +93,7 @@ class UpdatedTasks extends Command
                 'limit' => 100,
                 'sort' => 'updated_on:desc',
                 'include' => 'attachments',
-                'project_id' => $redmineClubhouseProjectObj->redmine_id,
+                'project_id' => $redmineProjectObj->project_id,
             );
 
             $redmineEntries = $Redmine->issue->all($args);

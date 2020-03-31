@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\ClubhouseToRedmine;
+namespace App\Console\Commands\RedmineToClubhouse;
 
 use Mail;
 use Illuminate\Console\Command;
@@ -204,10 +204,10 @@ class CreatedTasks extends Command
                 $redmineTicketName = '(' .  $redmineTicket['author']['name'] . ') ' . $redmineTicket['subject'];
                 $redmineTicketType = RedmineClubhouseTracker::where('redmine_name', $redmineTicket['tracker']['name'])->select('clubhouse_name')->first();
 
-                $clubhouseCreateIssueObj = array ();
-                $clubhouseCreateIssueObj['project_id'] = $clubhouseProjectId;
-                $clubhouseCreateIssueObj['name'] = $redmineTicketName;
-                $clubhouseCreateIssueObj['story_type'] = $redmineTicketType->clubhouse_name;
+                $clubhouseCreateIssueObj                = array ();
+                $clubhouseCreateIssueObj['project_id']  = $clubhouseProjectId;
+                $clubhouseCreateIssueObj['name']        = $redmineTicketName;
+                $clubhouseCreateIssueObj['story_type']  = $redmineTicketType->clubhouse_name;
                 $clubhouseCreateIssueObj['description'] = $redmineTicket['description'];
 
                 if ($this->debug) {
