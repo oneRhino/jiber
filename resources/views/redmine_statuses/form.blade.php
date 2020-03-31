@@ -23,7 +23,11 @@
 
                         <fieldset class="form-group">
                             <label for="jira_name">Clubhouse State</label>
-                            <input type="text" name="clubhouse_name" id="clubhouse_name" class="form-control" @if($status)value="{{ $status->clubhouse_name }}"@endif>
+                            <select multiple name="clubhouse_name[]" id="clubhouse_name" class="form-control" size="10">
+                                @foreach($clubhouse_statuses as $_clubhouse_status)
+                                    <option value="{{ $_clubhouse_status->clubhouse_id }}" @if(in_array($_clubhouse_status->clubhouse_id, $status->clubhouse_ids)) selected @endif>{{ $_clubhouse_status->clubhouse_id }} - {{ $_clubhouse_status->clubhouse_name }}</option>
+                                @endforeach
+                            </select>
                         </fieldset>
 
                         <button type="submit" class="btn btn-primary">Save</button>

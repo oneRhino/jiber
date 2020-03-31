@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use App\Http\Controllers\RedmineController;
-use App\RedmineStatus;
+use App\{ClubhouseStatus, RedmineStatus};
 
 class RedmineStatusesController extends Controller
 {
@@ -21,8 +21,12 @@ class RedmineStatusesController extends Controller
 
     public function edit(RedmineStatus $status)
     {
+        $clubhouse_statuses = ClubhouseStatus::orderby('clubhouse_name')->get();
+
         return view('redmine_statuses.form', [
-            'status' => $status,
+            'status'             => $status,
+            'clubhouse_statuses' => $clubhouse_statuses,
+            'clubhouse_selected' => json_decode($status->clubhouse_name, true) ?? [],
         ]);
     }
 
@@ -31,7 +35,7 @@ class RedmineStatusesController extends Controller
         // Save status
         $status->redmine_name   = $request->redmine_name;
         $status->jira_name      = $request->jira_name;
-        $status->clubhouse_name = $request->clubhouse_name;
+        $status->clubhouse_name = json_encode($request->clubhouse_name);
         $status->save();
 
         $request->session()->flash('alert-success', 'Status updated successfully!');
