@@ -82,7 +82,7 @@ class ClubhouseController extends Controller {
 
         return $projectsAsArray;
     }
-    
+
     public function getProjects () {
 
         $token = Config::get('clubhouse.api_key');
@@ -184,11 +184,219 @@ class ClubhouseController extends Controller {
         }
     }
 
+    /**
+     * "Story" will be a simple ticket on Redmine. We should record the Story ID
+     * with the Redmine ticket ID created.
+     * If this "Story" has a "epic_id" property, then we should make this ticket
+     * child of the one related to that epic_id: we have the epic_id/redmine
+     * ticket id relationship on clubhouse_epics table.
+
+     * So, this method should:
+     * 1. Check if this "Story" has already been created, just in case, by
+     * trying to get its ID from clubhouse_stories table
+     * 2. If it has been created, ignore.
+     * 3. If it hasn't been created:
+     * 3.1. Create ticket on redmine
+     * 3.2. Save Story ID + Redmine Ticket (the one we just created) to clubhouse_stories table
+     */
+    private function story_create() {
+
+        $storyId = $this->content->actions[0]->id;
+
+        // Check if story has been created
+        $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
+        if ($clubhouseStoryObj) {
+            die ("-- Story {$storyId} has already been created on Redmine.");
+        }
+
+        // START - Create story ticket.
+        $redmineApiResponse = $this->createRedmineTicket();
+
+        $clubhouseStoryObj = new ClubhouseStory();
+        $clubhouseStoryObj->redmine_ticket_id = $redmineApiResponse->id;
+        $clubhouseStoryObj->story_id = $storyId;
+        $clubhouseStoryObj->save();
+        // END - Create story ticket.
+
+        // START - Create epic ticket.
+        $storyReferences = $this->content->references;
+
+        foreach ($storyReferences as $storyReference) {
+            $entityType = $storyReference->entity_type;
+            if ($entityType != 'epic')
+                continue;
+
+            $projectId = $this->content->actions[0]->project_id;
+
+            $redmineProjectObj = RedmineProject::where('third_party_project_id', $projectId)->first();
+            $epicDetails = $this->getEpic($storyReference->id);
+
+            // Send epic to Redmine.
+            $redmineCreateIssueObj = array ();
+            $redmineCreateIssueObj['project_id'] = $projectId;
+            $redmineCreateIssueObj['subject'] = "(Epic)" . $epicDetails['name'];
+            $redmineCreateIssueObj['assigned_to_id'] = '1';
+            $redmineCreateIssueObj['description'] = $epicDetails['description'];
+            $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
+            if ($redmineProjectObj->content) {
+                $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
+            }
+            $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
+
+            // Save Redmine/Clubhouse epic relationship.
+            $clubhouseStoryObj = new ClubhouseEpic();
+            $clubhouseStoryObj->redmine_ticket_id = $redmineApiResponse->id;
+            $clubhouseStoryObj->epic_id = $storyReference->id;
+            $clubhouseStoryObj->save();
+        }
+        // END - Create epic ticket.
+
+        die ("-- Story {$storyId} has been created on Redmine.");
+    }
+
+    /**
+     * This method should:
+     * 1. Check if this "Story" has already been created, by trying to get its
+     * ID from clubhouse_stories table
+     * 2. If it hasn't been created, send data to "story_create" method, so it's created
+     * 3. If it has been created:
+     * 3.1. Update whatever data needed (it's inside action's "changes" property)
+     */
+    private function story_update() {
+
+        die ("Story Update");
+
+        $storyId = $this->content->actions[0]->id;
+        $changesOnStory = $this->content->actions[0]->changes;
+    }
+
+    /**
+     * Sent a update to Redmine ticket.
+     *
+     * NOTE:
+     * 'addNoteToIssue' does not return anything, so there's no redmine_comment_id.
+     */
+    private function story_comment_create() {
+
+        $contentActions = $this->content->actions;
+
+        $commentId = $contentActions[0]->id;
+        $storyId = $contentActions[1]->id;
+
+        // Checks if the story/ticket exists.
+        $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
+        if (!$redmineClubhouseTaskObj) {
+            $this->writeLog("-- Story {$storyId} not created on Redmine.");
+            die ("-- Story {$storyId} not created on Redmine.");
+        }
+
+        // Checks if the comment was already sent to Redmine.
+        $clubhouseCommentObj = ClubhouseComment::where('comment_id', $commentId)->first();
+        if ($clubhouseCommentObj) {
+            $this->writeLog("-- Comment {$commentId} already created on Redmine.");
+            die ("-- Comment {$commentId} already created on Redmine.");
+        }
+
+        try {
+            $redmineTicketId = $redmineClubhouseTaskObj->redmine_task;
+            $commentBody = $contentActions[0]->text;
+
+            // This method does not return anything (no comment ID).
+            $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
+
+            $clubhouseCommentObj = new ClubhouseComment ();
+            $clubhouseCommentObj->comment_id = $commentId;
+            $clubhouseCommentObj->redmine_comment_id = 0;
+            $clubhouseCommentObj->save();
+
+            die ("-- Comment {$commentId} sent to Redmine.");
+        } catch (\Exception $e) {
+            die ("-- Exception: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Sent a comment update to Redmine ticket.
+     *
+     * NOTE:
+     * There's no way to update/delete a note/comment using the Redmine API.
+     * This function sends the old comment and the new one to keep tracking.
+     */
+    private function story_comment_update() {
+
+        $contentActions = $this->content->actions;
+
+        $commentId = $contentActions[0]->id;
+        $storyId = $contentActions[0]->story_id;
+
+        // Checks if the story/ticket exists.
+        $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
+        if (!$redmineClubhouseTaskObj) {
+            $this->writeLog("-- Story {$storyId} not created on Redmine.");
+            die ("-- Story {$storyId} not created on Redmine.");
+        }
+
+        try {
+            $redmineTicketId = $redmineClubhouseTaskObj->redmine_task;
+
+            $commentBody = "h3. Comment Update: \n\n";
+            $commentBody .= "h4. OLD Body: \n\n";
+            $commentBody .= $contentActions[0]->changes->text->old;
+            $commentBody .= "\n\n";
+            $commentBody .= "h4. NEW Body: \n\n";
+            $commentBody .= $contentActions[0]->changes->text->new;
+
+            // This method does not return anything (no comment ID).
+            $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
+
+            die ("-- Comment {$commentId} update sent to Redmine.");
+        } catch (\Exception $e) {
+            die ("-- Exception: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * 'Deletes' a comment on Redmine ticket.
+     *
+     * NOTE:
+     * There's no way to update/delete a note/comment using the Redmine API.
+     * This function sends a new comment with the information about deleted comment.
+     */
+    private function story_comment_delete() {
+
+        $contentActions = $this->content->actions;
+
+        $commentId = $contentActions[0]->id;
+        $storyId = $contentActions[1]->id;
+
+        // Checks if the story/ticket exists.
+        $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
+        if (!$redmineClubhouseTaskObj) {
+            $this->writeLog("-- Story {$storyId} not created on Redmine.");
+            die ("-- Story {$storyId} not created on Redmine.");
+        }
+
+        try {
+            $redmineTicketId = $redmineClubhouseTaskObj->redmine_task;
+            $changedAt = strtotime($this->content->changed_at);
+            $changedAtFormatted = date("Y-m-d h:i:sa", $changedAt);
+
+            $commentBody = "h3. Comment {$commentId} was deleted on Clubhouse. ({$changedAtFormatted})";
+
+            // This method does not return anything (no comment ID).
+            $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
+
+            die ("-- Comment {$commentId} delete comment sent to Redmine.");
+        } catch (\Exception $e) {
+            die ("-- Exception: " . $e->getMessage());
+        }
+    }
+
     private function userLogin() {
         $clubhouse_user_id = $this->getUserFromContent();
 
         // TODO: REMOVE THIS (TEST ONLY)
-        $clubhouse_user_id = '5d818d54-4b45-4532-9ab3-8d29fc300a10';
+        // $clubhouse_user_id = '5d818d54-4b45-4532-9ab3-8d29fc300a10';
 
         // Get RedmineClubhouseUser based on clubhouse user id
         $user = RedmineClubhouseUser::where('clubhouse_user_id', $clubhouse_user_id)->first();
@@ -245,42 +453,6 @@ class ClubhouseController extends Controller {
         return $this->content->member_id;
     }
 
-    /**
-     * Epic is not related to any project. Function implemented but not in use.
-     *
-     * ------------------------------------------------------------------------------------
-     *
-     * "Epic" will be a simple ticket on Redmine. We should record the Epic ID
-     * with the Redmine ticket ID created, so, when a story is added to this
-     * Epic, we can create that story as a child ticket on Redmine.
-
-     * So, this method should:
-     * 1. Check if this "Epic" has already been created, just in case, by
-     * trying to get its ID from clubhouse_epics table
-     * 2. If it hasn't been created:
-     * 2.1. Create ticket on redmine
-     * 2.2. Save Epic ID + Redmine Ticket (the one we just created) to clubhouse_epics table
-     * 3. If it has been created, ignore.
-     */
-    private function epic_create() {
-        
-        die ('Epic Create'); 
-        $epicId = $this->content->actions[0]->id;
-        
-        // Check if epic has been created
-        $clubhouseEpicObj = ClubhouseEpic::where('epic_id', $epicId)->first();
-        if ($clubhouseEpicObj) {
-            die ("-- Epic {$epicId} has already been created on Redmine.");
-        }
-
-        $redmineApiResponse = $this->createRedmineTicket();
-
-        $clubhouseEpicObj = new ClubhouseEpic();
-        $clubhouseEpicObj->redmine_ticket_id = $redmineApiResponse->id;
-        $clubhouseEpicObj->epic_id = $clubhouseEpicDetails->id;
-        $clubhouseEpicObj->save();
-    }
-
     private function getProjectId() {
         if (empty($this->content->actions[0]) || empty($this->content->actions[0]->project_id)) {
             throw new Exception('Project not found: '.print_r($this->content->actions[0], true));
@@ -306,7 +478,7 @@ class ClubhouseController extends Controller {
      * Only 'stories' so far, 'epics' are not related to any project.
      */
     private function createRedmineTicket() {
-        
+
         try {
             $clubhouseDetails = $this->content->actions[0];
 
@@ -320,7 +492,7 @@ class ClubhouseController extends Controller {
             $redmineCreateIssueObj['project_id'] = $redmineProjectObj->project_name;
             $redmineCreateIssueObj['subject'] = $clubhouseDetails->name;
             $redmineCreateIssueObj['assigned_to_id'] = '1';
-            $redmineCreateIssueObj['description'] = $clubhouseDetails->description; 
+            $redmineCreateIssueObj['description'] = $clubhouseDetails->description;
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
             if ($redmineProjectObj->content) {
                 $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
@@ -330,233 +502,8 @@ class ClubhouseController extends Controller {
 
             return $redmineApiResponse;
 
-        } catch (\Exeption $e) { 
+        } catch (\Exeption $e) {
             $this->errorEmail($e->getMessage());
-        }
-    }
-
-    /**
-     * Epic update JSON is not available for development. Skipping for now.
-     *
-     * ------------------------------------------------------------------------------------
-     *
-     * This method should:
-     * 1. Check if this "Epic" has already been created, by trying to get its
-     * ID from clubhouse_epics table
-     * 2. If it hasn't been created, send data to "epic_create" method, so it's create
-     * 3. If it has been created:
-     * 3.1. Update whatever data needed (it's inside action's "changes" property)
-     */ 
-    private function epic_update($content) {
-
-        die ("Epic Update"); 
-    }
-
-    /**
-     * "Story" will be a simple ticket on Redmine. We should record the Story ID
-     * with the Redmine ticket ID created.
-     * If this "Story" has a "epic_id" property, then we should make this ticket
-     * child of the one related to that epic_id: we have the epic_id/redmine
-     * ticket id relationship on clubhouse_epics table.
-
-     * So, this method should:
-     * 1. Check if this "Story" has already been created, just in case, by
-     * trying to get its ID from clubhouse_stories table
-     * 2. If it has been created, ignore.
-     * 3. If it hasn't been created:
-     * 3.1. Create ticket on redmine
-     * 3.2. Save Story ID + Redmine Ticket (the one we just created) to clubhouse_stories table
-     */
-    private function story_create() {
-        
-        $storyId = $this->content->actions[0]->id;
-        
-        // Check if story has been created
-        $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
-        if ($clubhouseStoryObj) {
-            die ("-- Story {$storyId} has already been created on Redmine.");
-        }
-        
-        // START - Create story ticket.
-        $redmineApiResponse = $this->createRedmineTicket();
-
-        $clubhouseStoryObj = new ClubhouseStory();
-        $clubhouseStoryObj->redmine_ticket_id = $redmineApiResponse->id;
-        $clubhouseStoryObj->story_id = $storyId;
-        $clubhouseStoryObj->save();
-        // END - Create story ticket.
-
-        // START - Create epic ticket.
-        $storyReferences = $this->content->references;
-
-        foreach ($storyReferences as $storyReference) {
-            $entityType = $storyReference->entity_type;
-            if ($entityType != 'epic')
-                continue;
-
-            $projectId = $this->content->actions[0]->project_id;
-            
-            $redmineProjectObj = RedmineProject::where('third_party_project_id', $projectId)->first();
-            $epicDetails = $this->getEpic($storyReference->id);
-
-            // Send epic to Redmine.
-            $redmineCreateIssueObj = array ();
-            $redmineCreateIssueObj['project_id'] = $projectId;
-            $redmineCreateIssueObj['subject'] = "(Epic)" . $epicDetails['name'];
-            $redmineCreateIssueObj['assigned_to_id'] = '1';
-            $redmineCreateIssueObj['description'] = $epicDetails['description']; 
-            $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
-            if ($redmineProjectObj->content) {
-                $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
-            }
-            $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
-            
-            // Save Redmine/Clubhouse epic relationship.
-            $clubhouseStoryObj = new ClubhouseEpic();
-            $clubhouseStoryObj->redmine_ticket_id = $redmineApiResponse->id;
-            $clubhouseStoryObj->epic_id = $storyReference->id;
-            $clubhouseStoryObj->save();
-        }
-        // END - Create epic ticket.
-
-        die ("-- Story {$storyId} has been created on Redmine.");
-    }
-
-    /**
-     * This method should:
-     * 1. Check if this "Story" has already been created, by trying to get its
-     * ID from clubhouse_stories table
-     * 2. If it hasn't been created, send data to "story_create" method, so it's created
-     * 3. If it has been created:
-     * 3.1. Update whatever data needed (it's inside action's "changes" property)
-     */
-    private function story_update() {
-
-        die ("Story Update");
-
-        $storyId = $this->content->actions[0]->id;
-        $changesOnStory = $this->content->actions[0]->changes;
-    }
-
-    /**
-     * Sent a update to Redmine ticket.
-     *
-     * NOTE:
-     * 'addNoteToIssue' does not return anything, so there's no redmine_comment_id.
-     */
-    private function story_comment_create() {
-        
-        $contentActions = $this->content->actions;
-        
-        $commentId = $contentActions[0]->id;
-        $storyId = $contentActions[1]->id;
-
-        // Checks if the story/ticket exists.
-        $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
-        if (!$redmineClubhouseTaskObj) {
-            $this->writeLog("-- Story {$storyId} not created on Redmine."); 
-            die ("-- Story {$storyId} not created on Redmine.");
-        }
-
-        // Checks if the comment was already sent to Redmine.
-        $clubhouseCommentObj = ClubhouseComment::where('comment_id', $commentId)->first();
-        if ($clubhouseCommentObj) {
-            $this->writeLog("-- Comment {$commentId} already created on Redmine."); 
-            die ("-- Comment {$commentId} already created on Redmine.");
-        }
-
-        try {
-            $redmineTicketId = $redmineClubhouseTaskObj->redmine_task;
-            $commentBody = $contentActions[0]->text;
-
-            // This method does not return anything (no comment ID).
-            $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
-
-            $clubhouseCommentObj = new ClubhouseComment ();
-            $clubhouseCommentObj->comment_id = $commentId;
-            $clubhouseCommentObj->redmine_comment_id = 0;
-            $clubhouseCommentObj->save();
-
-            die ("-- Comment {$commentId} sent to Redmine.");
-        } catch (\Exception $e) {
-            die ("-- Exception: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * Sent a comment update to Redmine ticket.
-     *
-     * NOTE:
-     * There's no way to update/delete a note/comment using the Redmine API.
-     * This function sends the old comment and the new one to keep tracking.
-     */
-    private function story_comment_update() {
-
-        $contentActions = $this->content->actions;
-        
-        $commentId = $contentActions[0]->id;
-        $storyId = $contentActions[0]->story_id;
-
-        // Checks if the story/ticket exists.
-        $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
-        if (!$redmineClubhouseTaskObj) {
-            $this->writeLog("-- Story {$storyId} not created on Redmine."); 
-            die ("-- Story {$storyId} not created on Redmine.");
-        }
-
-        try {
-            $redmineTicketId = $redmineClubhouseTaskObj->redmine_task;
-
-            $commentBody = "h3. Comment Update: \n\n";
-            $commentBody .= "h4. OLD Body: \n\n";
-            $commentBody .= $contentActions[0]->changes->text->old;
-            $commentBody .= "\n\n";
-            $commentBody .= "h4. NEW Body: \n\n";
-            $commentBody .= $contentActions[0]->changes->text->new;
-
-            // This method does not return anything (no comment ID).
-            $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
-
-            die ("-- Comment {$commentId} update sent to Redmine.");
-        } catch (\Exception $e) {
-            die ("-- Exception: " . $e->getMessage());
-        }
-    }
-
-    /**
-     * 'Deletes' a comment on Redmine ticket.
-     *
-     * NOTE:
-     * There's no way to update/delete a note/comment using the Redmine API.
-     * This function sends a new comment with the information about deleted comment.
-     */
-    private function story_comment_delete() {
-        
-        $contentActions = $this->content->actions;
-        
-        $commentId = $contentActions[0]->id;
-        $storyId = $contentActions[1]->id;
-
-        // Checks if the story/ticket exists.
-        $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
-        if (!$redmineClubhouseTaskObj) {
-            $this->writeLog("-- Story {$storyId} not created on Redmine."); 
-            die ("-- Story {$storyId} not created on Redmine.");
-        }
-
-        try {
-            $redmineTicketId = $redmineClubhouseTaskObj->redmine_task;
-            $changedAt = strtotime($this->content->changed_at);
-            $changedAtFormatted = date("Y-m-d h:i:sa", $changedAt);
-
-            $commentBody = "h3. Comment {$commentId} was deleted on Clubhouse. ({$changedAtFormatted})";
-
-            // This method does not return anything (no comment ID).
-            $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
-
-            die ("-- Comment {$commentId} delete comment sent to Redmine.");
-        } catch (\Exception $e) {
-            die ("-- Exception: " . $e->getMessage());
         }
     }
 
@@ -582,7 +529,7 @@ class ClubhouseController extends Controller {
             $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
         });
     }
-    
+
     private function writeLog($message) {
 
         file_put_contents('clubhouse-webhook.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
