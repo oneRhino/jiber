@@ -52,35 +52,13 @@ class CreatedTasks extends Command
             $this->debug = true;
         }
 
-        if (!$this->option('source')) {
-            $this->writeLog('-- Getting tickets from Clubhouse');
-            // Grab tickets recently created on Clubhouse
-            $tickets = $this->getClubhouseTickets();
-            // Create tickets on Clubhouse, and get Redmine ID/Clubhouse ID combinations
-            $this->createTicketsRedmine($tickets);
+        $this->writeLog('-- Getting tickets from Redmine');
 
-            $this->writeLog('-- Getting tickets from Redmine');
-            // Grab tickets recently created on Redmine
-            $tickets = $this->getRedmineTickets();
-            // Create tickets on Redmine, and get Redmine ID/Clubhouse ID combinations
-            $this->createTicketsClubhouse($tickets);
-        } else {
-            if ($this->option('source') == 'clubhouse') {
-                $this->writeLog('-- Getting tickets from Clubhouse');
-                // Grab tickets recently created on Clubhouse
-                $tickets = $this->getClubhouseTickets();
-                // Create tickets on Clubhouse, and get Redmine ID/Clubhouse ID combinations
-                $this->createTicketsRedmine($tickets);
-            }
+        // Grab tickets recently created on Redmine
+        $tickets = $this->getRedmineTickets();
 
-            if ($this->option('source') == 'redmine') {
-                $this->writeLog('-- Getting tickets from Redmine');
-                // Grab tickets recently created on Redmine
-                $tickets = $this->getRedmineTickets();
-                // Create tickets on Redmine, and get Redmine ID/Clubhouse ID combinations
-                $this->createTicketsClubhouse($tickets);
-            }
-        }
+        // Create tickets on Redmine, and get Redmine ID/Clubhouse ID combinations
+        $this->createTicketsClubhouse($tickets);
 
         $this->writeLog('***** END *****');
     }
@@ -292,7 +270,7 @@ class CreatedTasks extends Command
                 $redmineCreateIssueObj['subject']     = $ticket['name'];
                 $redmineCreateIssueObj['assigned_to'] = 'admin';
                 $redmineCreateIssueObj['description'] = $ticket['description'];
-                
+
                 if ($redmineProject->content) {
 		            $redmineCreateIssueObj['description'] .= "\n" . $redmineProject->content;
 	            }

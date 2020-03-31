@@ -51,13 +51,13 @@ class UpdatedTasks extends Command
     public function handle() {
 
         $this->writeLog('***** INIT *****');
-        
+
         if ($this->option('debug')) {
             $this->debug = true;
         }
 
         $this->sendRedmineChangesToClubhouse ();
-        
+
         $this->writeLog('***** END *****');
     }
 
@@ -77,17 +77,17 @@ class UpdatedTasks extends Command
         // Get Redmine tasks updated this date
         $RedmineController = new RedmineController;
         $Redmine = $RedmineController->connect();
-        
+
         $redmineClubhouseProjectObjs = RedmineClubhouseProject::get();
-        
+
         $newChanges = array();
-        
+
         foreach ($redmineClubhouseProjectObjs as $redmineClubhouseProjectObj) {
             if (!$redmineClubhouseProjectObj->redmine_id) {
                 $this->writeLog('-- No Redmine project related to: ' . $redmineClubhouseProjectObj->clubhouse_name);
                 continue;
             }
-            
+
             $this->writeLog('-- Checking for new changes on project: ' . $redmineClubhouseProjectObj->redmine_name);
 
             // Current date
@@ -98,7 +98,7 @@ class UpdatedTasks extends Command
                 'limit' => 100,
                 'sort' => 'updated_on:desc',
                 'include' => 'attachments',
-                'project_id' => $redmineClubhouseProjectObj->redmine_id, 
+                'project_id' => $redmineClubhouseProjectObj->redmine_id,
             );
 
             $redmineEntries = $Redmine->issue->all($args);
@@ -111,8 +111,8 @@ class UpdatedTasks extends Command
 
                 foreach ($redmineEntry as $entryDetail) {
 
-                    $entryDetailId = $entryDetail['id']; 
-                
+                    $entryDetailId = $entryDetail['id'];
+
                     $args = array('include' => 'journals');
                     $entryJournals = $Redmine->issue->show($entryDetailId, $args);
                     $entryJournals = $entryJournals['issue']['journals'];
@@ -126,37 +126,37 @@ class UpdatedTasks extends Command
                             $this->writeLog("Old entry ({$entryJournal['created_on']}), CONTINUE");
                             continue;
                         }
-die ('mmmkey');
+
                         // Ticket comments.
                         if ($entryJournal['notes']) {
                             // ADD Redmine Journal ID.
-                            $redmineChangeId = $entryJournal['id']; 
+                            $redmineChangeId = $entryJournal['id'];
                             $this->createClubhouseStoryComment($entryDetailId, $redmineChangeId, $entryJournal);
                         }
 
                         // Check if change was already sent to Clubhouse.
                         if (RedmineClubhouseChange::where('redmine_change_id', $entryJournal['id'])->first()) {
-                            if (!$entryJournal['notes']) 
+                            if (!$entryJournal['notes'])
                                 $this->writeLog('-- Change already sent to Clubhouse: ' . $entryJournal['id'] . ', CONTINUE');
-                            continue; 
+                            continue;
                         }
 
-                        // Ticket updates. 
+                        // Ticket updates.
                         if ($entryJournal['details']) {
                             foreach ($entryJournal['details'] as $detail) {
                                 // ADD Redmine Journal ID.
-                                $redmineChangeId = $entryJournal['id']; 
-                                
+                                $redmineChangeId = $entryJournal['id'];
+
                                 switch ($detail['name']) {
                                     case 'subject':
                                         $changeArray = array ();
                                         $changeArray['name'] = $detail['new_value'];
-                                        $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray); 
+                                        $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
                                         break;
                                     case 'description':
                                         $changeArray = array ();
                                         $changeArray['description'] = $detail['new_value'];
-                                        $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray); 
+                                        $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
                                         break;
                                     case 'status_id':
                                         $this->writeLog('-- Status field not exists on Clubhouse, CONTINUE');
@@ -187,7 +187,7 @@ die ('mmmkey');
 
     // Send comment to a Clubhouse story.
     private function createClubhouseStoryComment ($redmineTicketId, $redmineChangeId, $change) {
-        
+
         if (!$change) {
             $this->writeLog('-- No new changes on Redmine tickets.');
             return;
@@ -198,12 +198,12 @@ die ('mmmkey');
 
             $storyObj = RedmineClubhouseTask::where('redmine_task', $redmineTicketId)->first();
             $storyId = $storyObj->clubhouse_task;
-            
+
             $comment = "(" . $change['user']['name'] . ") " . $change['notes'];
 
             // Send comment to Clubhouse Story.
             if (!$this->debug) {
-                
+
                 $changeObj = RedmineClubhouseChange::where('redmine_change_id', $redmineChangeId)->first();
                 $changeId = $changeObj->clubhouse_change_id;
 
@@ -230,7 +230,7 @@ die ('mmmkey');
                 $redmineClubhouseChangeObj->redmine_change_id = $redmineChangeId;
                 $redmineClubhouseChangeObj->clubhouse_change_id = $clubhouseComment['id'];
                 $redmineClubhouseChangeObj->save();
-                
+
                 $this->writeLog('-- Comment sent to Clubhouse: ' . $redmineChangeId);
             } else {
                 $this->writeLog('-- Comment NOT sent to Clubhouse due to Debug Mode');
@@ -257,12 +257,12 @@ die ('mmmkey');
         if (!$this->debug) {
             $clubhouseControllerObj = new ClubhouseController();
             $clubhouseUpdate = $clubhouseControllerObj->updateStory($storyId, $change);
-            
+
             $redmineClubhouseChangeObj = new RedmineClubhouseChange;
             $redmineClubhouseChangeObj->redmine_change_id = $redmineChangeId;
             $redmineClubhouseChangeObj->clubhouse_change_id = $clubhouseUpdate['id'];
             $redmineClubhouseChangeObj->save();
-            
+
             $this->writeLog('-- Change sent to Clubhouse: ' . $redmineChangeId);
         } else {
             $this->writeLog('-- Change NOT sent to Clubhouse due to Debug Mode');
