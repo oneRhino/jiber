@@ -170,19 +170,19 @@ class CreatedTasks extends Command
                 }
 
                 $redmineClubhouseTaskInstance = new RedmineClubhouseTask();
-                $redmineClubhouseTaskInstance->redmine_task   = $redmineTicket['id'];
+                $redmineClubhouseTaskInstance->redmine_task   = $ticket['ticket_details']['id'];
                 $redmineClubhouseTaskInstance->clubhouse_task = $this->debug ? 'debug_mode' : $clubhouseStory['id'];
                 $redmineClubhouseTaskInstance->source         = 'Redmine';
 
                 if ($this->debug) {
-                    $this->writeLog("-- Task {$redmineTicket['id']} NOT saved on database due to debug mode.");
+                    $this->writeLog("-- Task {$ticket['ticket_details']['id']} NOT saved on database due to debug mode.");
                 } else {
                     $redmineClubhouseTaskInstance->save();
-                    $this->writeLog("-- Task {$redmineTicket['id']} saved on database.");
+                    $this->writeLog("-- Task {$ticket['ticket_details']['id']} saved on database.");
                 }
 
             } catch (\Exeption $e) {
-                $this->writeLog("-- Task {$ticket['id']} could not be sent to Redmine, Error: {$e->getMessage()}");
+                $this->writeLog("-- Task {$ticket['ticket_details']['id']} could not be sent to Redmine, Error: {$e->getMessage()}");
             }
         }
 
