@@ -5,7 +5,7 @@
         <div class="col-sm-offset-2 col-sm-8">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    <h1>Update Redmine/Jira Project</h1>
+                    <h1>Update Redmine Project</h1>
 
                     <form action="{{ action('RedmineProjectsController@update', ['project' => $project->id]) }}" method="post">
                         <input name="_method" type="hidden" value="PUT"/>

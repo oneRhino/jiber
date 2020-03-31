@@ -84,9 +84,10 @@ Route::group(['middleware' => 'auth'], function() {
     ]]);
 });
 
-Route::get('/redmine/jira/statuses/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraStatusesController@import']);
+Route::get('/redmine/statuses/import', ['middleware' => 'auth', 'uses' => 'RedmineStatusesController@import']);
+
 Route::group(['middleware' => 'auth'], function() {
-    Route::resource('/redmine/jira/statuses', 'RedmineJiraStatusesController', ['parameters' => [
+    Route::resource('/redmine/statuses', 'RedmineStatusesController', ['parameters' => [
         'statuses' => 'status'
     ]]);
 });

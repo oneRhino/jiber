@@ -29,7 +29,7 @@
 
 namespace App\Http\Controllers;
 
-use App\{JiraSent, RedmineChange, RedmineJiraPriority, RedmineProject, RedmineJiraStatus, RedmineJiraTask, RedmineTracker, RedmineJiraUser, Report, Setting, TimeEntry, User};
+use App\{JiraSent, RedmineChange, RedmineJiraPriority, RedmineProject, RedmineStatus, RedmineJiraTask, RedmineTracker, RedmineJiraUser, Report, Setting, TimeEntry, User};
 use App\Http\Controllers\RedmineController;
 use chobie\Jira\Api;
 use chobie\Jira\Api\Authentication\Basic;
@@ -478,7 +478,7 @@ class JiraController extends Controller
             Log::debug('-- Redmine tracker found');
 
             $jira_status = $issue->getStatus();
-            $status = RedmineJiraStatus::where('jira_name', 'like', '%' . $jira_status['name'] . '%')->first();
+            $status = RedmineStatus::where('jira_name', 'like', '%' . $jira_status['name'] . '%')->first();
             Log::debug('-- Redmine status found');
 
             $jira_priority = $issue->getPriority();
@@ -714,7 +714,7 @@ class JiraController extends Controller
             Log::debug('-- Redmine project found');
             $tracker  =  RedmineTracker::where('jira_name', 'like', '%' . $content->issue->fields->issuetype->name . '%')->first();
             Log::debug('-- Redmine tracker found');
-            $status   =   RedmineJiraStatus::where('jira_name', 'like', '%' . $content->issue->fields->status->name . '%')->first();
+            $status   =   RedmineStatus::where('jira_name', 'like', '%' . $content->issue->fields->status->name . '%')->first();
             Log::debug('-- Redmine status found');
             $priority = RedmineJiraPriority::where('jira_name', $content->issue->fields->priority->name)->first();
             Log::debug('-- Redmine priority found');
@@ -896,7 +896,7 @@ class JiraController extends Controller
 
                         break;
                     case 'status':
-                        $status = RedmineJiraStatus::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
+                        $status = RedmineStatus::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
 
                         if (!$status) {
                             $this->errorEmail("Status not found: {$content->issue->fields->status->name}");

@@ -45,7 +45,7 @@
                                 <li><a href="{{ action('RedmineJiraUsersController@index') }}">Redmine/Jira Users</a></li>
                                 <li><a href="{{ action('RedmineProjectsController@index') }}">Redmine Projects</a></li>
                                 <li><a href="{{ action('RedmineTrackersController@index') }}">Redmine Trackers</a></li>
-                                <li><a href="{{ action('RedmineJiraStatusesController@index') }}">Redmine/Jira Statuses</a></li>
+                                <li><a href="{{ action('RedmineStatusesController@index') }}">Redmine Statuses</a></li>
                                 <li><a href="{{ action('RedmineJiraPrioritiesController@index') }}">Redmine/Jira Priorities</a></li>
                                 <li><a href="{{ action('RedmineClubhouseUsersController@index') }}">Redmine/Clubhouse Users</a></li>
                             @endif

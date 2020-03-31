@@ -3,7 +3,7 @@
 @section('content')
   <div class="container">
     <div class="col-sm-offset-2 col-sm-8">
-	    <h1>Redmine/Jira Trackers</h1>
+	    <h1>Redmine Trackers</h1>
 
         <div class="panel panel-default">
             <div class="panel-heading">
