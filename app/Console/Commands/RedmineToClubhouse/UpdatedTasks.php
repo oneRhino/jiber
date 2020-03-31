@@ -286,6 +286,6 @@ class UpdatedTasks extends Command
 
     private function writeLog($message) {
 
-	    file_put_contents('redmine-update.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
+	    file_put_contents('redmine-clubhouse-update.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
     }
 }
