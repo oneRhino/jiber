@@ -191,7 +191,7 @@ class ClubhouseController extends Controller {
         $user = RedmineClubhouseUser::where('clubhouse_user_id', $clubhouse_user_id)->first();
 
         if (!$user) {
-            throw new \Exception("User {$user_id} not found. Please re-import clubhouse users.");
+            throw new \Exception("User {$clubhouse_user_id} not found. Please re-import clubhouse users.");
         }
 
         // Get redmine user

@@ -77,11 +77,11 @@ class RedmineClubhouseUsersController extends Controller
             if (!$redmineClubhouseUser) {
                 $redmineClubhouseUser                    = new RedmineClubhouseUser();
                 $redmineClubhouseUser->clubhouse_name    = $user['username'];
-                $redmineClubhouseUser->clubhouse_user_id = $user['id'];
+                $redmineClubhouseUser->clubhouse_user_id = $user['permissions'][0]['id'];
                 $redmineClubhouseUser->redmine_names     = "[]";
                 $redmineClubhouseUser->save();
             } elseif (!$redmineClubhouseUser->clubhouse_user_id) {
-                $redmineClubhouseUser->clubhouse_user_id = $user['id'];
+                $redmineClubhouseUser->clubhouse_user_id = $user['permissions'][0]['id'];
                 $redmineClubhouseUser->save();
             }
         }
