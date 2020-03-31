@@ -82,7 +82,7 @@ class ClubhouseController extends Controller {
 
         return $projectsAsArray;
     }
-    
+
     public function getProjects () {
 
         $token = Config::get('clubhouse.api_key');
@@ -365,15 +365,15 @@ class ClubhouseController extends Controller {
      * 3.2. Save Story ID + Redmine Ticket (the one we just created) to clubhouse_stories table
      */
     private function story_create() {
-        
+
         $storyId = $this->content->actions[0]->id;
-        
+
         // Check if story has been created
         $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
         if ($clubhouseStoryObj) {
             die ("-- Story {$storyId} has already been created on Redmine.");
         }
-        
+
         // START - Create story ticket.
         $redmineApiResponse = $this->createRedmineTicket();
 
@@ -392,7 +392,7 @@ class ClubhouseController extends Controller {
                 continue;
 
             $projectId = $this->content->actions[0]->project_id;
-            
+
             $redmineProjectObj = RedmineProject::where('third_party_project_id', $projectId)->first();
             $epicDetails = $this->getEpic($storyReference->id);
 
@@ -401,13 +401,13 @@ class ClubhouseController extends Controller {
             $redmineCreateIssueObj['project_id'] = $projectId;
             $redmineCreateIssueObj['subject'] = "(Epic)" . $epicDetails['name'];
             $redmineCreateIssueObj['assigned_to_id'] = '1';
-            $redmineCreateIssueObj['description'] = $epicDetails['description']; 
+            $redmineCreateIssueObj['description'] = $epicDetails['description'];
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
             if ($redmineProjectObj->content) {
                 $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
             }
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
-            
+
             // Save Redmine/Clubhouse epic relationship.
             $clubhouseStoryObj = new ClubhouseEpic();
             $clubhouseStoryObj->redmine_ticket_id = $redmineApiResponse->id;
@@ -442,23 +442,23 @@ class ClubhouseController extends Controller {
      * 'addNoteToIssue' does not return anything, so there's no redmine_comment_id.
      */
     private function story_comment_create() {
-        
+
         $contentActions = $this->content->actions;
-        
+
         $commentId = $contentActions[0]->id;
         $storyId = $contentActions[1]->id;
 
         // Checks if the story/ticket exists.
         $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
         if (!$redmineClubhouseTaskObj) {
-            $this->writeLog("-- Story {$storyId} not created on Redmine."); 
+            $this->writeLog("-- Story {$storyId} not created on Redmine.");
             die ("-- Story {$storyId} not created on Redmine.");
         }
 
         // Checks if the comment was already sent to Redmine.
         $clubhouseCommentObj = ClubhouseComment::where('comment_id', $commentId)->first();
         if ($clubhouseCommentObj) {
-            $this->writeLog("-- Comment {$commentId} already created on Redmine."); 
+            $this->writeLog("-- Comment {$commentId} already created on Redmine.");
             die ("-- Comment {$commentId} already created on Redmine.");
         }
 
@@ -490,14 +490,14 @@ class ClubhouseController extends Controller {
     private function story_comment_update() {
 
         $contentActions = $this->content->actions;
-        
+
         $commentId = $contentActions[0]->id;
         $storyId = $contentActions[0]->story_id;
 
         // Checks if the story/ticket exists.
         $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
         if (!$redmineClubhouseTaskObj) {
-            $this->writeLog("-- Story {$storyId} not created on Redmine."); 
+            $this->writeLog("-- Story {$storyId} not created on Redmine.");
             die ("-- Story {$storyId} not created on Redmine.");
         }
 
@@ -528,16 +528,16 @@ class ClubhouseController extends Controller {
      * This function sends a new comment with the information about deleted comment.
      */
     private function story_comment_delete() {
-        
+
         $contentActions = $this->content->actions;
-        
+
         $commentId = $contentActions[0]->id;
         $storyId = $contentActions[1]->id;
 
         // Checks if the story/ticket exists.
         $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
         if (!$redmineClubhouseTaskObj) {
-            $this->writeLog("-- Story {$storyId} not created on Redmine."); 
+            $this->writeLog("-- Story {$storyId} not created on Redmine.");
             die ("-- Story {$storyId} not created on Redmine.");
         }
 
@@ -556,7 +556,7 @@ class ClubhouseController extends Controller {
             die ("-- Exception: " . $e->getMessage());
         }
     }
-
+    
     /**
      * Send email when something goes wrong.
      *
@@ -579,7 +579,7 @@ class ClubhouseController extends Controller {
             $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
         });
     }
-    
+
     private function writeLog($message) {
 
         file_put_contents('clubhouse-webhook.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
