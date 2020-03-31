@@ -18,14 +18,14 @@ class CreatedTasks extends Command
     *
     * @var string
     */
-    protected $signature = 'clubhouse-to-redmine:sync-created-tasks {--limit=} {--source=} {--debug}';
+    protected $signature = 'redmine-to-clubhouse:sync-created-tasks {--limit=} {--debug}';
 
     /**
     * The console command description.
     *
     * @var string
     */
-    protected $description = 'Syncs created tickets on Clubhouse and Redmine.';
+    protected $description = 'Syncs created tickets from Redmine to Clubhouse.';
 
     private $debug = false;
 

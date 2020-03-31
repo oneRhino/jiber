@@ -22,14 +22,14 @@ class UpdatedTasks extends Command
      *
      * @var string
      */
-    protected $signature = 'clubhouse-to-redmine:sync-updated-tasks {--debug}';
+    protected $signature = 'redmine-to-clubhouse:sync-updated-tasks {--debug}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Syncs updated tickets from Redmine and Clubhouse.';
+    protected $description = 'Syncs updated tickets from Redmine to Clubhouse.';
 
     private $debug = false;
 
