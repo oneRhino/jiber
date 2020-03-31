@@ -281,9 +281,9 @@ class CreatedTasks extends Command
 
         foreach ($tickets as $ticket) {
             try {
-                $redmineProject = RedmineProject::where('third_party_project_id', $ticket['project_id'])->where('third_party', 'clubhouse')->get(['redmine_name', 'content'])->first();
+                $redmineProject = RedmineProject::where('third_party_project_id', $ticket['project_id'])->where('third_party', 'clubhouse')->get(['project_name', 'content'])->first();
 
-                if (!$redmineProject->redmine_name ) {
+                if (!$redmineProject->project_name ) {
                     continue;
                 }
 
