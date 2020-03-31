@@ -6,17 +6,9 @@ namespace App\Console\Commands\RedmineToJira;
 use Mail;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
-use App\User;
-use App\Setting;
-use App\RedmineJiraPriority;
-use App\RedmineProject;
-use App\RedmineJiraTask;
-use App\RedmineJiraTracker;
-use App\RedmineJiraUser;
-use App\Http\Controllers\JiraController;
-use App\Http\Controllers\RedmineController;
+use Illuminate\Support\Facades\{Auth, Config};
+use App\{RedmineProject, RedmineTracker, RedmineJiraPriority, RedmineJiraTask, RedmineJiraUser, Setting, User};
+use App\Http\Controllers\{JiraController, RedmineController};
 
 class CreatedTasks extends Command
 {
@@ -177,7 +169,7 @@ class CreatedTasks extends Command
             $Jira = $JiraController->connect($request);
 
             // Get Tracker/Type
-            $tracker = RedmineJiraTracker::where('redmine_name', $_ticket['tracker']['name'])->first();
+            $tracker = RedmineTracker::where('redmine_name', $_ticket['tracker']['name'])->first();
 
             if (!$tracker) {
                 $this->errorEmail("No tracker {$_ticket['tracker']['name']} found.");

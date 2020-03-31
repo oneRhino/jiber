@@ -29,7 +29,7 @@
 
 namespace App\Http\Controllers;
 
-use App\{JiraSent, RedmineChange, RedmineJiraPriority, RedmineProject, RedmineJiraStatus, RedmineJiraTask, RedmineJiraTracker, RedmineJiraUser, Report, Setting, TimeEntry, User};
+use App\{JiraSent, RedmineChange, RedmineJiraPriority, RedmineProject, RedmineJiraStatus, RedmineJiraTask, RedmineTracker, RedmineJiraUser, Report, Setting, TimeEntry, User};
 use App\Http\Controllers\RedmineController;
 use chobie\Jira\Api;
 use chobie\Jira\Api\Authentication\Basic;
@@ -474,7 +474,7 @@ class JiraController extends Controller
 
             // Get data
             $jira_tracker = $issue->getIssueType();
-            $tracker = RedmineJiraTracker::where('jira_name', 'like', '%' . $jira_tracker['name'] . '%')->first();
+            $tracker = RedmineTracker::where('jira_name', 'like', '%' . $jira_tracker['name'] . '%')->first();
             Log::debug('-- Redmine tracker found');
 
             $jira_status = $issue->getStatus();
@@ -712,7 +712,7 @@ class JiraController extends Controller
             // Get data
             $project  =  RedmineProject::where('third_party_project_name', $content->issue->fields->project->key)->where('third_party', 'jira')->first();
             Log::debug('-- Redmine project found');
-            $tracker  =  RedmineJiraTracker::where('jira_name', 'like', '%' . $content->issue->fields->issuetype->name . '%')->first();
+            $tracker  =  RedmineTracker::where('jira_name', 'like', '%' . $content->issue->fields->issuetype->name . '%')->first();
             Log::debug('-- Redmine tracker found');
             $status   =   RedmineJiraStatus::where('jira_name', 'like', '%' . $content->issue->fields->status->name . '%')->first();
             Log::debug('-- Redmine status found');
@@ -907,7 +907,7 @@ class JiraController extends Controller
 
                         break;
                     case 'issuetype':
-                        $tracker = RedmineJiraTracker::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
+                        $tracker = RedmineTracker::where('jira_name', 'like', '%' . $_item->toString . '%')->first();
 
                         if (!$tracker) {
                             $this->errorEmail("Tracker not found: {$content->issue->fields->issuetype->name}");

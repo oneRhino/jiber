@@ -76,9 +76,10 @@ Route::group(['middleware' => 'auth'], function() {
 });
 
 
-Route::get('/redmine/jira/trackers/import', ['middleware' => 'auth', 'uses' => 'RedmineJiraTrackersController@import']);
+Route::get('/redmine/trackers/import', ['middleware' => 'auth', 'uses' => 'RedmineTrackersController@import']);
+
 Route::group(['middleware' => 'auth'], function() {
-    Route::resource('/redmine/jira/trackers', 'RedmineJiraTrackersController', ['parameters' => [
+    Route::resource('/redmine/trackers', 'RedmineTrackersController', ['parameters' => [
         'trackers' => 'tracker'
     ]]);
 });
