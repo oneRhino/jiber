@@ -147,8 +147,6 @@ class CreatedTasks extends Command
                     continue;
                 }
 
-                print_r($ticket);
-
                 $clubhouseCreateIssueObj = [
                     'project_id'        => $ticket['clubhouse_project_id'],
                     'name'              => $this->getTicketName($ticket),
@@ -165,6 +163,11 @@ class CreatedTasks extends Command
                 } else {
                     $clubhouseControllerObj = new clubhouseController() ;
                     $clubhouseStory         = $clubhouseControllerObj->createStory($clubhouseCreateIssueObj);
+
+                    if (empty($clubhouseStory['id'])) {
+                        $this->writeLog("-- Task {$ticket['ticket_details']['id']} NOT sent to Clubhouse. Error: ".print_r($clubhouseStory, true));
+                        continue;
+                    }
 
                     $this->writeLog("-- Task {$ticket['ticket_details']['id']} sent to Clubhouse.");
                 }
