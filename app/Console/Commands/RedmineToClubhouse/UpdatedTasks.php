@@ -269,6 +269,8 @@ class UpdatedTasks extends Command
 
         // Send update to Clubhouse Story.
         if (!$this->debug) {
+            $this->writeLog("-- Sending to Clubhouse: ".print_r($change, true));
+
             $clubhouseControllerObj = new ClubhouseController();
             $clubhouseUpdate = $clubhouseControllerObj->updateStory($storyId, $change);
 
