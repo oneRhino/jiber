@@ -219,6 +219,10 @@ class CreatedTasks extends Command
     }
 
     private function getOwnerIDs($ticket) {
+        if (empty($ticket['ticket_details']['assigned_to'])) {
+            return null;
+        }
+
         $assignee = $ticket['ticket_details']['assigned_to']['name'];
 
         return [$this->getClubhouseUserId($assignee)];
