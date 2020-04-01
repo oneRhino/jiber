@@ -220,13 +220,13 @@ class ClubhouseController extends Controller {
     }
 
     private function userLogin() {
-        $clubhouse_user_id = $this->getUserFromContent();
+        $clubhouse_user_permissions_id = $this->getUserFromContent();
 
         // Get RedmineClubhouseUser based on clubhouse user id
-        $user = RedmineClubhouseUser::where('clubhouse_user_id', $clubhouse_user_id)->first();
+        $user = RedmineClubhouseUser::where('clubhouse_user_permissions_id', $clubhouse_user_permissions_id)->first();
 
         if (!$user) {
-            throw new \Exception("User {$clubhouse_user_id} not found. Please re-import clubhouse users.");
+            throw new \Exception("User {$clubhouse_user_permissions_id} not found. Please re-import clubhouse users.");
         }
 
         // Get redmine user
@@ -452,7 +452,7 @@ class ClubhouseController extends Controller {
                 die ("-- Story/Epic {$storyId} not created on Redmine.");
             }
         }
-        
+
         $updatesAsIssueUpdateArray = array();
         $listOfFollowersToAdd = array();
         $listOfFollowersToRemove = array();

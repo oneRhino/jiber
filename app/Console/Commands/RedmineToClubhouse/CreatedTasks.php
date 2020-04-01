@@ -138,7 +138,7 @@ class CreatedTasks extends Command
                     'name'              => $this->getTicketName($ticket),
                     'story_type'        => $this->getStoryType($ticket),
                     'description'       => $this->getTicketDescription($ticket),
-                    // 'requested_by_id'   => $this->getRequestedBy($ticket), // not working for some reason. Let it default to onerhinodev
+                    'requested_by_id'   => $this->getRequestedBy($ticket),
                     'owner_ids'         => $this->getOwnerIDs($ticket),
                     'workflow_state_id' => $this->getWorkflowStateID($ticket),
                 ];

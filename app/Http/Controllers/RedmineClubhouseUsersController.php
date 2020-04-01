@@ -75,13 +75,15 @@ class RedmineClubhouseUsersController extends Controller
             $redmineClubhouseUser = RedmineClubhouseUser::where('clubhouse_name', $user['username'])->first();
 
             if (!$redmineClubhouseUser) {
-                $redmineClubhouseUser                    = new RedmineClubhouseUser();
-                $redmineClubhouseUser->clubhouse_name    = $user['username'];
-                $redmineClubhouseUser->clubhouse_user_id = $user['permissions'][0]['id'];
-                $redmineClubhouseUser->redmine_names     = "[]";
+                $redmineClubhouseUser                                = new RedmineClubhouseUser();
+                $redmineClubhouseUser->clubhouse_name                = $user['username'];
+                $redmineClubhouseUser->clubhouse_user_id             = $user['id'];
+                $redmineClubhouseUser->clubhouse_user_permissions_id = $user['permissions'][0]['id'];
+                $redmineClubhouseUser->redmine_names                 = "[]";
                 $redmineClubhouseUser->save();
-            } elseif (!$redmineClubhouseUser->clubhouse_user_id) {
-                $redmineClubhouseUser->clubhouse_user_id = $user['permissions'][0]['id'];
+            } else {
+                $redmineClubhouseUser->clubhouse_user_id             = $user['id'];
+                $redmineClubhouseUser->clubhouse_user_permissions_id = $user['permissions'][0]['id'];
                 $redmineClubhouseUser->save();
             }
         }
