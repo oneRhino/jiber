@@ -4,7 +4,7 @@ namespace App\Console\Commands\RedmineToClubhouse;
 
 use Mail;
 use Illuminate\Console\Command;
-use App\{RedmineProject, RedmineStatus, RedmineClubhouseChange, RedmineClubhouseTask, RedmineClubhouseUser, RedmineJiraUser};
+use App\{RedmineProject, RedmineStatus, RedmineTracker, RedmineClubhouseChange, RedmineClubhouseTask, RedmineClubhouseUser, RedmineJiraUser};
 use App\Http\Controllers\ClubhouseController;
 
 class UpdatedTasks extends Command
