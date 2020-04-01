@@ -152,11 +152,17 @@ class CreatedTasks extends Command
                     'name'              => $this->getTicketName($ticket),
                     'story_type'        => $this->getStoryType($ticket),
                     'description'       => $this->getTicketDescription($ticket),
-                    'deadline'          => $this->getDeadline($ticket),
                     'requested_by_id'   => $this->getRequestedBy($ticket),
                     'owner_ids'         => $this->getOwnerIDs($ticket),
                     'workflow_state_id' => $this->getWorkflowStateID($ticket),
                 ];
+
+                // Only send deadline if needed
+                $deadline = $this->getDeadline($ticket);
+
+                if ($deadline) {
+                    $clubhouseCreateIssueObj['deadline'] = $deadline;
+                }
 
                 if ($this->debug) {
                     $this->writeLog("-- Task {$ticket['ticket_details']['id']} NOT sent to Clubhouse due to debug mode.");
