@@ -14,7 +14,7 @@ class AddClubhouseUserPermissionId extends Migration
     public function up()
     {
         Schema::table('redmine_clubhouse_users', function (Blueprint $table) {
-            $table->string('clubhouse_user_permission_id');
+            $table->string('clubhouse_user_permissions_id');
         });
     }
 
@@ -26,7 +26,7 @@ class AddClubhouseUserPermissionId extends Migration
     public function down()
     {
         Schema::table('redmine_clubhouse_users', function (Blueprint $table) {
-            $table->dropColumn('clubhouse_user_permission_id');
+            $table->dropColumn('clubhouse_user_permissions_id');
         });
     }
 }
