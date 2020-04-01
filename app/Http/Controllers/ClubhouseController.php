@@ -278,21 +278,8 @@ class ClubhouseController extends Controller {
     }
 
     /**
-     * Epic is not related to any project. Function implemented but not in use.
-     *
-     * ------------------------------------------------------------------------------------
-     *
-     * "Epic" will be a simple ticket on Redmine. We should record the Epic ID
-     * with the Redmine ticket ID created, so, when a story is added to this
-     * Epic, we can create that story as a child ticket on Redmine.
-
-     * So, this method should:
-     * 1. Check if this "Epic" has already been created, just in case, by
-     * trying to get its ID from clubhouse_epics table
-     * 2. If it hasn't been created:
-     * 2.1. Create ticket on redmine
-     * 2.2. Save Epic ID + Redmine Ticket (the one we just created) to clubhouse_epics table
-     * 3. If it has been created, ignore.
+     * WEBHOOK: Creates the epic as a issue on Redmine.
+     * This function is not called by the Webhook itself but by the 'story_create' function ('cause of missing projectId).
      */
     private function epic_create($storyReferenceId) {
 
@@ -342,7 +329,6 @@ class ClubhouseController extends Controller {
 
     /**
      * Create a ticket on Redmine.
-     * Only 'stories' so far, 'epics' are not related to any project.
      */
     private function createRedmineTicket() {
 
@@ -352,6 +338,7 @@ class ClubhouseController extends Controller {
             $redmineProjectObj = RedmineProject::where('third_party_project_id', $clubhouseDetails->project_id)->first();
 
             if (!$redmineProjectObj) {
+                $this->writeLog ("Clubhouse project {$clubhouseDetails->project_id} is not mapped to any Redmine project.");
                 die ("Clubhouse project {$clubhouseDetails->project_id} is not mapped to any Redmine project.");
             }
 
@@ -386,6 +373,7 @@ class ClubhouseController extends Controller {
             $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
 
             if (!$clubhouseStoryObj) {
+                $this->writeLog ("Clubhouse story {$storyId} is not mapped to any Redmine project.");
                 die ("Clubhouse story {$storyId} is not mapped to any Redmine project.");
             }
 
@@ -411,36 +399,7 @@ class ClubhouseController extends Controller {
     }
 
     /**
-     * Epic update JSON is not available for development. Skipping for now.
-     *
-     * ------------------------------------------------------------------------------------
-     *
-     * This method should:
-     * 1. Check if this "Epic" has already been created, by trying to get its
-     * ID from clubhouse_epics table
-     * 2. If it hasn't been created, send data to "epic_create" method, so it's create
-     * 3. If it has been created:
-     * 3.1. Update whatever data needed (it's inside action's "changes" property)
-     */
-    private function epic_update($content) {
-
-        die ("Epic Update");
-    }
-
-    /**
-     * "Story" will be a simple ticket on Redmine. We should record the Story ID
-     * with the Redmine ticket ID created.
-     * If this "Story" has a "epic_id" property, then we should make this ticket
-     * child of the one related to that epic_id: we have the epic_id/redmine
-     * ticket id relationship on clubhouse_epics table.
-
-     * So, this method should:
-     * 1. Check if this "Story" has already been created, just in case, by
-     * trying to get its ID from clubhouse_stories table
-     * 2. If it has been created, ignore.
-     * 3. If it hasn't been created:
-     * 3.1. Create ticket on redmine
-     * 3.2. Save Story ID + Redmine Ticket (the one we just created) to clubhouse_stories table
+     * WEBHOOK: Creates the story as a issue on Redmine.
      */
     private function story_create() {
 
@@ -449,6 +408,7 @@ class ClubhouseController extends Controller {
         // Check if story has been created
         $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
         if ($clubhouseStoryObj) {
+            $this->writeLog ("-- Story {$storyId} has already been created on Redmine.");
             die ("-- Story {$storyId} has already been created on Redmine.");
         }
 
@@ -469,16 +429,13 @@ class ClubhouseController extends Controller {
             $this->epic_create($storyReference->id);
         }
 
+        $this->writeLog ("-- Story {$storyId} has been created on Redmine.");
         die ("-- Story {$storyId} has been created on Redmine.");
     }
 
     /**
-     * This method should:
-     * 1. Check if this "Story" has already been created, by trying to get its
-     * ID from clubhouse_stories table
-     * 2. If it hasn't been created, send data to "story_create" method, so it's created
-     * 3. If it has been created:
-     * 3.1. Update whatever data needed (it's inside action's "changes" property)
+     * WEBHOOK: Creates the story as a issue on Redmine.
+     * This method works for stories and epics (they are treated as a stories after created)
      */
     private function story_update() {
 
@@ -488,7 +445,7 @@ class ClubhouseController extends Controller {
         // Checks if the story/ticket exists.
         $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
         if (!$clubhouseStoryObj) {
-            $this->writeLog("-- Story {$storyId} not created on Redmine.");
+            $this->writeLog ("-- Story {$storyId} not created on Redmine.");
             die ("-- Story {$storyId} not created on Redmine.");
         }
 
@@ -552,9 +509,13 @@ class ClubhouseController extends Controller {
             $redmineTicket = $this->redmine->issue->update($redmineTicketId, $updatesAsIssueUpdateArray);
         }
 
+        $this->writeLog ("-- Story {$storyId} was updated on Redmine.");
         die ("-- Story {$storyId} was updated on Redmine.");
     }
 
+    /**
+     * WEBHOOK: Creates the task as a child issue on Redmine.
+     */
     private function story_task_create() {
 
         $storyId = $this->content->actions[1]->id;
@@ -563,12 +524,14 @@ class ClubhouseController extends Controller {
         // Check if story exists on Redmine
         $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
         if (!$clubhouseStoryObj) {
+            $this->writeLog ("-- Story {$storyId} was not created on Redmine.");
             die ("-- Story {$storyId} was not created on Redmine.");
         }
 
         // Check if task has been created already
         $clubhouseTaskObj = ClubhouseTask::where('task_id', $taskId)->first();
         if ($clubhouseTaskObj) {
+            $this->writeLog ("-- Task {$taskId} has already been created on Redmine.");
             die ("-- Task {$taskId} has already been created on Redmine.");
         }
 
@@ -579,92 +542,47 @@ class ClubhouseController extends Controller {
         $clubhouseTaskObj->task_id = $taskId;
         $clubhouseTaskObj->save();
 
+        $this->writeLog ("-- Task {$taskId} has been created on Redmine as a child ticket.");
         die ("-- Task {$taskId} has been created on Redmine as a child ticket.");
     }
 
+    /**
+     * WEBHOOK: Updates the issue on Redmine.
+     */
     private function story_task_update() {
 
-        die ('Story Task Update');
-
-        // Code from story_update
-        $storyId = $this->content->actions[0]->id;
-        $changesOnStory = $this->content->actions[0]->changes;
+        $taskId = $this->content->actions[0]->id;
+        $changesOnTask = $this->content->actions[0]->changes;
 
         // Checks if the story/ticket exists.
-        $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
-        if (!$clubhouseStoryObj) {
-            $this->writeLog("-- Story {$storyId} not created on Redmine.");
-            die ("-- Story {$storyId} not created on Redmine.");
+        $clubhouseTaskObj = ClubhouseTask::where('task_id', $taskId)->first();
+        if (!$clubhouseTaskObj) {
+            $this->writeLog ("-- Task {$taskId} not created on Redmine.");
+            die ("-- Task {$taskId} not created on Redmine.");
         }
 
         $updatesAsIssueUpdateArray = array();
-        $listOfFollowersToAdd = array();
-        $listOfFollowersToRemove = array();
 
-        foreach ($changesOnStory as $key => $changeOnStory) {
+        foreach ($changesOnTask as $key => $changeOnTask) {
 
             switch ($key) {
-                case "started":
-                    $updatesAsIssueUpdateArray['status'] = $changeOnStory->new ? 'In Progress' : 'Assigned';
+                case "description":
+                    $updatesAsIssueUpdateArray['description'] = $changeOnTask->new;
                     break;
-                case "workflow_state_id":
-                    $workflowStateId = $this->getWorkflowStateId($changeOnStory->new);
-                    if ($workflowStateId)
-                        $updatesAsIssueUpdateArray['status'] = $workflowStateId;
-                    break;
-                case "story_type":
-                    $storyTypeId = $this->getStoryType($changeOnStory->new);
-                    if ($storyTypeId)
-                        $updatesAsIssueUpdateArray['tracker'] = $storyTypeId;
-                    break;
-                case "started_at":
-                    $startDate = strtotime($changeOnStory->new);
-                    $updatesAsIssueUpdateArray['start_date'] = date('Y-m-d', $startDate);
-                    break;
-                case "deadline":
-                    $deadlineDate = strtotime($changeOnStory->new);
-                    $updatesAsIssueUpdateArray['due_date'] = date('Y-m-d', $deadlineDate);
-                    break;
-                case "follower_ids":
-                    if (isset($changeOnStory->adds)) {
-                        foreach ($changeOnStory->adds as $followerId) {
-                            $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
-                            $listOfFollowersToAdd = json_decode($followersRedmineIds->redmine_names, TRUE);
-                        }
-                    }
-                    if (isset($changeOnStory->removes)) {
-                        foreach ($changeOnStory->removes as $followerId) {
-                            $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
-                            $listOfFollowersToRemove = json_decode($followersRedmineIds->redmine_names, TRUE);
-                        }
-                        break;
-                    }
             }
         }
 
-        /* NOTE: Not in use so far, API returns FALSE, don't know why yet.
-        // Add follow users to ticket
-        if ($listOfFollowersToAdd)
-            $this->addFollowersToIssue ($clubhouseStoryObj->redmine_ticket_id, $listOfFollowersToAdd);
-
-        // Remove follow users from ticket
-        if ($listOfFollowersToRemove)
-            $this->removeFollowersFromIssue ($clubhouseStoryObj->redmine_ticket_id, $listOfFollowersToRemove);
-        */
-
         if ($updatesAsIssueUpdateArray) {
-            $redmineTicketId = $clubhouseStoryObj->redmine_ticket_id;
+            $redmineTicketId = $clubhouseTaskObj->redmine_ticket_id;
             $redmineTicket = $this->redmine->issue->update($redmineTicketId, $updatesAsIssueUpdateArray);
         }
 
-        die ("-- Story {$storyId} was updated on Redmine.");
+        $this->writeLog ("-- Task {$taskId} was updated on Redmine.");
+        die ("-- Task {$taskId} was updated on Redmine.");
     }
 
     /**
-     * Sent a update to Redmine ticket.
-     *
-     * NOTE:
-     * 'addNoteToIssue' does not return anything, so there's no redmine_comment_id.
+     * WEBHOOK: Created a comment on Redmine's issue.
      */
     private function story_comment_create() {
 
@@ -676,14 +594,14 @@ class ClubhouseController extends Controller {
         // Checks if the story/ticket exists.
         $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
         if (!$redmineClubhouseTaskObj) {
-            $this->writeLog("-- Story {$storyId} not created on Redmine.");
+            $this->writeLog ("-- Story {$storyId} not created on Redmine.");
             die ("-- Story {$storyId} not created on Redmine.");
         }
 
         // Checks if the comment was already sent to Redmine.
         $clubhouseCommentObj = ClubhouseComment::where('comment_id', $commentId)->first();
         if ($clubhouseCommentObj) {
-            $this->writeLog("-- Comment {$commentId} already created on Redmine.");
+            $this->writeLog ("-- Comment {$commentId} already created on Redmine.");
             die ("-- Comment {$commentId} already created on Redmine.");
         }
 
@@ -699,14 +617,15 @@ class ClubhouseController extends Controller {
             $clubhouseCommentObj->redmine_comment_id = 0;
             $clubhouseCommentObj->save();
 
+            $this->writeLog ("-- Comment {$commentId} sent to Redmine.");
             die ("-- Comment {$commentId} sent to Redmine.");
         } catch (\Exception $e) {
-            die ("-- Exception: " . $e->getMessage());
+            $this->writeLog ("-- Exception: " . $e->getMessage());
         }
     }
 
     /**
-     * Sent a comment update to Redmine ticket.
+     * WEBHOOK: Sent a comment update to Redmine ticket.
      *
      * NOTE:
      * There's no way to update/delete a note/comment using the Redmine API.
@@ -722,7 +641,7 @@ class ClubhouseController extends Controller {
         // Checks if the story/ticket exists.
         $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
         if (!$redmineClubhouseTaskObj) {
-            $this->writeLog("-- Story {$storyId} not created on Redmine.");
+            $this->writeLog ("-- Story {$storyId} not created on Redmine.");
             die ("-- Story {$storyId} not created on Redmine.");
         }
 
@@ -739,14 +658,16 @@ class ClubhouseController extends Controller {
             // This method does not return anything (no comment ID).
             $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
 
+            $this->writeLog ("-- Comment {$commentId} update sent to Redmine.");
             die ("-- Comment {$commentId} update sent to Redmine.");
         } catch (\Exception $e) {
+            $this->writeLog ("-- Exception: " . $e->getMessage());
             die ("-- Exception: " . $e->getMessage());
         }
     }
 
     /**
-     * 'Deletes' a comment on Redmine ticket.
+     * WEBHOOK: 'Deletes' a comment on Redmine ticket.
      *
      * NOTE:
      * There's no way to update/delete a note/comment using the Redmine API.
@@ -762,7 +683,7 @@ class ClubhouseController extends Controller {
         // Checks if the story/ticket exists.
         $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
         if (!$redmineClubhouseTaskObj) {
-            $this->writeLog("-- Story {$storyId} not created on Redmine.");
+            $this->writeLog ("-- Story {$storyId} not created on Redmine.");
             die ("-- Story {$storyId} not created on Redmine.");
         }
 
@@ -776,8 +697,10 @@ class ClubhouseController extends Controller {
             // This method does not return anything (no comment ID).
             $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
 
+            $this->writeLog ("-- Comment {$commentId} delete comment sent to Redmine.");
             die ("-- Comment {$commentId} delete comment sent to Redmine.");
         } catch (\Exception $e) {
+            $this->writeLog ("-- Exception: " . $e->getMessage());
             die ("-- Exception: " . $e->getMessage());
         }
     }
