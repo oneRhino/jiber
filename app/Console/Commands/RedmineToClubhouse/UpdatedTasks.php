@@ -263,6 +263,8 @@ class UpdatedTasks extends Command
             $clubhouseControllerObj = new ClubhouseController();
             $clubhouseUpdate = $clubhouseControllerObj->updateStory($storyId, $change);
 
+            $this->writeLog('-- Clubhouse answer: ' . print_r($clubhouseUpdate, true));
+
             $redmineClubhouseChangeObj = new RedmineClubhouseChange;
             $redmineClubhouseChangeObj->redmine_change_id = $redmineChangeId;
             $redmineClubhouseChangeObj->clubhouse_change_id = $clubhouseUpdate['id'];
