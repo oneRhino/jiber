@@ -29,7 +29,7 @@
 
 namespace App\Http\Controllers;
 
-use App\{RedmineClubhouseTask, RedmineJiraUser, RedmineProject, ClubhouseComment, ClubhouseTask, ClubhouseEpic, ClubhouseStory, Setting, RedmineClubhouseProject, RedmineClubhouseUser, User};
+use App\{RedmineJiraUser, RedmineProject, ClubhouseComment, ClubhouseTask, ClubhouseEpic, ClubhouseStory, Setting, RedmineClubhouseProject, RedmineClubhouseUser, User};
 use Mikkelson\Clubhouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Config};
@@ -596,7 +596,7 @@ class ClubhouseController extends Controller {
         $storyId = $contentActions[1]->id;
 
         // Checks if the story/ticket exists.
-        $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
+        $redmineClubhouseTaskObj = ClubhouseTask::where('task_id', $storyId)->first();
         if (!$redmineClubhouseTaskObj) {
             $this->writeLog ("-- Story {$storyId} not created on Redmine.");
             die ("-- Story {$storyId} not created on Redmine.");
@@ -610,7 +610,7 @@ class ClubhouseController extends Controller {
         }
 
         try {
-            $redmineTicketId = $redmineClubhouseTaskObj->redmine_task;
+            $redmineTicketId = $redmineClubhouseTaskObj->redmine_ticket_id;
             $commentBody = $contentActions[0]->text;
 
             // This method does not return anything (no comment ID).
@@ -643,14 +643,14 @@ class ClubhouseController extends Controller {
         $storyId = $contentActions[0]->story_id;
 
         // Checks if the story/ticket exists.
-        $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
+        $redmineClubhouseTaskObj = ClubhouseTask::where('task_id', $storyId)->first();
         if (!$redmineClubhouseTaskObj) {
             $this->writeLog ("-- Story {$storyId} not created on Redmine.");
             die ("-- Story {$storyId} not created on Redmine.");
         }
 
         try {
-            $redmineTicketId = $redmineClubhouseTaskObj->redmine_task;
+            $redmineTicketId = $redmineClubhouseTaskObj->redmine_ticket_id;
 
             $commentBody = "h3. Comment Update: \n\n";
             $commentBody .= "h4. OLD Body: \n\n";
@@ -685,14 +685,14 @@ class ClubhouseController extends Controller {
         $storyId = $contentActions[1]->id;
 
         // Checks if the story/ticket exists.
-        $redmineClubhouseTaskObj = RedmineClubhouseTask::where('clubhouse_task', $storyId)->first();
+        $redmineClubhouseTaskObj = ClubhouseTask::where('task_id', $storyId)->first();
         if (!$redmineClubhouseTaskObj) {
             $this->writeLog ("-- Story {$storyId} not created on Redmine.");
             die ("-- Story {$storyId} not created on Redmine.");
         }
 
         try {
-            $redmineTicketId = $redmineClubhouseTaskObj->redmine_task;
+            $redmineTicketId = $redmineClubhouseTaskObj->redmine_ticket_id;
             $changedAt = strtotime($this->content->changed_at);
             $changedAtFormatted = date("Y-m-d h:i:sa", $changedAt);
 

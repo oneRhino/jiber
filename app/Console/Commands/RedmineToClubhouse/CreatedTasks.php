@@ -4,7 +4,7 @@ namespace App\Console\Commands\RedmineToClubhouse;
 
 use Mail;
 use Illuminate\Console\Command;
-use App\{RedmineProject, RedmineStatus, RedmineTracker, RedmineClubhouseTask, RedmineClubhouseUser};
+use App\{RedmineProject, RedmineStatus, RedmineTracker, ClubhouseTask, RedmineClubhouseUser};
 use App\Http\Controllers\ClubhouseController;
 
 class CreatedTasks extends Command
@@ -93,8 +93,8 @@ class CreatedTasks extends Command
             $this->writeLog('Redmine new tasks');
 
             foreach ($redmine_entries['issues'] as $_issue) {
-                // Check if task has already been created on Clubhouse (RedmineClubhouseTask)
-                $task = RedmineClubhouseTask::where('redmine_task', $_issue['id'])->first();
+                // Check if task has already been created on Clubhouse (ClubhouseTask)
+                $task = ClubhouseTask::where('redmine_ticket_id', $_issue['id'])->first();
                 if ($task) {
                     $this->writeLog('-- Task '.$_issue['id'].' already been created on Clubhouse, CONTINUE');
                     continue;
@@ -128,7 +128,7 @@ class CreatedTasks extends Command
 
         foreach ($tickets as $ticket) {
             try {
-                if (RedmineClubhouseTask::where('clubhouse_task', $ticket['clubhouse_project_id'])->first()) {
+                if (ClubhouseTask::where('task_id', $ticket['clubhouse_project_id'])->first()) {
                     $this->writeLog("-- Task {$ticket['clubhouse_project_id']} already been created on Clubhouse, CONTINUE");
                     continue;
                 }
@@ -164,9 +164,9 @@ class CreatedTasks extends Command
                     $this->writeLog("-- Task {$ticket['ticket_details']['id']} sent to Clubhouse.");
                 }
 
-                $redmineClubhouseTaskInstance = new RedmineClubhouseTask();
-                $redmineClubhouseTaskInstance->redmine_task   = $ticket['ticket_details']['id'];
-                $redmineClubhouseTaskInstance->clubhouse_task = $this->debug ? 'debug_mode' : $clubhouseStory['id'];
+                $redmineClubhouseTaskInstance = new ClubhouseTask();
+                $redmineClubhouseTaskInstance->redmine_ticket_id   = $ticket['ticket_details']['id'];
+                $redmineClubhouseTaskInstance->task_id = $this->debug ? 'debug_mode' : $clubhouseStory['id'];
                 $redmineClubhouseTaskInstance->source         = 'Redmine';
 
                 if ($this->debug) {
