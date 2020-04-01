@@ -172,7 +172,7 @@ class UpdatedTasks extends Command
                                         $due_date->modify('+1 day');
 
                                         $changeArray = array ();
-                                        $changeArray['deadline'] = date_format($date, 'Y-m-d');
+                                        $changeArray['deadline'] = date_format($due_date, 'Y-m-d');
                                         $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
                                         break;
                                     case 'estimated_hours':
