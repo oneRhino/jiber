@@ -69,7 +69,7 @@ class CreatedTasks extends Command
         $tickets = array();
 
         // Get user
-        $this->login($user);
+        $this->login();
 
         $redmineProjectObjs = RedmineProject::clubhouse()->get();
 
