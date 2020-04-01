@@ -167,7 +167,6 @@ class CreatedTasks extends Command
                 $redmineClubhouseTaskInstance = new ClubhouseTask();
                 $redmineClubhouseTaskInstance->redmine_ticket_id   = $ticket['ticket_details']['id'];
                 $redmineClubhouseTaskInstance->task_id = $this->debug ? 'debug_mode' : $clubhouseStory['id'];
-                $redmineClubhouseTaskInstance->source         = 'Redmine';
 
                 if ($this->debug) {
                     $this->writeLog("-- Task {$ticket['ticket_details']['id']} NOT saved on database due to debug mode.");
