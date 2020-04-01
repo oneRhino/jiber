@@ -167,8 +167,12 @@ class UpdatedTasks extends Command
                                         $this->writeLog('-- Start Date field not exists on Clubhouse, CONTINUE');
                                         break;
                                     case 'due_date':
+                                        // For some reason, Clubhouse always sets the day before of what we sent
+                                        $due_date = new \DateTime($detail['new_value']);
+                                        $due_date->modify('+1 day');
+
                                         $changeArray = array ();
-                                        $changeArray['deadline'] = date('c', strtotime($detail['new_value']));
+                                        $changeArray['deadline'] = date_format($date, 'Y-m-d');
                                         $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
                                         break;
                                     case 'estimated_hours':

@@ -204,7 +204,12 @@ class CreatedTasks extends Command
     }
 
     private function getDeadline($ticket) {
-        return $ticket['ticket_details']['due_date'] ?? '';
+        if (empty($ticket['ticket_details']['due_date'])) return '';
+
+        $due_date = new \DateTime($ticket['ticket_details']['due_date']);
+        $due_date->modify('+1 day');
+
+        return date_format($due_date, 'Y-m-d');
     }
 
     private function getRequestedBy($ticket) {
