@@ -163,7 +163,7 @@ class UpdatedTasks extends Command
                                         break;
                                     case 'due_date':
                                         $changeArray = array ();
-                                        $changeArray['deadline'] = $detail['new_value'];
+                                        $changeArray['deadline'] = date('c', strtotime($detail['new_value']));
                                         $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
                                         break;
                                     case 'estimated_hours':
@@ -252,6 +252,10 @@ class UpdatedTasks extends Command
         }
 
         $storyObj = RedmineClubhouseTask::where('redmine_task', $redmineTicketId)->first();
+        if (empty($storyObj->clubhouse_task)) {
+            return null;
+        }
+
         $storyId = $storyObj->clubhouse_task;
 
         // Send update to Clubhouse Story.
