@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\RedmineToClubhouse;
 
-//use Log;
+use Mail;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Config};
@@ -73,13 +73,13 @@ class UpdatedTasks extends Command
         $RedmineController = new RedmineController;
         $Redmine = $RedmineController->connect();
 
-        $redmineProjectObjs = RedmineProject::get();
+        $redmineProjectObjs = RedmineProject::clubhouse()->get();
 
         $newChanges = array();
 
         foreach ($redmineProjectObjs as $redmineProjectObj) {
-            if (!$redmineProjectObj->redmine_id) {
-                $this->writeLog('-- No Redmine project related to: ' . $redmineProjectObj->third_party_project_name);
+            if (!$redmineProjectObj->third_party_project_id) {
+                $this->writeLog('-- No Clubhouse project related to: ' . $redmineProjectObj->project_name);
                 continue;
             }
 
