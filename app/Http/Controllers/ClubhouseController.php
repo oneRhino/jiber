@@ -158,6 +158,10 @@ class ClubhouseController extends Controller {
         Log::debug('CLUBHOUSE WEBHOOK ACTIVATED');
 
         $json_content = $request->getContent();
+
+        // On some calls, there is no content, so we'll ignore
+        if (empty($json_content)) die;
+
         $this->content = json_decode($json_content);
         if (!$this->content || json_last_error() !== JSON_ERROR_NONE) {
             $this->invalidJSON($json_content);
