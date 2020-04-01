@@ -182,7 +182,7 @@ class UpdatedTasks extends Command
                                         $changeArray = array ();
                                         $owner = $this->getClubhouseUserID($detail['new_value']);
                                         if ($owner) {
-                                            $changeArray['owner_ids'] = $owner;
+                                            $changeArray['owner_ids'] = [$owner];
                                             $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
                                         }
                                         break;
