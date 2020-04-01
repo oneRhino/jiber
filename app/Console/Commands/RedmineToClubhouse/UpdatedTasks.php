@@ -4,14 +4,13 @@ namespace App\Console\Commands\RedmineToClubhouse;
 
 use Mail;
 use Illuminate\Console\Command;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{Auth, Config};
-use App\{Setting, User};
-use App\{RedmineProject, RedmineClubhouseChange, RedmineClubhouseTask};
-use App\Http\Controllers\{ClubhouseController, RedmineController};
+use App\{RedmineProject, RedmineStatus, RedmineClubhouseChange, RedmineClubhouseTask, RedmineClubhouseUser, RedmineJiraUser};
+use App\Http\Controllers\ClubhouseController;
 
 class UpdatedTasks extends Command
 {
+    use Redmine;
+
     /**
      * The name and signature of the console command.
      *
@@ -63,15 +62,10 @@ class UpdatedTasks extends Command
     */
     private function sendRedmineChangesToClubhouse () {
 
-        $user = User::find(7);
-        $this->loginUser($user);
+        $this->login();
 
         // Current date
 	    $date = date('Y-m-d', strtotime("-20 minutes"));;
-
-        // Get Redmine tasks updated this date
-        $RedmineController = new RedmineController;
-        $Redmine = $RedmineController->connect();
 
         $redmineProjectObjs = RedmineProject::clubhouse()->get();
 
@@ -90,13 +84,13 @@ class UpdatedTasks extends Command
 
             $args = array(
                 'updated_on' => '>=' . $date,
-                'limit' => 100,
-                'sort' => 'updated_on:desc',
-                'include' => 'attachments',
+                'limit'      => 100,
+                'sort'       => 'updated_on:desc',
+                'include'    => 'attachments',
                 'project_id' => $redmineProjectObj->project_id,
             );
 
-            $redmineEntries = $Redmine->issue->all($args);
+            $redmineEntries = $this->redmine->issue->all($args);
 
             foreach ($redmineEntries as $redmineEntry) {
 
@@ -109,7 +103,7 @@ class UpdatedTasks extends Command
                     $entryDetailId = $entryDetail['id'];
 
                     $args = array('include' => 'journals');
-                    $entryJournals = $Redmine->issue->show($entryDetailId, $args);
+                    $entryJournals = $this->redmine->issue->show($entryDetailId, $args);
                     $entryJournals = $entryJournals['issue']['journals'];
 
                     foreach ($entryJournals as $entryJournal) {
@@ -154,7 +148,12 @@ class UpdatedTasks extends Command
                                         $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
                                         break;
                                     case 'status_id':
-                                        $this->writeLog('-- Status field not exists on Clubhouse, CONTINUE');
+                                        $changeArray = array ();
+                                        $status = $this->getWorkflowStateID($detail['new_value']);
+                                        if ($status) {
+                                            $changeArray['workflow_state_id'] = $status;
+                                            $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
+                                        }
                                         break;
                                     case 'priority_id':
                                         $this->writeLog('-- Priority field not exists on Clubhouse, CONTINUE');
@@ -163,13 +162,20 @@ class UpdatedTasks extends Command
                                         $this->writeLog('-- Start Date field not exists on Clubhouse, CONTINUE');
                                         break;
                                     case 'due_date':
-                                        $this->writeLog('-- Due Date field not exists on Clubhouse, CONTINUE');
+                                        $changeArray = array ();
+                                        $changeArray['deadline'] = $detail['new_value'];
+                                        $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
                                         break;
                                     case 'estimated_hours':
                                         $this->writeLog('-- Estimate Hours field not exists on Clubhouse, CONTINUE');
                                         break;
                                     case 'assigned_to_id':
-                                        $this->writeLog('-- Assigned To ID field not exists on Clubhouse, CONTINUE');
+                                        $changeArray = array ();
+                                        $owner = $this->getClubhouseUserID($detail['new_value']);
+                                        if ($owner) {
+                                            $changeArray['owner_ids'] = $owner;
+                                            $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
+                                        }
                                         break;
                                 }
                             }
@@ -241,7 +247,7 @@ class UpdatedTasks extends Command
         }
 
         if (RedmineClubhouseChange::where('redmine_change_id', $redmineChangeId)->first()) {
-            $this->writeLog('-- Change aleready sent to Clubhouse: ' . $redmineChangeId);
+            $this->writeLog('-- Change already sent to Clubhouse: ' . $redmineChangeId);
             return null;
         }
 
@@ -264,23 +270,48 @@ class UpdatedTasks extends Command
         }
     }
 
+    private function getWorkflowStateID($redmine_id) {
+        $redmine_status = RedmineStatus::where('redmine_id', $redmine_id)->first();
 
-    private function loginUser ($user) {
+        if (!$redmine_status) {
+            $this->writeLog("-- Status {$redmine_id} not found on Redmine Statuses");
+            return false;
+        }
 
-        // Set user as logged-in user
-        $request = new Request();
-        $request->merge(['user' => $user]);
-        $request->setUserResolver(function () use ($user) {
-            return $user;
-        });
+        $clubhouse_statuses = $redmine_status->clubhouse_ids;
 
-        Auth::setUser($user);
+        if (!$clubhouse_statuses) {
+            $this->writeLog("-- Status {$redmine_status->redmine_name} not linked to a Clubhouse Status");
+            return false;
+        }
 
-        return $request;
+        // Return first clubhouse status
+        return reset($clubhouse_statuses);
+    }
+
+    private function getClubhouseUserId($redmine_id) {
+        // Get Redmine name from redmine_jira_users
+        $redmine_jira_user = RedmineJiraUser::where('redmine_id', $redmine_id)->first();
+
+        if (!$redmine_jira_user) {
+            $this->writeLog("-- User {$redmine_id} not found on RedmineJiraUser");
+            return false;
+        }
+
+        $redmine_name = $redmine_jira_user->redmine_name;
+
+        $redmine_clubhouse_user = RedmineClubhouseUser::where('redmine_names', 'like', "%{$redmine_name}%")->first();
+
+        if (!$redmine_clubhouse_user) {
+            $this->writeLog("-- User {$redmine_name} not found on RedmineClubhouseUser");
+            return false;
+        }
+
+        return $redmine_clubhouse_user->clubhouse_user_id;
     }
 
     private function writeLog($message) {
 
-	    file_put_contents('redmine-clubhouse-update.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
+        file_put_contents('redmine-clubhouse-update.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
     }
 }

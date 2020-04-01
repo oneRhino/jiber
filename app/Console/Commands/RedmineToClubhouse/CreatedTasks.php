@@ -4,15 +4,13 @@ namespace App\Console\Commands\RedmineToClubhouse;
 
 use Mail;
 use Illuminate\Console\Command;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{Auth, Config};
-use App\{Setting, User};
 use App\{RedmineProject, RedmineStatus, RedmineTracker, RedmineClubhouseTask, RedmineClubhouseUser};
-use App\Http\Controllers\{ClubhouseController, RedmineController};
-use Redmine\Client as RedmineClient;
+use App\Http\Controllers\ClubhouseController;
 
 class CreatedTasks extends Command
 {
+    use Redmine;
+
     /**
     * The name and signature of the console command.
     *
@@ -71,19 +69,7 @@ class CreatedTasks extends Command
         $tickets = array();
 
         // Get user
-        $user = User::find(7);
-
-        // Set user as logged-in user
-        $request = new Request();
-        $request->merge(['user' => $user]);
-        $request->setUserResolver(function () use ($user) {
-            return $user;
-        });
-
-        Auth::setUser($user);
-
-        $RedmineController = new RedmineController;
-        $Redmine = $RedmineController->connect();
+        $this->login($user);
 
         $redmineProjectObjs = RedmineProject::clubhouse()->get();
 
@@ -102,7 +88,7 @@ class CreatedTasks extends Command
                 'project_id' => $redmineProjectObj->project_id,
             );
 
-            $redmine_entries = $Redmine->issue->all($args);
+            $redmine_entries = $this->redmine->issue->all($args);
 
             $this->writeLog('Redmine new tasks');
 
@@ -263,23 +249,6 @@ class CreatedTasks extends Command
 
         // Return first clubhouse status
         return reset($clubhouse_statuses);
-    }
-
-    /**
-    * Helper to access Remine API.
-    */
-    private function loginUser($user) {
-
-        // Set user as logged-in user
-        $request = new Request();
-        $request->merge(['user' => $user]);
-        $request->setUserResolver(function () use ($user) {
-            return $user;
-        });
-
-        Auth::setUser($user);
-
-        return $request;
     }
 
     private function writeLog($message) {
