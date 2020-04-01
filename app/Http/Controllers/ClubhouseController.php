@@ -446,9 +446,13 @@ class ClubhouseController extends Controller {
         $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
         if (!$clubhouseStoryObj) {
             $this->writeLog ("-- Story {$storyId} not created on Redmine.");
-            die ("-- Story {$storyId} not created on Redmine.");
+            $clubhouseStoryObj = ClubhouseEpic::where('epic_id', $storyId)->first();
+            if (!$clubhouseStoryObj) {
+                $this->writeLog ("-- Epic {$storyId} not created on Redmine.");
+                die ("-- Story/Epic {$storyId} not created on Redmine.");
+            }
         }
-
+        
         $updatesAsIssueUpdateArray = array();
         $listOfFollowersToAdd = array();
         $listOfFollowersToRemove = array();
