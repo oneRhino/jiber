@@ -4,7 +4,7 @@ namespace App\Console\Commands\RedmineToClubhouse;
 
 use Mail;
 use Illuminate\Console\Command;
-use App\{RedmineProject, RedmineStatus, RedmineTracker, RedmineClubhouseChange, ClubhouseTask, RedmineClubhouseUser, RedmineJiraUser};
+use App\{RedmineProject, RedmineStatus, RedmineTracker, RedmineClubhouseChange, ClubhouseStory, RedmineClubhouseUser, RedmineJiraUser};
 use App\Http\Controllers\ClubhouseController;
 
 class UpdatedTasks extends Command
@@ -206,8 +206,8 @@ class UpdatedTasks extends Command
         if (RedmineClubhouseChange::where('redmine_change_id', $redmineChangeId)->first()) {
             $this->writeLog('-- Comment will be updated on Clubhouse: ' . $redmineChangeId);
 
-            $storyObj = ClubhouseTask::where('redmine_ticket_id', $redmineTicketId)->first();
-            $storyId = $storyObj->task_id;
+            $storyObj = ClubhouseStory::where('redmine_ticket_id', $redmineTicketId)->first();
+            $storyId = $storyObj->story_id;
 
             $comment = "(" . $change['user']['name'] . ") " . $change['notes'];
 
@@ -226,8 +226,8 @@ class UpdatedTasks extends Command
             }
         } else {
             $this->writeLog('-- Comment will be sent on Clubhouse: ' . $redmineChangeId);
-            $storyObj = ClubhouseTask::where('redmine_ticket_id', $redmineTicketId)->first();
-            $storyId = $storyObj->task_id;
+            $storyObj = ClubhouseStory::where('redmine_ticket_id', $redmineTicketId)->first();
+            $storyId = $storyObj->story_id;
 
             $comment = "(" . $change['user']['name'] . ") " . $change['notes'];
 
@@ -260,12 +260,12 @@ class UpdatedTasks extends Command
             return null;
         }
 
-        $storyObj = ClubhouseTask::where('redmine_ticket_id', $redmineTicketId)->first();
-        if (empty($storyObj->task_id)) {
+        $storyObj = ClubhouseStory::where('redmine_ticket_id', $redmineTicketId)->first();
+        if (empty($storyObj->story_id)) {
             return null;
         }
 
-        $storyId = $storyObj->task_id;
+        $storyId = $storyObj->story_id;
 
         // Send update to Clubhouse Story.
         if (!$this->debug) {
