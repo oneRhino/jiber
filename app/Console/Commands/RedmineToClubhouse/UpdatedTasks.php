@@ -203,7 +203,7 @@ class UpdatedTasks extends Command
             return;
         }
 
-        if (RedmineClubhouseChange::where('redmine_change_id', $redmineChangeId)->first()) {
+        if (ClubhouseComment::where('redmine_comment_id', $redmineChangeId)->first()) {
             $this->writeLog('-- Comment will be updated on Clubhouse: ' . $redmineChangeId);
 
             $storyObj = ClubhouseStory::where('redmine_ticket_id', $redmineTicketId)->first();
@@ -214,7 +214,7 @@ class UpdatedTasks extends Command
             // Send comment to Clubhouse Story.
             if (!$this->debug) {
 
-                $changeObj = RedmineClubhouseChange::where('redmine_change_id', $redmineChangeId)->first();
+                $changeObj = ClubhouseComment::where('redmine_comment_id', $redmineChangeId)->first();
                 $changeId = $changeObj->clubhouse_change_id;
 
                 $clubhouseControllerObj = new ClubhouseController();
@@ -236,10 +236,10 @@ class UpdatedTasks extends Command
                 $clubhouseControllerObj = new ClubhouseController();
                 $clubhouseComment = $clubhouseControllerObj->createComment($storyId, $comment);
 
-                $redmineClubhouseChangeObj = new RedmineClubhouseChange;
-                $redmineClubhouseChangeObj->redmine_change_id = $redmineChangeId;
-                $redmineClubhouseChangeObj->clubhouse_change_id = $clubhouseComment['id'];
-                $redmineClubhouseChangeObj->save();
+                $clubhouseCommentObj = new ClubhouseComment ();
+                $clubhouseCommentObj->comment_id = $clubhouseComment['id'];
+                $clubhouseCommentObj->redmine_comment_id = $redmineChangeId;
+                $clubhouseCommentObj->save();
 
                 $this->writeLog('-- Comment sent to Clubhouse: ' . $redmineChangeId);
             } else {
