@@ -155,6 +155,11 @@ class UpdatedTasks extends Command
                                             $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
                                         }
                                         break;
+                                    case 'tracker_id':
+                                        $changeArray = array ();
+                                        $changeArray['story_type'] = $this->getStoryType($detail['new_value']);
+                                        $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
+                                        break;
                                     case 'priority_id':
                                         $this->writeLog('-- Priority field not exists on Clubhouse, CONTINUE');
                                         break;
@@ -274,6 +279,12 @@ class UpdatedTasks extends Command
         } else {
             $this->writeLog('-- Change NOT sent to Clubhouse due to Debug Mode');
         }
+    }
+
+    private function getStoryType($redmine_id) {
+        $redmineTicketType = RedmineTracker::where('redmine_id', $redmine_id)->select('clubhouse_name')->first();
+
+        return $redmineTicketType->clubhouse_name;
     }
 
     private function getWorkflowStateID($redmine_id) {
