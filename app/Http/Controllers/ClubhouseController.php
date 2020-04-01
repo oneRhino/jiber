@@ -738,7 +738,7 @@ class ClubhouseController extends Controller {
 
     private function writeLog($message) {
 
-        file_put_contents('clubhouse-webhook.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
+        file_put_contents(storage_path() . '/logs/clubhouse-webhook.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
     }
 
     private function getWorkflowStateId ($workflowStateId) {
