@@ -164,10 +164,12 @@ class CreatedTasks extends Command
                     $this->writeLog("-- Task {$ticket['ticket_details']['id']} sent to Clubhouse.");
                 }
 
-                $redmineClubhouseStoryInstance                    = new ClubhouseStory();
-                $redmineClubhouseStoryInstance->redmine_ticket_id = $ticket['ticket_details']['id'];
-                $redmineClubhouseStoryInstance->story_id          = $this->debug ? 'debug_mode' : $clubhouseStory['id'];
-                $redmineClubhouseStoryInstance->save();
+                if (!$this->debug) {
+                    $redmineClubhouseStoryInstance                    = new ClubhouseStory();
+                    $redmineClubhouseStoryInstance->redmine_ticket_id = $ticket['ticket_details']['id'];
+                    $redmineClubhouseStoryInstance->story_id          = $clubhouseStory['id'];
+                    $redmineClubhouseStoryInstance->save();
+                }
 
                 if ($this->debug) {
                     $this->writeLog("-- Task {$ticket['ticket_details']['id']} NOT saved on database due to debug mode.");
@@ -249,7 +251,7 @@ class CreatedTasks extends Command
             return false;
         }
 
-        $clubhouse_statuses = $redmine_status->clubhouse_ids;
+        $clubhouse_statuses = [$redmine_status->clubhouse_ids];
 
         if (!$clubhouse_statuses) {
             $this->writeLog("-- Status {$status} not linked to a Clubhouse Status");
