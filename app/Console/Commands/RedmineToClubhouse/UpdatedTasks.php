@@ -4,7 +4,7 @@ namespace App\Console\Commands\RedmineToClubhouse;
 
 use Mail;
 use Illuminate\Console\Command;
-use App\{RedmineProject, RedmineStatus, RedmineTracker, RedmineClubhouseChange, ClubhouseStory, RedmineClubhouseUser, RedmineJiraUser};
+use App\{RedmineProject, RedmineStatus, RedmineTracker, RedmineClubhouseChange, ClubhouseStory, ClubhouseComment, RedmineClubhouseUser, RedmineJiraUser};
 use App\Http\Controllers\ClubhouseController;
 
 class UpdatedTasks extends Command
@@ -235,6 +235,11 @@ class UpdatedTasks extends Command
             if (!$this->debug) {
                 $clubhouseControllerObj = new ClubhouseController();
                 $clubhouseComment = $clubhouseControllerObj->createComment($storyId, $comment);
+
+                if (!array_key_exists('id', $clubhouseComment)) {
+                    $this->writeLog("-- Story {$storyId} was not found on Clubhouse, comment not sent: " . $redmineChangeId);
+                    die;
+                }
 
                 $clubhouseCommentObj = new ClubhouseComment ();
                 $clubhouseCommentObj->comment_id = $clubhouseComment['id'];
