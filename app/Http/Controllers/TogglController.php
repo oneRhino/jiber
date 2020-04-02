@@ -43,14 +43,14 @@ class TogglController extends Controller
      */
     public function __construct(Request $request=null, Redirector $redirect=null)
     {
-        $this->middleware(function ($request, $next) {
-            $setting = Setting::find(Auth::user()->id);
-
-            if (!$setting || !$setting->toggl) {
-                $request->session()->flash('alert-warning', 'Please set your Toggl API Token before importing data.');
-                $redirect->to('/settings')->send();
-            }
-        });
+        // $this->middleware(function ($request, $next) {
+        //     $setting = Setting::find(Auth::user()->id);
+        //
+        //     if (!$setting || !$setting->toggl) {
+        //         $request->session()->flash('alert-warning', 'Please set your Toggl API Token before importing data.');
+        //         $redirect->to('/settings')->send();
+        //     }
+        // });
     }
 
     /**
