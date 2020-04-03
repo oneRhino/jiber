@@ -7,18 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class RedmineStatus extends Model
 {
     public function getClubhouseNameAttribute($value) {
-        $ids = json_decode($value, true);
+        $id = $this->attributes['clubhouse_id'];
 
-        if (!$ids) return '';
+        if (!$id) return '';
 
-        $statuses = ClubhouseStatus::whereIn('clubhouse_id', $ids)->get();
+        $status = ClubhouseStatus::where('clubhouse_id', $id)->first();
 
-        return $statuses->implode('clubhouse_name', ', ');
-    }
-
-    public function getClubhouseIdsAttribute() {
-        $ids = json_decode($this->attributes['clubhouse_name'], true);
-
-        return $ids ?? [];
+        return $status->clubhouse_name;
     }
 }

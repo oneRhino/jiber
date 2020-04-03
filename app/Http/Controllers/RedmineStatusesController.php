@@ -26,16 +26,15 @@ class RedmineStatusesController extends Controller
         return view('redmine_statuses.form', [
             'status'             => $status,
             'clubhouse_statuses' => $clubhouse_statuses,
-            'clubhouse_selected' => json_decode($status->clubhouse_name, true) ?? [],
         ]);
     }
 
     public function update(RedmineStatus $status, Request $request)
     {
         // Save status
-        $status->redmine_name   = $request->redmine_name;
-        $status->jira_name      = $request->jira_name;
-        $status->clubhouse_name = json_encode($request->clubhouse_name);
+        $status->redmine_name = $request->redmine_name;
+        $status->jira_name    = $request->jira_name;
+        $status->clubhouse_id = $request->clubhouse_id;
         $status->save();
 
         $request->session()->flash('alert-success', 'Status updated successfully!');

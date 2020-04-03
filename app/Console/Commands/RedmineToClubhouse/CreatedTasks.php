@@ -251,15 +251,14 @@ class CreatedTasks extends Command
             return false;
         }
 
-        $clubhouse_statuses = [$redmine_status->clubhouse_ids];
+        $clubhouse_status = $redmine_status->clubhouse_id;
 
-        if (!$clubhouse_statuses) {
+        if (!$clubhouse_status) {
             $this->writeLog("-- Status {$status} not linked to a Clubhouse Status");
             return false;
         }
 
-        // Return first clubhouse status
-        return reset($clubhouse_statuses);
+        return $clubhouse_status;
     }
 
     private function writeLog($message) {

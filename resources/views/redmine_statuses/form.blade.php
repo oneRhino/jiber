@@ -23,9 +23,9 @@
 
                         <fieldset class="form-group">
                             <label for="jira_name">Clubhouse State</label>
-                            <select multiple name="clubhouse_name[]" id="clubhouse_name" class="form-control" size="10">
+                            <select name="clubhouse_id" id="clubhouse_id" class="form-control">
                                 @foreach($clubhouse_statuses as $_clubhouse_status)
-                                    <option value="{{ $_clubhouse_status->clubhouse_id }}" @if(in_array($_clubhouse_status->clubhouse_id, $status->clubhouse_ids)) selected @endif>{{ $_clubhouse_status->clubhouse_id }} - {{ $_clubhouse_status->clubhouse_name }}</option>
+                                    <option value="{{ $_clubhouse_status->clubhouse_id }}" @if($_clubhouse_status->clubhouse_id == $status->clubhouse_id) selected @endif>{{ $_clubhouse_status->clubhouse_id }} - {{ $_clubhouse_status->clubhouse_name }}</option>
                                 @endforeach
                             </select>
                         </fieldset>
