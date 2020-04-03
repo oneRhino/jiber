@@ -203,6 +203,12 @@ class UpdatedTasks extends Command
             return;
         }
 
+        // Checks if this is a comment created on Clubhouse side (this is a dirty fix to missing Redmine comment id). 
+        if (strpos($change['notes'], 'Clubhouse: ') !== false) {
+            $this->writeLog('-- Comment already on Clubhouse.');
+            return;
+        }
+
         if (ClubhouseComment::where('redmine_comment_id', $redmineChangeId)->first()) {
             $this->writeLog('-- Comment will be updated on Clubhouse: ' . $redmineChangeId);
 
