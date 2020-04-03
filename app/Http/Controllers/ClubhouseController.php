@@ -464,6 +464,9 @@ class ClubhouseController extends Controller {
         foreach ($changesOnStory as $key => $changeOnStory) {
 
             switch ($key) {
+                case "description":
+                    $updatesAsIssueUpdateArray['description'] = $changeOnStory->new;
+                    break;
                 case "started":
                     $updatesAsIssueUpdateArray['status'] = $changeOnStory->new ? 'In Progress' : 'Assigned';
                     break;
