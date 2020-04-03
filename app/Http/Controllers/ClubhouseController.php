@@ -171,6 +171,14 @@ class ClubhouseController extends Controller {
         // Get first action - the main one
         $action = $this->content->actions[0];
 
+        // Ignore updates from onerhinodev user (to avoid duplicates)
+        $authorId = $action->author_id;
+        $ignoredUserId = RedmineClubhouseUser::where('clubhouse_name', 'onerhinodev')->first();
+        if ($authorId == $ignoredUserId->clubhouse_user_permissions_id) {
+            $this->writeLog ("-- Update from -onerhinodev- user, ignoring it.");
+            die ("-- Update from -onerhinodev- user, ignoring it.");
+        }
+
         // Create method name using entity and action
         $method = "{$action->entity_type}_$action->action";
         $method = str_replace('-', '_', $method);
@@ -608,7 +616,7 @@ class ClubhouseController extends Controller {
             $this->writeLog ("-- Story {$storyId} not created on Redmine.");
             die ("-- Story {$storyId} not created on Redmine.");
         }
-
+        
         // Checks if the comment was already sent to Redmine.
         $clubhouseCommentObj = ClubhouseComment::where('comment_id', $commentId)->first();
         if ($clubhouseCommentObj) {
