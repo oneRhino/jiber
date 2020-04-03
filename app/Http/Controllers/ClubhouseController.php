@@ -667,7 +667,7 @@ class ClubhouseController extends Controller {
         try {
             $redmineTicketId = $redmineClubhouseStoryObj->redmine_ticket_id;
 
-            $commentBody = "h3. Comment Update: \n\n";
+            $commentBody = "Clubhouse: h3. Comment Update: \n\n";
             $commentBody .= "h4. OLD Body: \n\n";
             $commentBody .= $contentActions[0]->changes->text->old;
             $commentBody .= "\n\n";
@@ -711,7 +711,7 @@ class ClubhouseController extends Controller {
             $changedAt = strtotime($this->content->changed_at);
             $changedAtFormatted = date("Y-m-d h:i:sa", $changedAt);
 
-            $commentBody = "h3. Comment {$commentId} was deleted on Clubhouse. ({$changedAtFormatted})";
+            $commentBody = "Clubhouse: h3. Comment {$commentId} was deleted on Clubhouse. ({$changedAtFormatted})";
 
             // This method does not return anything (no comment ID).
             $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
