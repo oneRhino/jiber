@@ -25,7 +25,7 @@ class UpdatedTasks extends Command
      */
     protected $description = 'Syncs updated tickets from Redmine and Jira.';
 
-    private $debug = true;
+    private $debug = false;
 
     /**
      * Create a new command instance.
