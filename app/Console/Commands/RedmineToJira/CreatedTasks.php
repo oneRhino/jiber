@@ -6,17 +6,9 @@ namespace App\Console\Commands\RedmineToJira;
 use Mail;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
-use App\User;
-use App\Setting;
-use App\RedmineJiraPriority;
-use App\RedmineJiraProject;
-use App\RedmineJiraTask;
-use App\RedmineJiraTracker;
-use App\RedmineJiraUser;
-use App\Http\Controllers\JiraController;
-use App\Http\Controllers\RedmineController;
+use Illuminate\Support\Facades\{Auth, Config};
+use App\{RedmineProject, RedmineTracker, RedmineJiraPriority, RedmineJiraTask, RedmineJiraUser, Setting, User};
+use App\Http\Controllers\{JiraController, RedmineController};
 
 class CreatedTasks extends Command
 {
@@ -68,7 +60,7 @@ class CreatedTasks extends Command
 
     /**
     * Get all Redmine today tickets, except the ones
-    * with Jira ID or project not on RedmineJiraProjects
+    * with Jira ID or project not on RedmineProjects
     */
     private function getRedmineTickets()
     {
@@ -112,10 +104,10 @@ class CreatedTasks extends Command
                 continue;
             }
 
-            // Check if project exists on Redmine/Jira Projects
-            $project = RedmineJiraProject::where('redmine_name', $_issue['project']['name'])->first();
+            // Check if project exists on Redmine Projects
+            $project = RedmineProject::where('project_name', $_issue['project']['name'])->first();
 
-            if (!$project) {
+            if (!$project || $project->third_party !== 'jira' || !$project->third_party_project_name) {
                 $this->writeLog('-- Project doesnt match Jira, CONTINUE');
                 continue;
             }
@@ -177,7 +169,7 @@ class CreatedTasks extends Command
             $Jira = $JiraController->connect($request);
 
             // Get Tracker/Type
-            $tracker = RedmineJiraTracker::where('redmine_name', $_ticket['tracker']['name'])->first();
+            $tracker = RedmineTracker::where('redmine_name', $_ticket['tracker']['name'])->first();
 
             if (!$tracker) {
                 $this->errorEmail("No tracker {$_ticket['tracker']['name']} found.");
@@ -244,7 +236,7 @@ class CreatedTasks extends Command
                 $issue['description'] = 'TODO';
             }
 
-            $project = RedmineJiraProject::where('redmine_name', $_ticket['project']['name'])->first();
+            $project = RedmineProject::where('project_name', $_ticket['project']['name'])->first();
 
             if ($project->content) {
                 $issue['description'] .= "\n".$project->content;

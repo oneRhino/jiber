@@ -6,39 +6,40 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use App\Http\Controllers\RedmineController;
-use App\RedmineJiraTracker;
+use App\RedmineTracker;
 
-class RedmineJiraTrackersController extends Controller
+class RedmineTrackersController extends Controller
 {
     public function index()
     {
-        $trackers = RedmineJiraTracker::get();
+        $trackers = RedmineTracker::get();
 
-        return view('redmine_jira_trackers.index', [
+        return view('redmine_trackers.index', [
             'trackers' => $trackers,
         ]);
     }
 
-    public function edit(RedmineJiraTracker $tracker)
+    public function edit(RedmineTracker $tracker)
     {
-        return view('redmine_jira_trackers.form', [
+        return view('redmine_trackers.form', [
             'tracker' => $tracker,
         ]);
     }
 
-    public function update(RedmineJiraTracker $tracker, Request $request)
+    public function update(RedmineTracker $tracker, Request $request)
     {
         // Save tracker
-        $tracker->redmine_name = $request->redmine_name;
-        $tracker->jira_name    = $request->jira_name;
+        $tracker->redmine_name   = $request->redmine_name;
+        $tracker->jira_name      = $request->jira_name;
+        $tracker->clubhouse_name = $request->clubhouse_name;
         $tracker->save();
 
         $request->session()->flash('alert-success', 'Tracker updated successfully!');
 
-        return redirect()->action('RedmineJiraTrackersController@index');
+        return redirect()->action('RedmineTrackersController@index');
     }
 
-    public function destroy(RedmineJiraTracker $tracker, Request $request)
+    public function destroy(RedmineTracker $tracker, Request $request)
     {
         $tracker->delete();
 
@@ -58,10 +59,10 @@ class RedmineJiraTrackersController extends Controller
         foreach ($trackers['trackers'] as $_tracker)
         {
             // Sync tracker
-            $tracker = RedmineJiraTracker::where('redmine_name', $_tracker['name'])->get()->first();
+            $tracker = RedmineTracker::where('redmine_name', $_tracker['name'])->get()->first();
 
             if (!$tracker) {
-                $tracker = new RedmineJiraTracker();
+                $tracker = new RedmineTracker();
                 $tracker->redmine_name = $_tracker['name'];
             }
 

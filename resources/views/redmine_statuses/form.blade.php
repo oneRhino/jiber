@@ -5,20 +5,29 @@
         <div class="col-sm-offset-2 col-sm-8">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    <h1>Update Redmine/Jira Status</h1>
+                    <h1>Update Redmine Status</h1>
 
-                    <form action="{{ action('RedmineJiraStatusesController@update', ['status' => $status->id]) }}" method="post">
+                    <form action="{{ action('RedmineStatusesController@update', ['status' => $status->id]) }}" method="post">
                         <input name="_method" type="hidden" value="PUT"/>
                         {{ csrf_field() }}
 
                         <fieldset class="form-group">
-                            <label for="redmine_name">Redmine Status name</label>
+                            <label for="redmine_name">Redmine Status</label>
                             <input type="text" name="redmine_name" readonly id="redmine_name" class="form-control" @if($status)value="{{ $status->redmine_name }}"@endif>
                         </fieldset>
 
                         <fieldset class="form-group">
-                            <label for="jira_name">Jira Status name</label>
+                            <label for="jira_name">Jira Status</label>
                             <input type="text" name="jira_name" id="jira_name" class="form-control" @if($status)value="{{ $status->jira_name }}"@endif>
+                        </fieldset>
+
+                        <fieldset class="form-group">
+                            <label for="jira_name">Clubhouse State</label>
+                            <select name="clubhouse_id" id="clubhouse_id" class="form-control">
+                                @foreach($clubhouse_statuses as $_clubhouse_status)
+                                    <option value="{{ $_clubhouse_status->clubhouse_id }}" @if($_clubhouse_status->clubhouse_id == $status->clubhouse_id) selected @endif>{{ $_clubhouse_status->clubhouse_id }} - {{ $_clubhouse_status->clubhouse_name }}</option>
+                                @endforeach
+                            </select>
                         </fieldset>
 
                         <button type="submit" class="btn btn-primary">Save</button>

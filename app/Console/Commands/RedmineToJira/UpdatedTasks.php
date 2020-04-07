@@ -5,16 +5,9 @@ namespace App\Console\Commands\RedmineToJira;
 //use Log;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
-use App\User;
-use App\Setting;
-use App\RedmineChange;
-use App\RedmineJiraPriority;
-use App\RedmineJiraStatus;
-use App\RedmineJiraUser;
-use App\Http\Controllers\JiraController;
-use App\Http\Controllers\RedmineController;
+use Illuminate\Support\Facades\{Auth, Config};
+use App\{RedmineChange, RedmineStatus, RedmineJiraPriority, RedmineJiraUser, Setting, User};
+use App\Http\Controllers\{JiraController, RedmineController};
 
 class UpdatedTasks extends Command
 {
@@ -246,10 +239,10 @@ class UpdatedTasks extends Command
 
     private function jiraStatus($created_on, $created_by, $content)
     {
-        $status = RedmineJiraStatus::where('redmine_id', $content)->first();
+        $status = RedmineStatus::where('redmine_id', $content)->first();
 
-	$status = explode(',', $status->jira_name);
-	$status = reset($status);
+    	$status = explode(',', $status->jira_name);
+    	$status = reset($status);
 
         $this->jira_updates[$created_by][$this->jira_id]['status'] = $status;
     }

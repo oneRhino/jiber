@@ -17,12 +17,12 @@
                         </fieldset>
 
                         <fieldset class="form-group">
-                            <label for="redmine_name">Redmine Project Name</label>
-                            <select name="redmine_id" class="form-control" id="redmine_id">
+                            <label for="project_name">Redmine Project Name</label>
+                            <select name="project_id" class="form-control" id="project_id">
                                 @if ($redmine_projects->count())
-                                    <option value="0" {{ $project->redmine_id == 0 ? 'selected="selected"' : '' }}>NOT SET</option>
+                                    <option value="0" {{ $project->project_id == 0 ? 'selected="selected"' : '' }}>NOT SET</option>
                                     @foreach($redmine_projects as $redmine_project)
-                                        <option value="{{ $redmine_project->redmine_id }}" {{ $project->redmine_id == $redmine_project->redmine_id ? 'selected="selected"' : '' }}>{{ $redmine_project->redmine_name }}</option>
+                                        <option value="{{ $redmine_project->project_id }}" {{ $project->redmine_id == $redmine_project->project_id ? 'selected="selected"' : '' }}>{{ $redmine_project->project_name }}</option>
                                     @endforeach
                                 @endif
                             </select>
