@@ -427,7 +427,7 @@ class ClubhouseController extends Controller {
                 foreach ($clubhouseDetails['comments'] as $storyComment) {
                     $startDate = strtotime($storyComment['created_at']);
                     $startDateFormatted = date('Y-m-d H:i:s', $startDate);
-                    $commentBody = "({$startDateFormatted}) {$storyComment['text']}";
+                    $commentBody = "Clubhouse: ({$startDateFormatted}) {$storyComment['text']}";
                     $this->redmine->issue->addNoteToIssue($redmineApiResponse->id, $commentBody);
 
                     $clubhouseCommentObj = new ClubhouseComment ();
