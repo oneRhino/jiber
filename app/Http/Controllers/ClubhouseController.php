@@ -265,18 +265,18 @@ class ClubhouseController extends Controller {
         Auth::setUser($user);
     }
 
-    private function getRedmineUser($redmine_clubhouse_user) {
-        if (!$redmine_clubhouse_user->redmine_names) {
-            throw new Exception("User {$redmine_clubhouse_user->clubhouse_name} does not have a redmine user associated.");
+    private function getRedmineUser($redmineClubhouseUserObj) {
+        if (!$redmineClubhouseUserObj->redmine_names) {
+            throw new Exception("User {$redmineClubhouseUserObj->clubhouse_name} does not have a redmine user associated.");
         }
 
-        $redmine_names = json_decode($redmine_clubhouse_user->redmine_names);
+        $redmine_names = json_decode($redmineClubhouseUserObj->redmine_names);
         $redmine_user  = reset($redmine_names); // First user by default
 
         // Check if there is more than one redmine user associated
         if (count($redmine_names) > 1) {
             // If geisermenoia, get geiser's user
-            if ('geisermenoia' === $redmine_clubhouse_user->clubhouse_name) {
+            if ('geisermenoia' === $redmineClubhouseUserObj->clubhouse_name) {
                 $redmine_user = 'geiser';
             }
         }
@@ -291,6 +291,33 @@ class ClubhouseController extends Controller {
         $user = User::find($settings->id);
 
         return $user;
+    }
+    
+    private function getRedmineAssignToUser ($clubhouseUserId) {
+        
+        $redmineClubhouseUserObj = RedmineClubhouseUser::where('clubhouse_user_permissions_id', $clubhouseUserId)->first();
+        
+        if (!$redmineClubhouseUserObj->redmine_names) {
+            throw new Exception("User {$redmineClubhouseUserObj->clubhouse_name} does not have a redmine user associated.");
+        }
+
+        $redmine_names = json_decode($redmineClubhouseUserObj->redmine_names);
+        $redmine_user  = reset($redmine_names); // First user by default
+
+        // If assigned to 'onerhinodev' assigns ticket to Alejandro on Redmine. 
+        $onerhinodevUserId = RedmineClubhouseUser::where('clubhouse_name', 'onerhinodev')->first();
+        if ($clubhouseUserId == $onerhinodevUserId->clubhouse_user_permissions_id) {
+            $redmine_user = 'alejandro'; 
+        }
+
+        // Get user settings
+        $redmineUser = RedmineJiraUser::where('redmine_name', $redmine_user)->first();
+
+        if (!$redmineUser) {
+            throw new Exception("Settings not found for {$redmine_user}.");
+        }
+
+        return $redmineUser->redmine_id;
     }
 
     private function getUserFromContent() {
@@ -316,7 +343,7 @@ class ClubhouseController extends Controller {
         $redmineCreateIssueObj = array ();
         $redmineCreateIssueObj['project_id'] = $projectId;
         $redmineCreateIssueObj['subject'] = "(Epic)" . $epicDetails['name'];
-        $redmineCreateIssueObj['assigned_to_id'] = '1';
+        $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($this->content->member_id);
         $redmineCreateIssueObj['description'] = $epicDetails['description'];
         $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
         if ($redmineProjectObj->content) {
@@ -366,7 +393,7 @@ class ClubhouseController extends Controller {
             $redmineCreateIssueObj = array ();
             $redmineCreateIssueObj['project_id'] = $redmineProjectObj->project_name;
             $redmineCreateIssueObj['subject'] = $clubhouseDetails['name'];
-            $redmineCreateIssueObj['assigned_to_id'] = '1';
+            $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($this->content->member_id);
             $redmineCreateIssueObj['description'] = $clubhouseDetails['description'];
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
 
@@ -429,16 +456,17 @@ class ClubhouseController extends Controller {
                 die ("Clubhouse project {$clubhouseDetails->project_id} is not mapped to any Redmine project.");
             }
 
+
             $redmineCreateIssueObj = array ();
             $redmineCreateIssueObj['project_id'] = $redmineProjectObj->project_name;
             $redmineCreateIssueObj['subject'] = $clubhouseDetails->name;
-            $redmineCreateIssueObj['assigned_to_id'] = '1';
+            $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($this->content->member_id);
             $redmineCreateIssueObj['description'] = $clubhouseDetails->description;
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
             if ($redmineProjectObj->content) {
                 $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
             }
-
+            
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
 
             return $redmineApiResponse;
