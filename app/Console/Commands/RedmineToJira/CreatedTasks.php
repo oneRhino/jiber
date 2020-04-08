@@ -130,7 +130,7 @@ class CreatedTasks extends Command
             $this->writeLog("Ticket {$_issue['id']} will be created on Jira");
 
             // Jira ID doesn't exist, and project is OMG
-            $_issue['JiraProject'] = $project->jira_name;
+            $_issue['JiraProject'] = $project->third_party_project_name;
             $tickets[] = $_issue;
         }
 

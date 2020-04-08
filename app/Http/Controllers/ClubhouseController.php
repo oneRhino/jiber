@@ -176,8 +176,10 @@ class ClubhouseController extends Controller {
 
         $this->content = json_decode($json_content);
         if (!$this->content || json_last_error() !== JSON_ERROR_NONE) {
-            $this->invalidJSON($json_content);
-            die;
+            if ($json_content) {
+                $this->invalidJSON($json_content);
+                die;
+            }
         }
 
         // Get first action - the main one
@@ -526,7 +528,7 @@ class ClubhouseController extends Controller {
 
             if (!$clubhouseStoryObj) {
                 $this->writeLog ("-- Story {$storyId} not created on Redmine. Creating...");
-                $this->createMissingRedmineTicket($storyId); 
+                $this->createMissingRedmineTicket($storyId);
             }
 
             // Gets parent ticket.
@@ -563,7 +565,7 @@ class ClubhouseController extends Controller {
             $this->writeLog ("-- Story {$storyId} already created on Redmine.");
             die ("-- Story {$storyId} already created on Redmine.");
         }
-        
+
         $redmineApiResponse = $this->createRedmineTicket();
 
         $clubhouseStoryObj = new ClubhouseStory();
@@ -601,7 +603,7 @@ class ClubhouseController extends Controller {
             $clubhouseStoryObj = ClubhouseEpic::where('epic_id', $storyId)->first();
             if (!$clubhouseStoryObj) {
                 $this->writeLog ("-- Story/Epic {$storyId} not created on Redmine. Creating...");
-                $this->createMissingRedmineTicket($storyId); 
+                $this->createMissingRedmineTicket($storyId);
                 $this->writeLog ("-- Story/Epic {$storyId} not updated on Redmine since the ticket is updated.");
                 die ("-- Story/Epic {$storyId} not updated on Redmine since the ticket is updated.");
             }
@@ -686,7 +688,7 @@ class ClubhouseController extends Controller {
         $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
         if (!$clubhouseStoryObj) {
             $this->writeLog ("-- Story {$storyId} not created on Redmine. Creating...");
-            $this->createMissingRedmineTicket($storyId); 
+            $this->createMissingRedmineTicket($storyId);
         }
 
         // Check if task has been created already
@@ -720,14 +722,14 @@ class ClubhouseController extends Controller {
         $redmineClubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
         if (!$redmineClubhouseStoryObj) {
             $this->writeLog ("-- Story {$storyId} not created on Redmine. Creating...");
-            $this->createMissingRedmineTicket($storyId); 
+            $this->createMissingRedmineTicket($storyId);
         }
 
         // Checks if the task exists.
         $clubhouseTaskObj = ClubhouseTask::where('task_id', $taskId)->first();
         if (!$clubhouseTaskObj) {
             $this->writeLog ("-- Task {$taskId} not created on Redmine. Creating...");
-            $this->createMissingRedmineSubTicket($taskId); 
+            $this->createMissingRedmineSubTicket($taskId);
             $this->writeLog ("-- Story/Epic {$taskId} not updated on Redmine since the ticket is updated.");
             die ("-- Story/Epic {$taskId} not updated on Redmine since the ticket is updated.");
         }
@@ -766,11 +768,11 @@ class ClubhouseController extends Controller {
         $redmineClubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
         if (!$redmineClubhouseStoryObj) {
             $this->writeLog ("-- Story {$storyId} not created on Redmine. Creating...");
-            $this->createMissingRedmineTicket($storyId); 
+            $this->createMissingRedmineTicket($storyId);
             $this->writeLog ("-- Comment {$commentId} not created on Redmine since the ticket is updated.");
             die ("-- Comment {$commentId} not created on Redmine since the ticket is updated.");
         }
-        
+
         // Checks if the comment was already sent to Redmine.
         $clubhouseCommentObj = ClubhouseComment::where('comment_id', $commentId)->first();
         if ($clubhouseCommentObj) {
@@ -815,7 +817,7 @@ class ClubhouseController extends Controller {
         $redmineClubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
         if (!$redmineClubhouseStoryObj) {
             $this->writeLog ("-- Story {$storyId} not created on Redmine. Creating...");
-            $this->createMissingRedmineTicket($storyId); 
+            $this->createMissingRedmineTicket($storyId);
             $this->writeLog ("-- Comment {$commentId} not updated on Redmine since the ticket is updated.");
             die ("-- Comment {$commentId} not updated on Redmine since the ticket is updated.");
         }
@@ -859,7 +861,7 @@ class ClubhouseController extends Controller {
         $redmineClubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
         if (!$redmineClubhouseStoryObj) {
             $this->writeLog ("-- Story {$storyId} not created on Redmine. Creating...");
-            $this->createMissingRedmineTicket($storyId); 
+            $this->createMissingRedmineTicket($storyId);
             $this->writeLog ("-- Comment {$commentId} not deleted on Redmine since the ticket is updated.");
             die ("-- Comment {$commentId} not deleted on Redmine since the ticket is updated.");
         }
