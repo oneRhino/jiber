@@ -24,6 +24,7 @@
                         <fieldset class="form-group">
                             <label for="clubhouse_main_id">Clubhouse Main Status</label>
                             <select name="clubhouse_main_id" id="clubhouse_main_id" class="form-control">
+                                <option value="">-- None --</option>
                                 @foreach($clubhouse_statuses as $_clubhouse_status)
                                     <option value="{{ $_clubhouse_status->clubhouse_id }}" @if($_clubhouse_status->clubhouse_id == $status->clubhouse_main_id) selected @endif>{{ $_clubhouse_status->clubhouse_id }} - {{ $_clubhouse_status->clubhouse_name }}</option>
                                 @endforeach
