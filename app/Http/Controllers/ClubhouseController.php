@@ -993,33 +993,22 @@ class ClubhouseController extends Controller {
 
     private function getWorkflowStateId ($workflowStateId) {
 
-        $workflowStates = array();
-        $workflowStates['500000008'] = 'New'; // Uncheduled
-        $workflowStates['500000007'] = 'Assigned'; // Ready for Development
-        $workflowStates['500000006'] = 'In Progress'; // In Progress
-        $workflowStates['500000604'] = 'In Review'; // QA Dev
-        $workflowStates['500000010'] = 'In Review'; // QA Staging
-        $workflowStates['500000009'] = 'In Review'; // Ready for Deploy
-        $workflowStates['500000011'] = 'Resolved'; // Completed
+        $redmine_status = RedmineStatus::where('clubhouse_id', 'like', '%"'.$workflowStateId.'"%')->first();
 
-        if (array_key_exists($workflowStateId, $workflowStates))
-            return $workflowStates[$workflowStateId];
-        else
-            return FALSE;
+        if ($redmine_status)
+            return $redmine_status->redmine_name;
 
+        return FALSE;
     }
 
     private function getStoryType ($storyTypeId) {
 
-        $storyTypes = array();
-        $storyTypes['bug'] = 'Bug'; // Uncheduled
-        $storyTypes['feature'] = 'Feature'; // Ready for Development
-        $storyTypes['chore'] = 'Support'; // Ready for Development
+        $redmine_tracker = RedmineTracker::where('clubhouse_name', $storyTypeId)->first();
 
-        if (array_key_exists($storyTypeId, $storyTypes))
-            return $storyTypes[$storyTypeId];
-        else
-            return FALSE;
+        if ($redmine_tracker)
+            return $redmine_tracker->clubhouse_name;
+
+        return FALSE;
     }
 
     private function addFollowersToIssue ($issueId, $listOfFollowers) {
