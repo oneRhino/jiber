@@ -639,10 +639,10 @@ class ClubhouseController extends Controller {
                     if ($storyTypeId)
                         $updatesAsIssueUpdateArray['tracker'] = $storyTypeId;
                     break;
-                case "started_at":
-                    $startDate = strtotime($changeOnStory->new);
-                    $updatesAsIssueUpdateArray['start_date'] = date('Y-m-d', $startDate);
-                    break;
+                // case "started_at":
+                //     $startDate = strtotime($changeOnStory->new);
+                //     $updatesAsIssueUpdateArray['start_date'] = date('Y-m-d', $startDate);
+                //     break;
                 case "deadline":
                     $deadlineDate = strtotime($changeOnStory->new);
                     $updatesAsIssueUpdateArray['due_date'] = date('Y-m-d', $deadlineDate);
