@@ -293,6 +293,11 @@ class ClubhouseController extends Controller {
             }
         }
 
+        // If there's no Redmine User set, sets Billy's user.
+        if (!$redmine_user) {
+            $redmine_user = 'admin';
+        }
+
         // Get user settings
         $settings = Setting::where('redmine_user', $redmine_user)->first();
 
