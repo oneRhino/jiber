@@ -301,7 +301,13 @@ class ClubhouseController extends Controller {
 
     private function getRedmineAssignToUser ($clubhouseUserId) {
 
+        // If no clubhouse id, set it as null
+        if (!$clubhouseUserId) return null;
+
         $redmineClubhouseUserObj = RedmineClubhouseUser::where('clubhouse_user_permissions_id', $clubhouseUserId)->first();
+
+        // If no clubhouse user, set it as null
+        if (!$redmineClubhouseUserObj) return null;
 
         if (!$redmineClubhouseUserObj->redmine_names) {
             throw new Exception("User {$redmineClubhouseUserObj->clubhouse_name} does not have a redmine user associated.");
