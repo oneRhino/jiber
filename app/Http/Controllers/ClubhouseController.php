@@ -281,6 +281,10 @@ class ClubhouseController extends Controller {
             if ('geisermenoia' === $redmineClubhouseUserObj->clubhouse_name) {
                 $redmine_user = 'geiser';
             }
+            // If onerhinodev, get billy's user
+            elseif ('onerhinodev' === $redmineClubhouseUserObj->clubhouse_name) {
+                $redmine_user = 'admin';
+            }
         }
 
         // Get user settings
@@ -294,11 +298,11 @@ class ClubhouseController extends Controller {
 
         return $user;
     }
-    
+
     private function getRedmineAssignToUser ($clubhouseUserId) {
 
         $redmineClubhouseUserObj = RedmineClubhouseUser::where('clubhouse_user_permissions_id', $clubhouseUserId)->first();
-        
+
         if (!$redmineClubhouseUserObj->redmine_names) {
             throw new Exception("User {$redmineClubhouseUserObj->clubhouse_name} does not have a redmine user associated.");
         }
@@ -306,7 +310,7 @@ class ClubhouseController extends Controller {
         $redmine_names = json_decode($redmineClubhouseUserObj->redmine_names);
         $redmine_user  = reset($redmine_names); // First user by default
 
-        // If assigned to 'onerhinodev' assigns ticket to Alejandro on Redmine. 
+        // If assigned to 'onerhinodev' assigns ticket to Alejandro on Redmine.
         $onerhinodevUserId = RedmineClubhouseUser::where('clubhouse_name', 'onerhinodev')->first();
         if ($clubhouseUserId == $onerhinodevUserId->clubhouse_user_permissions_id) {
             $redmine_user = 'alejandro.b';
