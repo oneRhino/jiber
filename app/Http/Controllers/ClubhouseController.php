@@ -296,7 +296,7 @@ class ClubhouseController extends Controller {
     }
     
     private function getRedmineAssignToUser ($clubhouseUserId) {
-        
+
         $redmineClubhouseUserObj = RedmineClubhouseUser::where('clubhouse_user_permissions_id', $clubhouseUserId)->first();
         
         if (!$redmineClubhouseUserObj->redmine_names) {
@@ -309,14 +309,14 @@ class ClubhouseController extends Controller {
         // If assigned to 'onerhinodev' assigns ticket to Alejandro on Redmine. 
         $onerhinodevUserId = RedmineClubhouseUser::where('clubhouse_name', 'onerhinodev')->first();
         if ($clubhouseUserId == $onerhinodevUserId->clubhouse_user_permissions_id) {
-            $redmine_user = 'alejandro'; 
+            $redmine_user = 'alejandro.b';
         }
 
         // Get user settings
         $redmineUser = RedmineJiraUser::where('redmine_name', $redmine_user)->first();
 
         if (!$redmineUser) {
-            throw new Exception("Settings not found for {$redmine_user}.");
+            throw new \Exception("Redmine/Clubhouse user not found for {$redmine_user}.");
         }
 
         return $redmineUser->redmine_id;
@@ -331,6 +331,72 @@ class ClubhouseController extends Controller {
     }
 
     /**
+     * Gets a owner of an epic. Since 'owner_ids' is not mandatory the order is this:
+     *
+     * - first owner_id
+     * - first follower_id
+     * - none (will be assigned to Alejadro as discussed in Slack)
+     */
+    private function getOwnerFromEpic ($epicDetails) {
+
+        // Set the same owner as the story related to the epic.
+        $epicOwnerId = '';
+        if (array_key_exists(0, $epicDetails['owner_ids'])) {
+            $epicOwnerId = $epicDetails['owner_ids'][0];
+            $this->writeLog ("-- Epic {$epicDetails['id']} has owner: {$epicOwnerId}");
+        }
+
+        if (!$epicOwnerId) {
+            if (array_key_exists(0, $epicDetails['follower_ids'])) {
+                $epicOwnerId = $epicDetails['follower_ids'][0];
+                $this->writeLog ("-- Epic {$epicDetails['id']} has no owner. Follower assigned as owner: {$epicOwnerId}");
+            } else {
+                $this->writeLog ("-- Epic {$epicDetails['id']} has no owner or follower. Alejandro assigned as owner.");
+            }
+        }
+
+        if ($epicOwnerId) {
+            $epicOwnerId = RedmineClubhouseUser::where('clubhouse_user_id', $epicOwnerId)->first();
+            $epicOwnerId = $epicOwnerId->clubhouse_user_permissions_id;
+        }
+
+        return ($epicOwnerId);
+    }
+
+    /**
+     * Gets a owner of a story. Since 'owner_ids' is not mandatory the order is this:
+     *
+     * - first owner_id
+     * - first follower_id
+     * - none (will be assigned to Alejadro as discussed in Slack)
+     */
+    private function getOwnerFromStory ($storyDetails) {
+
+        // Set the same owner as the story related to the epic.
+        $storyOwnerId = '';
+        if (array_key_exists(0, $storyDetails['owner_ids'])) {
+            $storyOwnerId = $storyDetails['owner_ids'][0];
+            $this->writeLog ("-- Epic {$storyDetails['id']} has owner: {$storyOwnerId}");
+        }
+
+        if (!$storyOwnerId) {
+            if (array_key_exists(0, $storyDetails['follower_ids'])) {
+                $storyOwnerId = $storyDetails['follower_ids'][0];
+                $this->writeLog ("-- Epic {$storyDetails['id']} has no owner. Follower assigned as owner: {$storyOwnerId}");
+            } else {
+                $this->writeLog ("-- Epic {$storyDetails['id']} has no owner or follower. Alejandro assigned as owner.");
+            }
+        }
+
+        if ($storyOwnerId) {
+            $storyOwnerId = RedmineClubhouseUser::where('clubhouse_user_id', $storyOwnerId)->first();
+            $storyOwnerId = $storyOwnerId->clubhouse_user_permissions_id;
+        }
+
+        return ((string)$storyOwnerId);
+    }
+
+    /**
      * WEBHOOK: Creates the epic as a issue on Redmine.
      * This function is not called by the Webhook itself but by the 'story_create' function ('cause of missing projectId).
      */
@@ -341,16 +407,19 @@ class ClubhouseController extends Controller {
         $redmineProjectObj = RedmineProject::where('third_party_project_id', $projectId)->first();
         $epicDetails = $this->getEpic($storyReferenceId);
 
+        $epicOwnerId = $this->getOwnerFromEpic ($epicDetails);
+
         // Send epic to Redmine.
         $redmineCreateIssueObj = array ();
         $redmineCreateIssueObj['project_id'] = $projectId;
         $redmineCreateIssueObj['subject'] = "(Epic)" . $epicDetails['name'];
-        $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($this->content->member_id);
+        $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($epicOwnerId);
         $redmineCreateIssueObj['description'] = $epicDetails['description'];
         $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
         if ($redmineProjectObj->content) {
             $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
         }
+
         $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
 
         // Save Redmine/Clubhouse epic relationship.
@@ -392,10 +461,12 @@ class ClubhouseController extends Controller {
                 die ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Redmine project.");
             }
 
+            $storyOwnerId = $this->getOwnerFromStory ($clubhouseDetails);
+
             $redmineCreateIssueObj = array ();
             $redmineCreateIssueObj['project_id'] = $redmineProjectObj->project_name;
             $redmineCreateIssueObj['subject'] = $clubhouseDetails['name'];
-            $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($this->content->member_id);
+            $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($storyOwnerId);
             $redmineCreateIssueObj['description'] = $clubhouseDetails['description'];
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
 
@@ -458,17 +529,18 @@ class ClubhouseController extends Controller {
                 die ("Clubhouse project {$clubhouseDetails->project_id} is not mapped to any Redmine project.");
             }
 
+            $storyOwnerId = $this->getOwnerFromStory ($clubhouseDetails);
 
             $redmineCreateIssueObj = array ();
             $redmineCreateIssueObj['project_id'] = $redmineProjectObj->project_name;
             $redmineCreateIssueObj['subject'] = $clubhouseDetails->name;
-            $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($this->content->member_id);
+            $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($storyOwnerId);
             $redmineCreateIssueObj['description'] = $clubhouseDetails->description;
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
             if ($redmineProjectObj->content) {
                 $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
             }
-            
+
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
 
             return $redmineApiResponse;
