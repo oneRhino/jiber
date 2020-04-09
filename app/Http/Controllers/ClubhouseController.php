@@ -247,7 +247,8 @@ class ClubhouseController extends Controller {
         }
 
         $error = "Invalid JSON coming from Clubhouse ({$motive}): {$json_content}";
-        $this->errorEmail($error, 'invalid json error');
+        // Remove this comment to start sending those emails again.
+        //$this->errorEmail($error, 'invalid json error');
     }
 
     private function userLogin() {
