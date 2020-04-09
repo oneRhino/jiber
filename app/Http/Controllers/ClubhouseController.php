@@ -629,9 +629,6 @@ class ClubhouseController extends Controller {
                 case "description":
                     $updatesAsIssueUpdateArray['description'] = $changeOnStory->new;
                     break;
-                case "started":
-                    $updatesAsIssueUpdateArray['status'] = $changeOnStory->new ? 'In Progress' : 'Assigned';
-                    break;
                 case "workflow_state_id":
                     $workflowStateId = $this->getWorkflowStateId($changeOnStory->new);
                     if ($workflowStateId)
