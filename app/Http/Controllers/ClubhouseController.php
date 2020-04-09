@@ -47,6 +47,11 @@ class ClubhouseController extends Controller {
      */
     private $content;
 
+    /**
+     * Clubhouse base URL (used to add URL to ticket description on Redmine)
+     */
+    private $clubhouseBaseUrl = "https://app.clubhouse.io/flypilot";
+
     public function createComment ($storyId, $comment) {
 
         $commentFields = array ();
@@ -366,7 +371,7 @@ class ClubhouseController extends Controller {
         }
 
         if ($epicOwnerId) {
-            $epicOwnerId = RedmineClubhouseUser::where('clubhouse_user_id', $epicOwnerId)->first();
+            $epicOwnerId = RedmineClubhouseUser::where('clubhouse_user_id', $epicOwnerId)->orWhere('clubhouse_user_permissions_id', $epicOwnerId)->first();
             $epicOwnerId = $epicOwnerId->clubhouse_user_permissions_id;
         }
 
@@ -399,11 +404,12 @@ class ClubhouseController extends Controller {
         }
 
         if ($storyOwnerId) {
-            $storyOwnerId = RedmineClubhouseUser::where('clubhouse_user_id', $storyOwnerId)->first();
+            $storyOwnerId = RedmineClubhouseUser::where('clubhouse_user_id', $storyOwnerId)->orWhere('clubhouse_user_permissions_id', $storyOwnerId)->first();
+
             $storyOwnerId = $storyOwnerId->clubhouse_user_permissions_id;
         }
 
-        return ((string)$storyOwnerId);
+        return $storyOwnerId;
     }
 
     /**
@@ -425,6 +431,7 @@ class ClubhouseController extends Controller {
         $redmineCreateIssueObj['subject'] = "(Epic)" . $epicDetails['name'];
         $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($epicOwnerId);
         $redmineCreateIssueObj['description'] = $epicDetails['description'];
+        $redmineCreateIssueObj['description'] .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/epic/{$storyReferenceId}";
         $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
         if ($redmineProjectObj->content) {
             $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
@@ -479,6 +486,10 @@ class ClubhouseController extends Controller {
             $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($storyOwnerId);
             $redmineCreateIssueObj['description'] = $clubhouseDetails['description'];
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
+            $redmineCreateIssueObj['description'] .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/story/{$storyId}";
+            if ($redmineProjectObj->content) {
+                $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
+            }
 
             $workflowStateId = $this->getWorkflowStateId($clubhouseDetails['workflow_state_id']);
             if ($workflowStateId) {
@@ -539,7 +550,8 @@ class ClubhouseController extends Controller {
                 die ("Clubhouse project {$clubhouseDetails->project_id} is not mapped to any Redmine project.");
             }
 
-            $storyOwnerId = $this->getOwnerFromStory ($clubhouseDetails);
+            $clubhouseDetailsAsArray = json_decode(json_encode($clubhouseDetails), TRUE);
+            $storyOwnerId = $this->getOwnerFromStory ($clubhouseDetailsAsArray);
 
             $redmineCreateIssueObj = array ();
             $redmineCreateIssueObj['project_id'] = $redmineProjectObj->project_name;
@@ -547,6 +559,7 @@ class ClubhouseController extends Controller {
             $redmineCreateIssueObj['assigned_to_id'] = $this->getRedmineAssignToUser($storyOwnerId);
             $redmineCreateIssueObj['description'] = $clubhouseDetails->description;
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
+            $redmineCreateIssueObj['description'] .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/story/{$clubhouseDetails->id}";
             if ($redmineProjectObj->content) {
                 $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
             }
@@ -569,7 +582,11 @@ class ClubhouseController extends Controller {
             $clubhouseDetails = $this->content->actions[0];
             $storyId = $this->content->actions[0]->story_id;
 
+            $storyDetails = $this->getStory($storyId);
+
             $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
+            //$redmineProjectObj = RedmineProject::where('third_party_project_id', $storyDetails['project_id'])->first();
+            $redmineProjectObj = RedmineProject::where('third_party_project_id', '340')->first();
 
             if (!$clubhouseStoryObj) {
                 $this->writeLog ("-- Story {$storyId} not created on Redmine. Canceling...");
@@ -586,7 +603,11 @@ class ClubhouseController extends Controller {
             $redmineCreateIssueObj['subject'] = $clubhouseDetails->description;
             $redmineCreateIssueObj['assigned_to_id'] = $redmineParentTicket['issue']['assigned_to']['id'];
             $redmineCreateIssueObj['description'] = $clubhouseDetails->description;
+            $redmineCreateIssueObj['description'] .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/epic/{$storyId}";
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
+            if ($redmineProjectObj->content) {
+                $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
+            }
 
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
 
@@ -606,7 +627,10 @@ class ClubhouseController extends Controller {
             $clubhouseDetails = $this->content->actions[0];
             $storyId = $this->content->actions[1]->id;
 
+            $storyDetails = $this->getStory($storyId);
+
             $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
+            $redmineProjectObj = RedmineProject::where('third_party_project_id', $storyDetails['project_id'])->first();
 
             if (!$clubhouseStoryObj) {
                 $this->writeLog ("-- Story {$storyId} not created on Redmine. Creating...");
@@ -623,7 +647,11 @@ class ClubhouseController extends Controller {
             $redmineCreateIssueObj['subject'] = $clubhouseDetails->description;
             $redmineCreateIssueObj['assigned_to_id'] = $redmineParentTicket['issue']['assigned_to']['id'];
             $redmineCreateIssueObj['description'] = $clubhouseDetails->description;
+            $redmineCreateIssueObj['description'] .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/stories/{$storyId}";
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
+            if ($redmineProjectObj->content) {
+                $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
+            }
 
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
 
