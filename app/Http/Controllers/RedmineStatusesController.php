@@ -32,9 +32,10 @@ class RedmineStatusesController extends Controller
     public function update(RedmineStatus $status, Request $request)
     {
         // Save status
-        $status->redmine_name = $request->redmine_name;
-        $status->jira_name    = $request->jira_name;
-        $status->clubhouse_id = $request->clubhouse_id;
+        $status->redmine_name      = $request->redmine_name;
+        $status->jira_name         = $request->jira_name;
+        $status->clubhouse_main_id = $request->clubhouse_main_id;
+        $status->clubhouse_id      = json_encode($request->clubhouse_id);
         $status->save();
 
         $request->session()->flash('alert-success', 'Status updated successfully!');

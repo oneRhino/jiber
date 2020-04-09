@@ -203,7 +203,7 @@ class UpdatedTasks extends Command
             return;
         }
 
-        // Checks if this is a comment created on Clubhouse side (this is a dirty fix to missing Redmine comment id). 
+        // Checks if this is a comment created on Clubhouse side (this is a dirty fix to missing Redmine comment id).
         if (strpos($change['notes'], 'Clubhouse: ') !== false) {
             $this->writeLog('-- Comment already on Clubhouse.');
             return;
@@ -312,7 +312,7 @@ class UpdatedTasks extends Command
             return false;
         }
 
-        $clubhouse_status = $redmine_status->clubhouse_id;
+        $clubhouse_status = $redmine_status->clubhouse_main_id;
 
         if (!$clubhouse_status) {
             $this->writeLog("-- Status {$redmine_status->redmine_name} not linked to a Clubhouse Status");
