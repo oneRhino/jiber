@@ -934,7 +934,7 @@ class ClubhouseController extends Controller {
         $redmine_tracker = RedmineTracker::where('clubhouse_name', $storyTypeId)->first();
 
         if ($redmine_tracker)
-            return $redmine_tracker->clubhouse_name;
+            return $redmine_tracker->redmine_name;
 
         return FALSE;
     }
