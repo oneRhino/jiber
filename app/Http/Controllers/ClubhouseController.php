@@ -714,6 +714,7 @@ class ClubhouseController extends Controller {
 
         // Checks if the story/ticket exists.
         $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
+
         if (!$clubhouseStoryObj) {
             $this->writeLog ("-- Story/Epic {$storyId} not created on Redmine.");
             $clubhouseStoryObj = ClubhouseEpic::where('epic_id', $storyId)->first();
@@ -725,6 +726,10 @@ class ClubhouseController extends Controller {
             }
         }
 
+        $storyObj = $this->getStory($storyId);
+        $projectId = $storyObj['project_id'];
+        $redmineProjectObj = RedmineProject::where('third_party_project_id', $projectId)->first();
+
         $updatesAsIssueUpdateArray = array();
         $listOfFollowersToAdd = array();
         $listOfFollowersToRemove = array();
@@ -733,7 +738,12 @@ class ClubhouseController extends Controller {
 
             switch ($key) {
                 case "description":
-                    $updatesAsIssueUpdateArray['description'] = $changeOnStory->new;
+                    $newDescription = $changeOnStory->new;
+                    $newDescription .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/epic/{$storyId}";
+                    if ($redmineProjectObj->content) {
+                        $newDescription .= "\n\n" . $redmineProjectObj->content;
+                    }
+                    $updatesAsIssueUpdateArray['description'] = $newDescription;
                     break;
                 case "workflow_state_id":
                     $workflowStateId = $this->getWorkflowStateId($changeOnStory->new);
