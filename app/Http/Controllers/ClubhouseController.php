@@ -739,7 +739,7 @@ class ClubhouseController extends Controller {
             switch ($key) {
                 case "description":
                     $newDescription = $changeOnStory->new;
-                    $newDescription .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/epic/{$storyId}";
+                    $newDescription .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/story/{$storyId}";
                     if ($redmineProjectObj->content) {
                         $newDescription .= "\n\n" . $redmineProjectObj->content;
                     }
