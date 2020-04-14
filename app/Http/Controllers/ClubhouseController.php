@@ -1071,7 +1071,7 @@ class ClubhouseController extends Controller {
     }
 
     private function getRedmineStatus(string $workflow_state_id):string {
-        $redmine_status = RedmineStatus::where('clubhouse_id', 'like', '%"'.$workflowStateId.'"%')->first();
+        $redmine_status = RedmineStatus::where('clubhouse_id', 'like', '%"'.$workflow_state_id.'"%')->first();
 
         if (!$redmine_status) {
             throw new Exception("Redmine Status related to Workflow State ID {$workflow_state_id} not found.");
