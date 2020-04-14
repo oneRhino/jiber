@@ -609,7 +609,7 @@ class ClubhouseController extends Controller {
             $redmineCreateIssueObj['subject'] = $clubhouseDetails->description;
             $redmineCreateIssueObj['assigned_to_id'] = $redmineParentTicket['issue']['assigned_to']['id'];
             $redmineCreateIssueObj['description'] = $clubhouseDetails->description;
-            $redmineCreateIssueObj['description'] .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/epic/{$storyId}";
+            $redmineCreateIssueObj['description'] .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/story/{$storyId}";
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
             if ($redmineProjectObj->content) {
                 $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
