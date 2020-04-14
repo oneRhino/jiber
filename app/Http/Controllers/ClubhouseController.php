@@ -426,7 +426,9 @@ class ClubhouseController extends Controller {
 
         $projectId = $this->content->actions[0]->project_id;
 
-        $redmineProjectObj = RedmineProject::where('third_party_project_id', $projectId)->first();
+        $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
+            ->where('third_party_project_id', $projectId)
+            ->first();
         $epicDetails = $this->getEpic($storyReferenceId);
 
         $epicOwnerId = $this->getOwnerFromEpic ($epicDetails);
@@ -477,7 +479,9 @@ class ClubhouseController extends Controller {
         try {
             $clubhouseDetails = $this->getStory($storyId);
 
-            $redmineProjectObj = RedmineProject::where('third_party_project_id', $clubhouseDetails['project_id'])->first();
+            $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
+                ->where('third_party_project_id', $clubhouseDetails['project_id'])
+                ->first();
 
             if (!$redmineProjectObj) {
                 $this->writeLog ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Redmine project.");
@@ -546,7 +550,9 @@ class ClubhouseController extends Controller {
         try {
             $clubhouseDetails = $this->content->actions[0];
 
-            $redmineProjectObj = RedmineProject::where('third_party_project_id', $clubhouseDetails->project_id)->first();
+            $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
+                ->where('third_party_project_id', $clubhouseDetails->project_id)
+                ->first();
 
             if (!$redmineProjectObj) {
                 $this->writeLog ("Clubhouse project {$clubhouseDetails->project_id} is not mapped to any Redmine project.");
@@ -594,8 +600,9 @@ class ClubhouseController extends Controller {
             $storyDetails = $this->getStory($storyId);
 
             $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
-            //$redmineProjectObj = RedmineProject::where('third_party_project_id', $storyDetails['project_id'])->first();
-            $redmineProjectObj = RedmineProject::where('third_party_project_id', '340')->first();
+            $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
+                ->where('third_party_project_id', $storyDetails['project_id'])
+                ->first();
 
             if (!$clubhouseStoryObj) {
                 $this->writeLog ("-- Story {$storyId} not created on Redmine. Canceling...");
@@ -639,7 +646,9 @@ class ClubhouseController extends Controller {
             $storyDetails = $this->getStory($storyId);
 
             $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
-            $redmineProjectObj = RedmineProject::where('third_party_project_id', $storyDetails['project_id'])->first();
+            $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
+                ->where('third_party_project_id', $storyDetails['project_id'])
+                ->first();
 
             if (!$clubhouseStoryObj) {
                 $this->writeLog ("-- Story {$storyId} not created on Redmine. Creating...");
@@ -731,7 +740,9 @@ class ClubhouseController extends Controller {
 
         $storyObj = $this->getStory($storyId);
         $projectId = $storyObj['project_id'];
-        $redmineProjectObj = RedmineProject::where('third_party_project_id', $projectId)->first();
+        $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
+            ->where('third_party_project_id', $projectId)
+            ->first();
 
         $updatesAsIssueUpdateArray = array();
         $listOfFollowersToAdd = array();
