@@ -393,27 +393,15 @@ class ClubhouseController extends Controller {
      */
     private function getOwnerFromStory ($storyDetails) {
 
-        // Set the same owner as the story related to the epic.
-        $storyOwnerId = '';
-        if (array_key_exists(0, $storyDetails['owner_ids'])) {
-            $storyOwnerId = $storyDetails['owner_ids'][0];
-            $this->writeLog ("-- Epic {$storyDetails['id']} has owner: {$storyOwnerId}");
+        if (empty($storyDetails['owner_ids'])) {
+            return null;
         }
 
-        if (!$storyOwnerId) {
-            if (array_key_exists(0, $storyDetails['follower_ids'])) {
-                $storyOwnerId = $storyDetails['follower_ids'][0];
-                $this->writeLog ("-- Epic {$storyDetails['id']} has no owner. Follower assigned as owner: {$storyOwnerId}");
-            } else {
-                $this->writeLog ("-- Epic {$storyDetails['id']} has no owner or follower. Alejandro assigned as owner.");
-            }
-        }
+        $storyOwnerId = reset($storyDetails['owner_ids']);
 
-        if ($storyOwnerId) {
-            $storyOwnerId = RedmineClubhouseUser::where('clubhouse_user_id', $storyOwnerId)->orWhere('clubhouse_user_permissions_id', $storyOwnerId)->first();
+        $storyOwnerId = RedmineClubhouseUser::where('clubhouse_user_id', $storyOwnerId)->orWhere('clubhouse_user_permissions_id', $storyOwnerId)->first();
 
-            $storyOwnerId = $storyOwnerId->clubhouse_user_permissions_id;
-        }
+        $storyOwnerId = $storyOwnerId->clubhouse_user_permissions_id;
 
         return $storyOwnerId;
     }
