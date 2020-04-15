@@ -792,6 +792,8 @@ class ClubhouseController extends Controller {
             $redmineTicket = $this->redmine->issue->update($redmineTicketId, $updatesAsIssueUpdateArray);
         }
 
+        $this->setAllRedmineChangesAsSent($redmineTicketId, $storyId);
+
         $this->writeLog ("-- Story {$storyId} was updated on Redmine.");
         die ("-- Story {$storyId} was updated on Redmine.");
     }
@@ -1082,5 +1084,25 @@ class ClubhouseController extends Controller {
         $deadlineDate = strtotime($deadline);
 
         return date('Y-m-d', $deadlineDate);
+    }
+
+    private function setAllRedmineChangesAsSent($redmine_ticket_id, $clubhouse_story_id) {
+        // Get all changes from Redmine's ticket
+        $ticket_details = $this->redmine->issue->show($redmine_ticket_id, ['include' => 'journals']);
+
+        $ticket_changes = $ticket_details['issue']['journals'];
+
+        foreach ($ticket_changes as $_change) {
+            // Check if change has already been recorded
+            $RedmineClubhouseChange = RedmineClubhouseChange::where('redmine_change_id', $_change['id'])->first();
+
+            if (!$RedmineClubhouseChange) {
+                // Change not recorded, so save it
+                $redmineClubhouseChangeObj = new RedmineClubhouseChange;
+                $redmineClubhouseChangeObj->redmine_change_id   = $_change['id'];
+                $redmineClubhouseChangeObj->clubhouse_change_id = $clubhouse_story_id;
+                $redmineClubhouseChangeObj->save();
+            }
+        }
     }
 }
