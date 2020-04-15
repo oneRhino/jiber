@@ -28,7 +28,7 @@
 
 namespace App\Http\Controllers;
 
-use App\{RedmineJiraUser, RedmineProject, RedmineStatus, RedmineTracker, ClubhouseComment, ClubhouseTask, ClubhouseEpic, ClubhouseStory, Setting, RedmineClubhouseProject, RedmineClubhouseUser, User};
+use App\{RedmineClubhouseChange, RedmineJiraUser, RedmineProject, RedmineStatus, RedmineTracker, ClubhouseComment, ClubhouseTask, ClubhouseEpic, ClubhouseStory, Setting, RedmineClubhouseProject, RedmineClubhouseUser, User};
 use Mikkelson\Clubhouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Config};
