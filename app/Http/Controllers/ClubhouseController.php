@@ -213,7 +213,7 @@ class ClubhouseController extends Controller {
             $this->redmine = $RedmineController->connect();
 
             $this->$method();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->errorEmail($e->getMessage());
         }
     }
@@ -274,7 +274,7 @@ class ClubhouseController extends Controller {
 
     private function getRedmineUser($redmineClubhouseUserObj) {
         if (!$redmineClubhouseUserObj->redmine_names) {
-            throw new Exception("User {$redmineClubhouseUserObj->clubhouse_name} does not have a redmine user associated.");
+            throw new \Exception("User {$redmineClubhouseUserObj->clubhouse_name} does not have a redmine user associated.");
         }
 
         $redmine_names = json_decode($redmineClubhouseUserObj->redmine_names);
@@ -301,7 +301,7 @@ class ClubhouseController extends Controller {
         $settings = Setting::where('redmine_user', $redmine_user)->first();
 
         if (!$settings) {
-            throw new Exception("Settings not found for {$redmine_user}.");
+            throw new \Exception("Settings not found for {$redmine_user}.");
         }
 
         $user = User::find($settings->id);
@@ -320,7 +320,7 @@ class ClubhouseController extends Controller {
         if (!$redmineClubhouseUserObj) return null;
 
         if (!$redmineClubhouseUserObj->redmine_names) {
-            throw new Exception("User {$redmineClubhouseUserObj->clubhouse_name} does not have a redmine user associated.");
+            throw new \Exception("User {$redmineClubhouseUserObj->clubhouse_name} does not have a redmine user associated.");
         }
 
         // If assigned to "onerhinodev", use Alejandro's user
@@ -345,7 +345,7 @@ class ClubhouseController extends Controller {
 
     private function getUserFromContent() {
         if (empty($this->content->member_id)) {
-            throw new Exception("User (member_id) not found on json content: ".print_r($this->content, true));
+            throw new \Exception("User (member_id) not found on json content: ".print_r($this->content, true));
         }
 
         return $this->content->member_id;
@@ -444,7 +444,7 @@ class ClubhouseController extends Controller {
 
     private function getProjectId() {
         if (empty($this->content->actions[0]) || empty($this->content->actions[0]->project_id)) {
-            throw new Exception('Project not found: '.print_r($this->content->actions[0], true));
+            throw new \Exception('Project not found: '.print_r($this->content->actions[0], true));
         }
 
         $clubhouse_project_id = $this->content->actions[0]->project_id;
@@ -452,11 +452,11 @@ class ClubhouseController extends Controller {
         $redmine_clubhouse_project = RedmineClubhouseProject::where('clubhouse_id', $clubhouse_project_id)->first();
 
         if (empty($redmine_clubhouse_project)) {
-            throw new Exception('Clubhouse Project not found: '.$clubhouse_project_id);
+            throw new \Exception('Clubhouse Project not found: '.$clubhouse_project_id);
         }
 
         if (empty($redmine_clubhouse_project->redmine_id)) {
-            throw new Exception('Clubhouse Project not linked to a Redmine Project: '.$clubhouse_project_id);
+            throw new \Exception('Clubhouse Project not linked to a Redmine Project: '.$clubhouse_project_id);
         }
 
         return $redmine_clubhouse_project->redmine_id;
@@ -1064,7 +1064,7 @@ class ClubhouseController extends Controller {
         $redmine_status = RedmineStatus::where('clubhouse_id', 'like', '%"'.$workflow_state_id.'"%')->first();
 
         if (!$redmine_status) {
-            throw new Exception("Redmine Status related to Workflow State ID {$workflow_state_id} not found.");
+            throw new \Exception("Redmine Status related to Workflow State ID {$workflow_state_id} not found.");
         }
 
         return $redmine_status->redmine_name;
@@ -1074,7 +1074,7 @@ class ClubhouseController extends Controller {
         $redmine_tracker = RedmineTracker::where('clubhouse_name', $story_type)->first();
 
         if (!$redmine_tracker) {
-            throw new Exception("Redmine Tracker related to Story Type {$story_type} not found.");
+            throw new \Exception("Redmine Tracker related to Story Type {$story_type} not found.");
         }
 
         return $redmine_tracker->redmine_name;
