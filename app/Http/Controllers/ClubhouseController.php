@@ -870,6 +870,8 @@ class ClubhouseController extends Controller {
         if ($updatesAsIssueUpdateArray) {
             $redmineTicketId = $clubhouseTaskObj->redmine_ticket_id;
             $redmineTicket = $this->redmine->issue->update($redmineTicketId, $updatesAsIssueUpdateArray);
+
+            $this->setAllRedmineChangesAsSent($redmineTicketId, $storyId);
         }
 
         $this->writeLog ("-- Task {$taskId} was updated on Redmine.");
@@ -914,6 +916,8 @@ class ClubhouseController extends Controller {
             $clubhouseCommentObj->redmine_comment_id = 0;
             $clubhouseCommentObj->save();
 
+            $this->setAllRedmineChangesAsSent($redmineTicketId, $storyId);
+
             $this->writeLog ("-- Comment {$commentId} sent to Redmine.");
             die ("-- Comment {$commentId} sent to Redmine.");
         } catch (\Exception $e) {
@@ -957,6 +961,8 @@ class ClubhouseController extends Controller {
             // This method does not return anything (no comment ID).
             $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
 
+            $this->setAllRedmineChangesAsSent($redmineTicketId, $storyId);
+
             $this->writeLog ("-- Comment {$commentId} update sent to Redmine.");
             die ("-- Comment {$commentId} update sent to Redmine.");
         } catch (\Exception $e) {
@@ -997,6 +1003,8 @@ class ClubhouseController extends Controller {
 
             // This method does not return anything (no comment ID).
             $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
+
+            $this->setAllRedmineChangesAsSent($redmineTicketId, $storyId);
 
             $this->writeLog ("-- Comment {$commentId} delete comment sent to Redmine.");
             die ("-- Comment {$commentId} delete comment sent to Redmine.");
