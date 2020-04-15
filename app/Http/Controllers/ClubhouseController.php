@@ -760,20 +760,30 @@ class ClubhouseController extends Controller {
                     $updatesAsIssueUpdateArray['due_date'] = $this->getRedmineDueDate($changeOnStory->new);
                     break;
 
-                case "follower_ids":
-                    if (isset($changeOnStory->adds)) {
-                        foreach ($changeOnStory->adds as $followerId) {
-                            $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
-                            $listOfFollowersToAdd = json_decode($followersRedmineIds->redmine_names, TRUE);
-                        }
+                case "owner_ids":
+                    // Ignore removing owners, only change it when an owner is added
+                    if (!empty($changeOnStory->adds)) {
+                        $storyOwnerId = reset($changeOnStory->adds);
+                        $redmine_user = $this->getRedmineAssignToUser($storyOwnerId);
+                        $updatesAsIssueUpdateArray['assigned_to_id'] = $redmine_user;
                     }
-                    if (isset($changeOnStory->removes)) {
-                        foreach ($changeOnStory->removes as $followerId) {
-                            $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
-                            $listOfFollowersToRemove = json_decode($followersRedmineIds->redmine_names, TRUE);
-                        }
-                    }
+
                     break;
+
+                // case "follower_ids":
+                //     if (isset($changeOnStory->adds)) {
+                //         foreach ($changeOnStory->adds as $followerId) {
+                //             $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
+                //             $listOfFollowersToAdd = json_decode($followersRedmineIds->redmine_names, TRUE);
+                //         }
+                //     }
+                //     if (isset($changeOnStory->removes)) {
+                //         foreach ($changeOnStory->removes as $followerId) {
+                //             $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
+                //             $listOfFollowersToRemove = json_decode($followersRedmineIds->redmine_names, TRUE);
+                //         }
+                //     }
+                //     break;
             }
         }
 
