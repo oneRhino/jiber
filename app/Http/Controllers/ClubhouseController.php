@@ -906,7 +906,7 @@ class ClubhouseController extends Controller {
 
         try {
             $redmineTicketId = $redmineClubhouseStoryObj->redmine_ticket_id;
-            $commentBody = "Clubhouse: " . $contentActions[0]->text;
+            $commentBody = $contentActions[0]->text;
 
             // This method does not return anything (no comment ID).
             $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
