@@ -906,13 +906,6 @@ class ClubhouseController extends Controller {
             die ("-- Comment {$commentId} not created on Redmine since the ticket is updated.");
         }
 
-        // Checks if the comment was already sent to Redmine.
-        $clubhouseCommentObj = ClubhouseComment::where('comment_id', $commentId)->first();
-        if ($clubhouseCommentObj) {
-            $this->writeLog ("-- Comment {$commentId} already created on Redmine.");
-            die ("-- Comment {$commentId} already created on Redmine.");
-        }
-
         try {
             $redmineTicketId = $redmineClubhouseStoryObj->redmine_ticket_id;
             $commentBody = $contentActions[0]->text;
@@ -920,12 +913,7 @@ class ClubhouseController extends Controller {
             // This method does not return anything (no comment ID).
             $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
 
-            $clubhouseCommentObj = new ClubhouseComment ();
-            $clubhouseCommentObj->comment_id = $commentId;
-            $clubhouseCommentObj->redmine_comment_id = 0;
-            $clubhouseCommentObj->save();
-
-            $this->setAllRedmineChangesAsSent($redmineTicketId, $storyId);
+            $this->setAllRedmineChangesAsSent($redmineTicketId, $storyId, $commentId);
 
             $this->writeLog ("-- Comment {$commentId} sent to Redmine.");
             die ("-- Comment {$commentId} sent to Redmine.");
@@ -1103,7 +1091,7 @@ class ClubhouseController extends Controller {
         return date('Y-m-d', $deadlineDate);
     }
 
-    private function setAllRedmineChangesAsSent($redmine_ticket_id, $clubhouse_story_id) {
+    private function setAllRedmineChangesAsSent($redmine_ticket_id, $clubhouse_story_id, $comment_id = NULL) {
         // Get all changes from Redmine's ticket
         $ticket_details = $this->redmine->issue->show($redmine_ticket_id, ['include' => 'journals']);
 
@@ -1118,6 +1106,7 @@ class ClubhouseController extends Controller {
                 $redmineClubhouseChangeObj = new RedmineClubhouseChange;
                 $redmineClubhouseChangeObj->redmine_change_id   = $_change['id'];
                 $redmineClubhouseChangeObj->clubhouse_change_id = $clubhouse_story_id;
+                $redmineClubhouseChangeObj->clubhouse_comment_id = $comment_id ? $comment_id : NULL;
                 $redmineClubhouseChangeObj->save();
             }
         }
