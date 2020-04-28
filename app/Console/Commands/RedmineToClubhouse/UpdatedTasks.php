@@ -178,9 +178,14 @@ class UpdatedTasks extends Command
                                         break;
                                     case 'assigned_to_id':
                                         $changeArray = array ();
-                                        $owner = $this->getClubhouseUserID($detail['new_value']);
+                                        if (!empty($detail['new_value'])) {
+                                            $owner = $this->getClubhouseUserID($detail['new_value']);
+                                        }
                                         if ($owner) {
                                             $changeArray['owner_ids'] = [$owner];
+                                            $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
+                                        } else {
+                                            $changeArray['owner_ids'] = [];
                                             $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
                                         }
                                         break;

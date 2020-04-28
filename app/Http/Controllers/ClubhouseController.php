@@ -171,7 +171,7 @@ class ClubhouseController extends Controller {
      * @param Request $request
      */
     public function webhook(Request $request) {
-        Log::debug('CLUBHOUSE WEBHOOK ACTIVATED');
+        $this->writeLog('CLUBHOUSE WEBHOOK ACTIVATED');
 
         $json_content = $request->getContent();
 
@@ -208,11 +208,12 @@ class ClubhouseController extends Controller {
         }
 
         try {
-            $this->userLogin();
-            $RedmineController = new RedmineController;
-            $this->redmine = $RedmineController->connect();
+            if ($this->userLogin()) {
+                $RedmineController = new RedmineController;
+                $this->redmine = $RedmineController->connect();
 
-            $this->$method();
+                $this->$method();
+            }
         } catch (\Exception $e) {
             $this->errorEmail($e->getMessage());
         }
@@ -263,6 +264,8 @@ class ClubhouseController extends Controller {
         // Get redmine user
         $user = $this->getRedmineUser($user);
 
+        if (!$user) return false;
+
         // Connect on Redmine using this user
         $request = new Request();
         $request->merge(['user' => $user]);
@@ -270,6 +273,8 @@ class ClubhouseController extends Controller {
             return $user;
         });
         Auth::setUser($user);
+
+        return true;
     }
 
     private function getRedmineUser($redmineClubhouseUserObj) {
@@ -301,7 +306,8 @@ class ClubhouseController extends Controller {
         $settings = Setting::where('redmine_user', $redmine_user)->first();
 
         if (!$settings) {
-            throw new \Exception("Settings not found for {$redmine_user}.");
+			return false;
+            //throw new \Exception("Settings not found for {$redmine_user}.");
         }
 
         $user = User::find($settings->id);
@@ -805,6 +811,11 @@ class ClubhouseController extends Controller {
 
         $this->writeLog ("-- Story {$storyId} was updated on Redmine.");
         die ("-- Story {$storyId} was updated on Redmine.");
+    }
+
+    private function story_delete() {
+        // We won't deal with this now.
+        return false;
     }
 
     /**
