@@ -1,4 +1,4 @@
-<p>The following error(s) were found while matching data between Redmine and Jira:</p>
+<p>The following error(s) were found while matching data:</p>
 
 <ul>
     <?php foreach ($errors as $_error): ?>
