@@ -81,7 +81,11 @@ class CreatedTasks extends Command
 
             $this->writeLog('-- Checking for new tickets on project: ' . $redmineProjectObj->project_name);
 
+            // Current date
+            $date = date('Y-m-d', strtotime("-20 minutes"));
+
             $args = array(
+                'created_on' => '>=' . $date,
                 'limit'      => 100,
                 'sort'       => 'created_on:desc',
                 'include'    => 'attachments',
