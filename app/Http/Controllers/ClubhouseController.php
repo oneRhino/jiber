@@ -508,10 +508,7 @@ class ClubhouseController extends Controller {
 
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
 
-            $clubhouseStoryObj = new ClubhouseStory();
-            $clubhouseStoryObj->redmine_ticket_id = $redmineApiResponse->id;
-            $clubhouseStoryObj->story_id = $storyId;
-            $clubhouseStoryObj->save();
+            $this->createClubhouseStory($redmineApiResponse->id, $storyId);
 
             $this->writeLog ("-- Missing story {$storyId} has been created on Redmine.");
 
@@ -690,10 +687,7 @@ class ClubhouseController extends Controller {
 
         $redmineApiResponse = $this->createRedmineTicket();
 
-        $clubhouseStoryObj = new ClubhouseStory();
-        $clubhouseStoryObj->redmine_ticket_id = $redmineApiResponse->id;
-        $clubhouseStoryObj->story_id = $storyId;
-        $clubhouseStoryObj->save();
+        $this->createClubhouseStory($redmineApiResponse->id, $storyId);
 
         // Check if story has epics related to it and create them on Redmine as tickets.
         $storyReferences = $this->content->references;
@@ -818,6 +812,20 @@ class ClubhouseController extends Controller {
         return false;
     }
 
+    private function createClubhouseTask($redmine_ticket_id, $task_id) {
+        $clubhouseTaskObj = new ClubhouseTask();
+        $clubhouseTaskObj->redmine_ticket_id = $redmine_ticket_id;
+        $clubhouseTaskObj->task_id           = $task_id;
+        $clubhouseTaskObj->save();
+    }
+
+    private function createClubhouseStory($redmine_ticket_id, $story_id) {
+        $clubhouseStoryObj = new ClubhouseStory();
+        $clubhouseStoryObj->redmine_ticket_id = $redmine_ticket_id;
+        $clubhouseStoryObj->story_id          = $story_id;
+        $clubhouseStoryObj->save();
+    }
+
     /**
      * WEBHOOK: Creates the task as a child issue on Redmine.
      */
@@ -828,6 +836,7 @@ class ClubhouseController extends Controller {
 
         // Check if story exists on Redmine
         $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
+
         if (!$clubhouseStoryObj) {
             $this->writeLog ("-- Story {$storyId} not created on Redmine. Creating...");
             $this->createMissingRedmineTicket($storyId);
@@ -835,6 +844,7 @@ class ClubhouseController extends Controller {
 
         // Check if task has been created already
         $clubhouseTaskObj = ClubhouseTask::where('task_id', $taskId)->first();
+
         if ($clubhouseTaskObj) {
             $this->writeLog ("-- Task {$taskId} has already been created on Redmine.");
             die ("-- Task {$taskId} has already been created on Redmine.");
@@ -842,10 +852,8 @@ class ClubhouseController extends Controller {
 
         $redmineApiResponse = $this->createRedmineSubTicket();
 
-        $clubhouseTaskObj = new ClubhouseTask();
-        $clubhouseTaskObj->redmine_ticket_id = $redmineApiResponse->id;
-        $clubhouseTaskObj->task_id = $taskId;
-        $clubhouseTaskObj->save();
+        $this->createClubhouseTask($redmineApiResponse->id, $taskId);
+        $this->createClubhouseStory($redmineApiResponse->id, $taskId);
 
         $this->writeLog ("-- Task {$taskId} has been created on Redmine as a child ticket.");
         die ("-- Task {$taskId} has been created on Redmine as a child ticket.");
@@ -856,12 +864,13 @@ class ClubhouseController extends Controller {
      */
     private function story_task_update() {
 
-        $storyId = $this->content->actions[0]->story_id;
-        $taskId = $this->content->actions[0]->id;
+        $storyId       = $this->content->actions[0]->story_id;
+        $taskId        = $this->content->actions[0]->id;
         $changesOnTask = $this->content->actions[0]->changes;
 
         // Checks if the story/ticket exists.
         $redmineClubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
+
         if (!$redmineClubhouseStoryObj) {
             $this->writeLog ("-- Story {$storyId} not created on Redmine. Creating...");
             $this->createMissingRedmineTicket($storyId);
@@ -869,11 +878,16 @@ class ClubhouseController extends Controller {
 
         // Checks if the task exists.
         $clubhouseTaskObj = ClubhouseTask::where('task_id', $taskId)->first();
+
         if (!$clubhouseTaskObj) {
             $this->writeLog ("-- Task {$taskId} not created on Redmine. Creating...");
-            $this->createMissingRedmineSubTicket($taskId);
-            $this->writeLog ("-- Story/Epic {$taskId} not updated on Redmine since the ticket is updated.");
-            die ("-- Story/Epic {$taskId} not updated on Redmine since the ticket is updated.");
+            $redmineApiResponse = $this->createMissingRedmineSubTicket($taskId);
+
+            $this->createClubhouseStory($redmineApiResponse->id, $taskId);
+
+            $this->writeLog ("-- Task {$taskId} created on Redmine.");
+
+            return;
         }
 
         $updatesAsIssueUpdateArray = array();
