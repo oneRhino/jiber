@@ -189,6 +189,9 @@ class ClubhouseController extends Controller {
         // Get first action - the main one
         $action = $this->content->actions[0];
 
+		// Ignore "branch" actions
+		if ($action->entity_type === 'branch') return;
+
         // Ignore updates from onerhinodev user (to avoid duplicates)
         $authorId = $this->content->member_id;
         $ignoredUserId = RedmineClubhouseUser::where('clubhouse_name', 'onerhinodev')->first();
