@@ -726,7 +726,7 @@ class JiraController extends Controller
             }
 
             if (empty($assignee)) {
-                Log::error($content->issue->fields->assignee);
+                Log::error(print_r($content->issue->fields->assignee, true));
                 $errors = [
                     'Assignee malformed:',
                     'app/Http/Controllers/JiraController.php:705',
