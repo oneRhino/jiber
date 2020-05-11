@@ -21,6 +21,9 @@
                             <input type="text" name="jira_name" id="jira_name" class="form-control" @if($status)value="{{ $status->jira_name }}"@endif>
                         </fieldset>
 
+                        <hr>
+                        <p>Clubhouse has custom status workflows. Please select statuses from all workflows that corresponds to Redmine/Jira ones. Jiber will send the correct status ID based in the workflow.</p>
+
                         <fieldset class="form-group">
                             <label for="clubhouse_main_id">Clubhouse Main Status</label>
                             <select multiple name="clubhouse_main_id[]" id="clubhouse_main_id" class="form-control" size="10">
