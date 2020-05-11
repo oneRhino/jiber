@@ -4,7 +4,7 @@ namespace App\Console\Commands\RedmineToClubhouse;
 
 use Mail;
 use Illuminate\Console\Command;
-use App\{RedmineProject, RedmineStatus, RedmineTracker, RedmineClubhouseChange, ClubhouseStory, ClubhouseComment, RedmineClubhouseUser, RedmineJiraUser};
+use App\{RedmineProject, RedmineStatus, RedmineTracker, RedmineClubhouseChange, ClubhouseStory, ClubhouseStatus, ClubhouseComment, RedmineClubhouseUser, RedmineJiraUser};
 use App\Http\Controllers\ClubhouseController;
 
 class UpdatedTasks extends Command
@@ -147,7 +147,8 @@ class UpdatedTasks extends Command
                                         break;
                                     case 'status_id':
                                         $changeArray = array ();
-                                        $status = $this->getWorkflowStateID($detail['new_value']);
+                                        $projectId = $entryDetail['project']['id'];
+                                        $status = $this->getWorkflowStateID($detail['new_value'], $projectId);
                                         if ($status) {
                                             $changeArray['workflow_state_id'] = $status;
                                             $this->updateClubhouseStory ($entryDetailId, $redmineChangeId, $changeArray);
@@ -300,19 +301,28 @@ class UpdatedTasks extends Command
         return $redmineTicketType->clubhouse_name;
     }
 
-    private function getWorkflowStateID($redmine_id) {
+    private function getWorkflowStateID($redmine_id, $projectId) {
+
         $redmine_status = RedmineStatus::where('redmine_id', $redmine_id)->first();
 
         if (!$redmine_status) {
-            $this->writeLog("-- Status {$redmine_id} not found on Redmine Statuses");
+            $this->writeLog("-- Status {$redmine_id} (redmine) not found on Redmine Statuses");
             return false;
         }
 
         $clubhouse_status = $redmine_status->clubhouse_main_id;
 
         if (!$clubhouse_status) {
-            $this->writeLog("-- Status {$redmine_status->redmine_name} not linked to a Clubhouse Status");
+            $this->writeLog("-- Status {$status} (redmine) not linked to a Clubhouse Status");
             return false;
+        }
+
+        $clubhouseStatusAsArray = $clubhouse_status;
+        foreach ($clubhouseStatusAsArray as $clubhouseStatus) {
+            $redmineStatusByProject = ClubhouseStatus::where('clubhouse_id', $clubhouseStatus)->where('projects', 'like', "%{$projectId}%")->first();
+
+            if ($redmineStatusByProject)
+                $clubhouse_status = $redmineStatusByProject->clubhouse_id;
         }
 
         return $clubhouse_status;
