@@ -4,7 +4,7 @@ namespace App\Console\Commands\RedmineToClubhouse;
 
 use Mail;
 use Illuminate\Console\Command;
-use App\{RedmineProject, RedmineStatus, RedmineTracker, ClubhouseStory, RedmineClubhouseUser};
+use App\{ClubhouseStatus, RedmineProject, RedmineStatus, RedmineTracker, ClubhouseStory, RedmineClubhouseUser};
 use App\Http\Controllers\ClubhouseController;
 
 class CreatedTasks extends Command
@@ -260,6 +260,15 @@ class CreatedTasks extends Command
         if (!$clubhouse_status) {
             $this->writeLog("-- Status {$status} not linked to a Clubhouse Status");
             return false;
+        }
+
+        $ticketProject = $ticket['ticket_details']['project']['id'];
+        $clubhouseStatusAsArray = $clubhouse_status;
+        foreach ($clubhouseStatusAsArray as $clubhouseStatus) {
+            $redmineStatusByProject = ClubhouseStatus::where('clubhouse_id', $clubhouseStatus)->where('projects', 'like', "%{$ticketProject}%")->first();
+
+            if ($redmineStatusByProject)
+                $clubhouse_status = $redmineStatusByProject->clubhouse_id;
         }
 
         return $clubhouse_status;
