@@ -193,11 +193,17 @@ class ClubhouseController extends Controller {
 		if ($action->entity_type === 'branch' || $action->action === 'branch') return;
 
         // Ignore updates from onerhinodev user (to avoid duplicates)
-        $authorId = $this->content->member_id;
-        $ignoredUserId = RedmineClubhouseUser::where('clubhouse_name', 'onerhinodev')->first();
-        if ($authorId == $ignoredUserId->clubhouse_user_permissions_id) {
-            $this->writeLog ("-- Update from -onerhinodev- user, ignoring it.");
-            die ("-- Update from -onerhinodev- user, ignoring it.");
+        if (!empty($this->content->member_id)) {
+            $authorId = $this->content->member_id;
+            $ignoredUserId = RedmineClubhouseUser::where('clubhouse_name', 'onerhinodev')->first();
+            if ($authorId == $ignoredUserId->clubhouse_user_permissions_id) {
+                $this->writeLog ("-- Update from -onerhinodev- user, ignoring it.");
+                die ("-- Update from -onerhinodev- user, ignoring it.");
+            }
+        } else {
+            $this->writeLog("-- Member ID not found.");
+            $this->writeLog(print_r($this->content, true));
+            die ("-- Member ID not found.");
         }
 
         // Create method name using entity and action
