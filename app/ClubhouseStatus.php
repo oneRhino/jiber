@@ -21,7 +21,7 @@ class ClubhouseStatus extends Model
         return $this->workflow_names[$id] ?? '';
     }
 
-    public function getGroupedByWorkflow() {
+    public static function getGroupedByWorkflow() {
         $all = self::orderby('workflow_id')->orderby('clubhouse_name')->get();
 
         $grouped = [];
