@@ -19,28 +19,34 @@ class ClubhouseStatusesController extends Controller
 
         $workflows = $clubhouseApi->get('workflows');
 
-        $newClubhouseStatuses = 0;
+        $newClubhouseStatuses = $updatedClubhouseStatuses = 0;
 
         foreach ($workflows as $_workflow) {
 
             foreach ($_workflow['states'] as $_state) {
 
                 // Check if it exists
-                $exists = ClubhouseStatus::where('clubhouse_id', $_state['id'])->first();
+                $ch_status = ClubhouseStatus::where('clubhouse_id', $_state['id'])->first();
 
-                if (!$exists) {
+                if (!$ch_status) {
                     $newClubhouseStatuses++;
 
-                    $status                 = new ClubhouseStatus;
-                    $status->clubhouse_id   = $_state['id'];
-                    $status->clubhouse_name = $_state['name'];
-                    $status->workflow_id    = $_workflow['id'];
-                    $status->save();
+                    $ch_status                 = new ClubhouseStatus;
+                    $ch_status->clubhouse_id   = $_state['id'];
+                    $ch_status->clubhouse_name = $_state['name'];
+                    $ch_status->workflow_id    = $_workflow['id'];
+                    $ch_status->save();
+                } else {
+                    $updatedClubhouseStatuses++;
+
+                    $ch_status->clubhouse_name = $_state['name'];
+                    $ch_status->workflow_id    = $_workflow['id'];
+                    $ch_status->save();
                 }
             }
         }
 
-        $request->session()->flash('alert-success', "All statuses have been imported successfully! New Clubhouse statuses: {$newClubhouseStatuses}");
+        $request->session()->flash('alert-success', "All statuses have been imported successfully! New: {$newClubhouseStatuses}; Updated: {$updatedClubhouseStatuses}");
 
         return back()->withInput();
     }
