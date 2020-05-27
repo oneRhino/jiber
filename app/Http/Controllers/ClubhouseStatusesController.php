@@ -34,6 +34,7 @@ class ClubhouseStatusesController extends Controller
                     $status                 = new ClubhouseStatus;
                     $status->clubhouse_id   = $_state['id'];
                     $status->clubhouse_name = $_state['name'];
+                    $status->workflow_id    = $_workflow['id'];
                     $status->save();
                 }
             }

@@ -21,7 +21,7 @@ class RedmineStatusesController extends Controller
 
     public function edit(RedmineStatus $status)
     {
-        $clubhouse_statuses = ClubhouseStatus::orderby('clubhouse_name')->get();
+        $clubhouse_statuses = ClubhouseStatus::orderby('workflow_id')->orderby('clubhouse_name')->get();
 
         return view('redmine_statuses.form', [
             'status'             => $status,
