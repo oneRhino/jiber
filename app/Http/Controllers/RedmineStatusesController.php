@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use App\Http\Controllers\RedmineController;
-use App\{ClubhouseStatus, RedmineStatus};
+use App\{ClubhouseStatus, ClubhouseWorkflow, RedmineStatus};
 
 class RedmineStatusesController extends Controller
 {
@@ -21,7 +21,7 @@ class RedmineStatusesController extends Controller
 
     public function edit(RedmineStatus $status)
     {
-        $ch_workflows = ClubhouseStatus::getGroupedByWorkflow();
+        $ch_workflows = ClubhouseWorkflow::orderby('clubhouse_name')->get();
 
         return view('redmine_statuses.form', [
             'status'       => $status,
