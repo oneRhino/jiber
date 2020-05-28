@@ -37,7 +37,7 @@
 
                         <fieldset class="form-group">
                             <label for="jira_name">Clubhouse State</label>
-                            <select multiple name="clubhouse_id[]" id="clubhouse_id" class="form-control" size="10">
+                            <select multiple name="clubhouse_id[]" id="clubhouse_id" class="form-control" size="25">
                                 @foreach($ch_workflows as $_workflow)
                                     <optgroup label="{{ $_workflow->clubhouse_name }}">
                                         @foreach($_workflow->statuses as $_clubhouse_status)
