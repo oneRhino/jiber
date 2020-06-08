@@ -534,6 +534,8 @@ class ClubhouseController extends Controller {
                     $clubhouseCommentObj->redmine_comment_id = 0;
                     $clubhouseCommentObj->save();
 
+					$this->setAllRedmineChangesAsSent($redmineApiResponse->id, $storyId, $storyComment['id']);
+
                     $this->writeLog ("-- Missing story comment {$storyComment['id']} on story {$storyId} has been created on Redmine.");
                 }
             }
