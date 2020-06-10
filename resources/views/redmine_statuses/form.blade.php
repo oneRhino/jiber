@@ -22,31 +22,16 @@
                         </fieldset>
 
                         <fieldset class="form-group">
-                            <label for="clubhouse_main_id">Clubhouse Main Status</label>
-                            <select name="clubhouse_main_id" id="clubhouse_main_id" class="form-control">
-                                @foreach($ch_workflows as $_workflow)
-                                    <optgroup label="{{ $_workflow->clubhouse_name }}">
-                                        @foreach($_workflow->statuses as $_clubhouse_status)
-                                            <option value="{{ $_clubhouse_status->clubhouse_id }}" @if($_clubhouse_status->clubhouse_id == $status->clubhouse_main_id) selected @endif>({{ $_clubhouse_status->type }}) {{ $_clubhouse_status->clubhouse_name }}</option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </select>
-                            <p><small>Will be used when Status is changed on Redmine</small></p>
-                        </fieldset>
-
-                        <fieldset class="form-group">
                             <label for="jira_name">Clubhouse State</label>
                             <select multiple name="clubhouse_id[]" id="clubhouse_id" class="form-control" size="25">
                                 @foreach($ch_workflows as $_workflow)
                                     <optgroup label="{{ $_workflow->clubhouse_name }}">
                                         @foreach($_workflow->statuses as $_clubhouse_status)
-                                            <option value="{{ $_clubhouse_status->clubhouse_id }}" @if(in_array($_clubhouse_status->clubhouse_id, $status->clubhouse_ids)) selected @endif>({{ $_clubhouse_status->type }}) {{ $_clubhouse_status->clubhouse_name }}</option>
+                                            <option value="{{ $_clubhouse_status->clubhouse_id }}" @if($status->clubhouse_ids && in_array($_clubhouse_status->clubhouse_id, $status->clubhouse_ids)) selected @endif>({{ $_clubhouse_status->type }}) {{ $_clubhouse_status->clubhouse_name }}</option>
                                         @endforeach
                                     </optgroup>
                                 @endforeach
                             </select>
-                            <p><small>Will be used when Status is changed on Clubhouse</small></p>
                         </fieldset>
 
                         <button type="submit" class="btn btn-primary">Save</button>

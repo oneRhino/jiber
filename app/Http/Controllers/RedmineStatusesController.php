@@ -34,7 +34,6 @@ class RedmineStatusesController extends Controller
         // Save status
         $status->redmine_name      = $request->redmine_name;
         $status->jira_name         = $request->jira_name;
-        $status->clubhouse_main_id = $request->clubhouse_main_id;
         $status->clubhouse_id      = json_encode($request->clubhouse_id);
         $status->save();
 

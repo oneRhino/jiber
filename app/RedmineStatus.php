@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class RedmineStatus extends Model
 {
     public function getClubhouseNameAttribute($value) {
-        $id = $this->attributes['clubhouse_main_id'];
+        $ids = $this->getClubhouseIdsAttribute($value);
 
-        if (!$id) return '';
+        if (!$ids) return '';
 
-        $status = ClubhouseStatus::where('clubhouse_id', $id)->first();
+        $status = ClubhouseStatus::where('clubhouse_id', $ids[0])->first();
 
         return $status->clubhouse_name;
     }
