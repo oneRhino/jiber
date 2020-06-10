@@ -47,7 +47,7 @@ class RedmineTicket extends Model
 		$this->description   = $ticket['description'];
 		$this->status        = $ticket['status'];
 
-		if ($ticket['journals']) {
+		if (!empty($ticket['journals'])) {
 			foreach ($ticket['journals'] as $_journal) {
 				$this->journals[] = new RedmineJournalEntry($_journal);
 			}
