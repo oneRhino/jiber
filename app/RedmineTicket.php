@@ -44,7 +44,7 @@ class RedmineTicket extends Model
 		$this->id            = $ticket['id'];
 		$this->tracker       = $ticket['tracker'];
 		$this->custom_fields = $ticket['custom_fields'];
-		$this->description   = $ticket['description'];
+		$this->description   = $ticket['description'] ?? '';
 		$this->status        = $ticket['status'];
 
 		if (!empty($ticket['journals'])) {
