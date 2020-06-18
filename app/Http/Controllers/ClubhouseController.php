@@ -210,6 +210,10 @@ class ClubhouseController extends Controller {
         $method = "{$action->entity_type}_$action->action";
         $method = str_replace('-', '_', $method);
 
+        if ($method == 'branch_branch') {
+            die;
+        }
+
         if (!method_exists($this, $method)) {
             $error = "Method {$method} needs to be created on Clubhouse Controller.";
             $this->errorEmail($error, 'missing method error');
