@@ -47,6 +47,11 @@ trait Clubhouse {
 
 			$this->writeLog('-- Clubhouse answer: ' . print_r($clubhouseUpdate, true));
 
+			if (empty($clubhouseUpdate['id'])) {
+				$this->writeLog('-- Change NOT sent to error (see Clubhouse answer above for details).');
+				return;
+			}
+
 			// Save Clubhouse Change
 			$this->saveClubhouseChange($RedmineJournalEntry->getID(), $clubhouseUpdate['id']);
 
