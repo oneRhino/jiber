@@ -59,6 +59,7 @@ trait Clubhouse {
 	// Send comment to a Clubhouse story.
 	private function sendClubhouseStoryComment($RedmineTicket, $RedmineJournalEntry) {
 		$ClubhouseStory = $RedmineTicket->getRelatedClubhouseStory();
+		$redmine_clubhouse_change = $RedmineJournalEntry->getSentToClubhouse();
 
 		// If this entry has already been sent to clubhouse, then we'll update its comment
 		if ($redmine_clubhouse_change) {
@@ -76,7 +77,7 @@ trait Clubhouse {
 	}
 
 	private function createClubhouseStoryComment($RedmineJournalEntry, $ClubhouseStory) {
-		$this->writeLog('-- Comment will be sent on Clubhouse: ' . $redmine_clubhouse_change->redmine_change_id);
+		$this->writeLog('-- Comment will be sent on Clubhouse: ' . $RedmineJournalEntry->getID());
 
 		if (!$this->debug) {
 			// Send comment to Clubhouse Story.
@@ -84,8 +85,8 @@ trait Clubhouse {
 
 			// Check if comment was successfully sent
 			if (!array_key_exists('id', $clubhouse_comment)) {
-				$this->writeLog("-- Story {$ClubhouseStory->story_id} was not found on Clubhouse, comment not sent: " . $redmine_clubhouse_change->redmine_change_id);
-				throw new Exception("-- Story {$ClubhouseStory->story_id} was not found on Clubhouse, comment not sent: " . $redmine_clubhouse_change->redmine_change_id);
+				$this->writeLog("-- Story {$ClubhouseStory->story_id} was not found on Clubhouse, comment not sent: " . $RedmineJournalEntry->getID());
+				throw new Exception("-- Story {$ClubhouseStory->story_id} was not found on Clubhouse, comment not sent: " . $RedmineJournalEntry->getID());
 			}
 
 			$this->saveClubhouseChange($RedmineJournalEntry->getID(), $clubhouse_comment['id']);
@@ -107,7 +108,7 @@ trait Clubhouse {
 			// Send comment to Clubhouse Story.
 			$clubhouse_comment = $this->clubhouse->updateComment($ClubhouseStory->story_id, $change_id, $RedmineJournalEntry->getNotes());
 
-			$this->writeLog('-- Comment update sent to Clubhouse: ' . $redmine_clubhouse_change->redmine_change_id);
+			$this->writeLog('-- Comment update sent to Clubhouse: ' . $RedmineJournalEntry->getID());
 		} else {
 			$this->writeLog('-- Comment update NOT sent to Clubhouse due to Debug Mode');
 		}
