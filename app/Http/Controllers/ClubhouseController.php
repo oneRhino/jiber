@@ -130,7 +130,7 @@ class ClubhouseController extends Controller {
         $token = Config::get('clubhouse.api_key');
         $clubhouseApi = new Clubhouse($token);
 
-        $apiUri = "users";
+        $apiUri = "members";
 
         $usersAsArray = $clubhouseApi->get($apiUri);
 
