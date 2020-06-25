@@ -81,7 +81,7 @@ class CheckTimeEntries extends Command {
                     continue;
                 }
             } catch (\Exception $e) {
-                $this->error($e->getMessage());
+                $this->error($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
             }
         }
 

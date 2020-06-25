@@ -228,7 +228,7 @@ class ClubhouseController extends Controller {
                 $this->$method();
             }
         } catch (\Exception $e) {
-            $this->errorEmail($e->getMessage());
+            $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
 
@@ -544,7 +544,7 @@ class ClubhouseController extends Controller {
                 }
             }
         } catch (\Exception $e) {
-            $this->errorEmail($e->getMessage());
+            $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
 
@@ -590,7 +590,7 @@ class ClubhouseController extends Controller {
             return $redmineApiResponse;
 
         } catch (\Exeption $e) {
-            $this->errorEmail($e->getMessage());
+            $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
 
@@ -636,7 +636,7 @@ class ClubhouseController extends Controller {
             return $redmineApiResponse;
 
         } catch (\Exeption $e) {
-            $this->errorEmail($e->getMessage());
+            $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
 
@@ -682,7 +682,7 @@ class ClubhouseController extends Controller {
             return $redmineApiResponse;
 
         } catch (\Exeption $e) {
-            $this->errorEmail($e->getMessage());
+            $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
 
@@ -958,7 +958,7 @@ class ClubhouseController extends Controller {
             $this->writeLog ("-- Comment {$commentId} sent to Redmine.");
             die ("-- Comment {$commentId} sent to Redmine.");
         } catch (\Exception $e) {
-            $this->writeLog ("-- Exception: " . $e->getMessage());
+            $this->writeLog ("-- Exception: " . $e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
 
@@ -1003,8 +1003,8 @@ class ClubhouseController extends Controller {
             $this->writeLog ("-- Comment {$commentId} update sent to Redmine.");
             die ("-- Comment {$commentId} update sent to Redmine.");
         } catch (\Exception $e) {
-            $this->writeLog ("-- Exception: " . $e->getMessage());
-            die ("-- Exception: " . $e->getMessage());
+            $this->writeLog ("-- Exception: " . $e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
+            die ("-- Exception: " . $e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
 
@@ -1046,8 +1046,8 @@ class ClubhouseController extends Controller {
             $this->writeLog ("-- Comment {$commentId} delete comment sent to Redmine.");
             die ("-- Comment {$commentId} delete comment sent to Redmine.");
         } catch (\Exception $e) {
-            $this->writeLog ("-- Exception: " . $e->getMessage());
-            die ("-- Exception: " . $e->getMessage());
+            $this->writeLog ("-- Exception: " . $e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
+            die ("-- Exception: " . $e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
 

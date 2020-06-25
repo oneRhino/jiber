@@ -110,7 +110,7 @@ class CreatedTasks extends Command
 				}
 
 			} catch (\Exeption $e) {
-				$this->writeLog("-- Task {$ticket->getId()} could not be sent to Redmine, Error: {$e->getMessage()}");
+				$this->writeLog("-- Task {$ticket->getId()} could not be sent to Redmine, Error: {$e->getMessage()}, Trace: {$e->getTraceAsString()}");
 			}
 		}
 
