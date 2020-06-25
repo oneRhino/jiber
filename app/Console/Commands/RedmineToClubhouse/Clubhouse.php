@@ -63,6 +63,9 @@ trait Clubhouse {
 
 	// Send comment to a Clubhouse story.
 	private function sendClubhouseStoryComment($RedmineTicket, $RedmineJournalEntry) {
+		// Start Clubhouse controller
+		$this->clubhouse();
+
 		$ClubhouseStory = $RedmineTicket->getRelatedClubhouseStory();
 		$redmine_clubhouse_change = $RedmineJournalEntry->getSentToClubhouse();
 
