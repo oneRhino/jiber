@@ -79,13 +79,16 @@ class RedmineReportController extends RedmineController
         foreach ($redmine_entries['time_entries'] as $_entry) {
             if (!isset($_entry['issue'])) continue;
 
-		if (isset($_entry['comments'])) {
-			$description = $_entry['comments'];
-		} elseif (isset($_entry['activity'])) {
-			$description = $_entry['activity']['name'];
-		} else {
-			$description = 'Development';
-		}
+    		if (isset($_entry['comments'])) {
+    			$description = $_entry['comments'];
+    		} elseif (isset($_entry['activity'])) {
+    			$description = $_entry['activity']['name'];
+    		} else {
+    			$description = 'Development';
+    		}
+
+            // Make description not to have more than 100 chars
+            $description = substr($description, 0, 100);
 
             $time_entry = new TimeEntry();
             $time_entry->user_id           = Auth::user()->id;
@@ -150,7 +153,7 @@ class RedmineReportController extends RedmineController
     public function sendAllToJira($report_id, $request) {
         $report = Report::find($report_id);
 
-        if (!$report) 
+        if (!$report)
             abort(403, 'Report not found.');
 
         $request->task      = array();
