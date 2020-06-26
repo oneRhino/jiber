@@ -267,8 +267,13 @@ class ClubhouseController extends Controller {
     private function userLogin() {
         $clubhouse_user_permissions_id = $this->getUserFromContent();
 
-        // Get RedmineClubhouseUser based on clubhouse user id
+        // Get RedmineClubhouseUser based on clubhouse user permissions id
         $user = RedmineClubhouseUser::where('clubhouse_user_permissions_id', $clubhouse_user_permissions_id)->first();
+
+        // If not found, try by user id
+        if (!$user) {
+            $user = RedmineClubhouseUser::where('clubhouse_user_id', $clubhouse_user_permissions_id)->first();
+        }
 
         if (!$user) {
             throw new \Exception("User {$clubhouse_user_permissions_id} not found. Please re-import clubhouse users.");
@@ -619,21 +624,25 @@ class ClubhouseController extends Controller {
             $redmineParentTicketId = $clubhouseStoryObj->redmine_ticket_id;
             $redmineParentTicket = $this->redmine->issue->show($redmineParentTicketId);
 
-            $redmineCreateIssueObj = array ();
-            $redmineCreateIssueObj['project_id'] = $redmineParentTicket['issue']['project']['id'];
-            $redmineCreateIssueObj['parent_issue_id'] = $redmineParentTicketId;
-            $redmineCreateIssueObj['subject'] = $clubhouseDetails->description;
-            $redmineCreateIssueObj['assigned_to_id'] = $redmineParentTicket['issue']['assigned_to']['id'];
-            $redmineCreateIssueObj['description'] = $clubhouseDetails->description;
-            $redmineCreateIssueObj['description'] .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/story/{$storyId}";
-            $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
-            if ($redmineProjectObj->content) {
-                $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
+            if ($redmineParentTicket) {
+                $redmineCreateIssueObj = array ();
+                $redmineCreateIssueObj['project_id'] = $redmineParentTicket['issue']['project']['id'];
+                $redmineCreateIssueObj['parent_issue_id'] = $redmineParentTicketId;
+                $redmineCreateIssueObj['subject'] = $clubhouseDetails->description;
+                $redmineCreateIssueObj['assigned_to_id'] = $redmineParentTicket['issue']['assigned_to']['id'];
+                $redmineCreateIssueObj['description'] = $clubhouseDetails->description;
+                $redmineCreateIssueObj['description'] .= "\n\n (Clubhouse URL): {$this->clubhouseBaseUrl}/story/{$storyId}";
+                $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
+                if ($redmineProjectObj->content) {
+                    $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
+                }
+
+                $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
+
+                return $redmineApiResponse;
+            } else {
+                $this->errorEmail("Issue {$redmineParentTicketId} should exist and be a parent, but it is not, check." . print_r($redmineParentTicket, true));
             }
-
-            $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
-
-            return $redmineApiResponse;
 
         } catch (\Exeption $e) {
             $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
