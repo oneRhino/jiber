@@ -190,7 +190,10 @@ class ClubhouseController extends Controller {
         $action = $this->content->actions[0];
 
 		// Ignore "branch" actions
-		if ($action->entity_type === 'branch' || $action->action === 'branch') return;
+		if ($action->entity_type == 'branch' || $action->action == 'branch') return;
+
+        // Ignore pull request actions
+        if ($action->entity_type == 'pull-request' || $action->action == 'pull-request') return;
 
         // Ignore updates from onerhinodev user (to avoid duplicates)
         if (!empty($this->content->member_id)) {
