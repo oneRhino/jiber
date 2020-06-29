@@ -210,7 +210,7 @@ class ClubhouseController extends Controller {
         $method = "{$action->entity_type}_$action->action";
         $method = str_replace('-', '_', $method);
 
-        if ($method == 'branch_branch') {
+        if (in_array($method, ['branch_branch','branch_create'])) {
             die;
         }
 
