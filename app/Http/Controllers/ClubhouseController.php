@@ -524,6 +524,8 @@ class ClubhouseController extends Controller {
                 $redmineCreateIssueObj['due_date'] = $this->getRedmineDueDate($clubhouseDetails->deadline);
             }
 
+            $this->writeLog($redmineCreateIssueObj);
+
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
 
             $this->createClubhouseStory($redmineApiResponse->id, $storyId);
@@ -549,7 +551,7 @@ class ClubhouseController extends Controller {
                 }
             }
         } catch (\Exception $e) {
-            $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
+            $this->errorEmail($e->getMessage() . '<br>Trace: ' . print_r($e->getTrace(), true));
         }
     }
 
