@@ -267,16 +267,24 @@ class ClubhouseController extends Controller {
     private function userLogin() {
         $clubhouse_user_permissions_id = $this->getUserFromContent();
 
+        $this->writeLog ("-- Searching for user {$clubhouse_user_permissions_id}");
+
         // Get RedmineClubhouseUser based on clubhouse user permissions id
         $user = RedmineClubhouseUser::where('clubhouse_user_permissions_id', $clubhouse_user_permissions_id)->first();
 
+        $this->writeLog($user);
+
         // If not found, try by user id
         if (!$user) {
+            $this->writeLog("Not found based on permissions id, search based on user id");
             $user = RedmineClubhouseUser::where('clubhouse_user_id', $clubhouse_user_permissions_id)->first();
+
+            $this->writeLog($user);
         }
 
         if (!$user) {
-            throw new \Exception("User {$clubhouse_user_permissions_id} not found. Please re-import clubhouse users.");
+            $this->writeLog("User '{$clubhouse_user_permissions_id}' not found.");
+            throw new \Exception("User '{$clubhouse_user_permissions_id}' not found. Please re-import clubhouse users.");
         }
 
         // Get redmine user
