@@ -565,7 +565,8 @@ class JiraController extends Controller
         if (!$content) die;
 
         Log::debug('JIRA WEBHOOK ACTIVATED');
-        //Log::debug(print_r($content, true));
+        Log::debug(print_r($_GET, true));
+        Log::debug(print_r($content, true));
 
         // Check if project is supported by Jiber
         if (empty($_GET['project'])) {
