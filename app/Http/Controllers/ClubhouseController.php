@@ -972,6 +972,10 @@ class ClubhouseController extends Controller {
             $redmineTicketId = $redmineClubhouseStoryObj->redmine_ticket_id;
             $commentBody = $contentActions[0]->text;
 
+            // Try to fix problem while sending certain comments to Redmine
+            $commentBody = htmlspecialchars($commentBody, ENT_XML1, 'UTF-8');
+            $this->writeLog($commentBody);
+
             // This method does not return anything (no comment ID).
             $this->redmine->issue->addNoteToIssue($redmineTicketId, $commentBody);
 
