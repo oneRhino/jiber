@@ -562,7 +562,10 @@ class ClubhouseController extends Controller {
                 }
             }
         } catch (\Exception $e) {
-            $this->errorEmail($e->getMessage() . '<br>Trace: ' . print_r($e->getTrace(), true));
+            $this->writeLog("createMissingRedmineTicket Problem");
+            $this->writeLog($e->getMessage());
+            $this->writeLog($e->getTrace());
+            $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
 
