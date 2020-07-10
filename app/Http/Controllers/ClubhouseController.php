@@ -1104,6 +1104,9 @@ class ClubhouseController extends Controller {
     }
 
     private function writeLog($message) {
+        if (is_array($message)) {
+            $message = print_r($message, true);
+        }
 
         file_put_contents(storage_path() . '/logs/clubhouse-webhook.log', date('Y-m-d H:i:s').' - '.$message."\n", FILE_APPEND);
     }
