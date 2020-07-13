@@ -532,7 +532,7 @@ class ClubhouseController extends Controller {
             }
 
             if (!empty($clubhouseDetails['deadline'])) {
-                $redmineCreateIssueObj['due_date'] = $this->getRedmineDueDate($clubhouseDetails->deadline);
+                $redmineCreateIssueObj['due_date'] = $this->getRedmineDueDate($clubhouseDetails['deadline']);
             }
 
             $this->writeLog($redmineCreateIssueObj);
