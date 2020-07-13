@@ -275,14 +275,14 @@ class ClubhouseController extends Controller {
         // Get RedmineClubhouseUser based on clubhouse user permissions id
         $user = RedmineClubhouseUser::where('clubhouse_user_permissions_id', $clubhouse_user_permissions_id)->first();
 
-        $this->writeLog($user);
+        // $this->writeLog($user);
 
         // If not found, try by user id
         if (!$user) {
             $this->writeLog("Not found based on permissions id, search based on user id");
             $user = RedmineClubhouseUser::where('clubhouse_user_id', $clubhouse_user_permissions_id)->first();
 
-            $this->writeLog($user);
+            // $this->writeLog($user);
         }
 
         if (!$user) {
@@ -564,7 +564,7 @@ class ClubhouseController extends Controller {
         } catch (\Exception $e) {
             $this->writeLog("createMissingRedmineTicket Problem");
             $this->writeLog($e->getMessage());
-            $this->writeLog($e->getTrace());
+            // $this->writeLog($e->getTrace());
             $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
