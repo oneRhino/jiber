@@ -535,9 +535,16 @@ class ClubhouseController extends Controller {
                 $redmineCreateIssueObj['due_date'] = $this->getRedmineDueDate($clubhouseDetails['deadline']);
             }
 
+            $this->writeLog("redmineCreateIssueObj");
             $this->writeLog($redmineCreateIssueObj);
 
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
+
+            if (! $redmineApiResponse) {
+                $this->writeLog("Missing API Response from Redmine");
+                $this->writeLog($redmineApiResponse);
+                $this->errorEmail("Missing API Response from Redmine", print_r($redmineApiResponse, true));
+            }
 
             $this->createClubhouseStory($redmineApiResponse->id, $storyId);
 
@@ -977,6 +984,7 @@ class ClubhouseController extends Controller {
 
             // Try to fix problem while sending certain comments to Redmine
             $commentBody = htmlspecialchars($commentBody, ENT_XML1, 'UTF-8');
+            $this->writeLog("commentBody:");
             $this->writeLog($commentBody);
 
             // This method does not return anything (no comment ID).
@@ -1166,6 +1174,12 @@ class ClubhouseController extends Controller {
     private function setAllRedmineChangesAsSent($redmine_ticket_id, $clubhouse_story_id, $comment_id = NULL) {
         // Get all changes from Redmine's ticket
         $ticket_details = $this->redmine->issue->show($redmine_ticket_id, ['include' => 'journals']);
+
+        if (!isset($ticket_details['issue'])) {
+            $this->writeLog("Missing Issue key from Redmine Ticket");
+            $this->writeLog($ticket_details);
+            $this->errorEmail("Missing Issue key from Redmine Ticket: ".print_r($ticket_details, true));
+        }
 
         $ticket_changes = $ticket_details['issue']['journals'];
 
