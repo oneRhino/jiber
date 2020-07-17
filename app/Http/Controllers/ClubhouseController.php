@@ -1177,6 +1177,7 @@ class ClubhouseController extends Controller {
 
         if (!isset($ticket_details['issue'])) {
             $this->writeLog("Missing Issue key from Redmine Ticket");
+            $this->writeLog("Ticket ID: ".$redmine_ticket_id);
             $this->writeLog($ticket_details);
             $this->errorEmail("Missing Issue key from Redmine Ticket: ".print_r($ticket_details, true));
         }
