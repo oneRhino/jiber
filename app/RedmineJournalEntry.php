@@ -15,7 +15,7 @@ class RedmineJournalEntry extends Model
 	public function __construct($entry) {
 		$this->details    = $entry['details'];
 		$this->created_on = $entry['created_on'];
-		$this->notes      = $entry['notes'];
+		$this->notes      = $entry['notes'] ?? '';
 		$this->id         = $entry['id'];
 		$this->user       = $entry['user'];
 	}
