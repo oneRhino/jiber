@@ -95,6 +95,11 @@ class CreatedTasks extends Command
         $this->writeLog('Redmine new tasks');
         $this->writeLog(print_r($redmine_entries, true));
 
+        if (empty($redmine_entries['issues'])) {
+            $this->writeLog('No issues found.');
+            return;
+        }
+
         foreach ($redmine_entries['issues'] as $_issue)
         {
             // Check if task has already been created on Jira (RedmineJiraTask)
