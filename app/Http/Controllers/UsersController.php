@@ -69,6 +69,7 @@ class UsersController extends Controller
             $setting->id                 = Auth::user()->id;
             $setting->toggl              = $request->toggl;
             $setting->redmine            = $request->redmine;
+            $setting->redmine_user       = $request->redmine_user;
             $setting->jira               = $request->jira;
             $setting->jira_password      = $request->jira_password;
             $setting->basecamp           = $request->basecamp;
