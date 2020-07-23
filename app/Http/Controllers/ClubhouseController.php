@@ -28,7 +28,10 @@
 
 namespace App\Http\Controllers;
 
-use App\{RedmineClubhouseChange, RedmineJiraUser, RedmineProject, RedmineStatus, RedmineTracker, ClubhouseComment, ClubhouseTask, ClubhouseEpic, ClubhouseStory, Setting, RedmineClubhouseProject, RedmineClubhouseUser, User};
+use App\{ClubhouseComment, ClubhouseEpic, ClubhouseStory, ClubhouseTask};
+use App\{RedmineClubhouseChange, RedmineClubhouseProject, RedmineClubhouseUser};
+use App\{RedmineJiraUser, RedmineProject, RedmineStatus, RedmineTracker};
+use App\{Setting, User};
 use Mikkelson\Clubhouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Config};
@@ -186,52 +189,45 @@ class ClubhouseController extends Controller {
             }
         }
 
-        // Get first action - the main one
-        $action = $this->content->actions[0];
+        // Run through all actions
+        foreach ($this->content->actions as $action) {
+            // Ignore "branch" actions
+            if ($action->entity_type == 'branch' || $action->action == 'branch') continue;
 
-		// Ignore "branch" actions
-		if ($action->entity_type == 'branch' || $action->action == 'branch') return;
+            // Ignore pull request actions
+            if ($action->entity_type == 'pull-request' || $action->action == 'pull-request') continue;
 
-        // Ignore pull request actions
-        if ($action->entity_type == 'pull-request' || $action->action == 'pull-request') return;
+            // Ignore updates from onerhinodev user (to avoid duplicates)
+            if (!empty($this->content->member_id)) {
+                $authorId = $this->content->member_id;
+                $ignoredUserId = RedmineClubhouseUser::where('clubhouse_name', 'onerhinodev')->first();
 
-        // Ignore updates from onerhinodev user (to avoid duplicates)
-        if (!empty($this->content->member_id)) {
-            $authorId = $this->content->member_id;
-            $ignoredUserId = RedmineClubhouseUser::where('clubhouse_name', 'onerhinodev')->first();
-            if ($authorId == $ignoredUserId->clubhouse_user_permissions_id) {
-                $this->writeLog ("-- Update from -onerhinodev- user, ignoring it.");
-                die ("-- Update from -onerhinodev- user, ignoring it.");
+                if ($authorId == $ignoredUserId->clubhouse_user_permissions_id) {
+                    $this->writeLog ("-- Update from -onerhinodev- user, ignoring it.");
+                    die ("-- Update from -onerhinodev- user, ignoring it.");
+                }
             }
-        } else {
-            $this->writeLog("-- Member ID not found.");
-            $this->writeLog(print_r($this->content, true));
-            die ("-- Member ID not found.");
-        }
 
-        // Create method name using entity and action
-        $method = "{$action->entity_type}_$action->action";
-        $method = str_replace('-', '_', $method);
+            // Create method name using entity and action
+            $method = "{$action->entity_type}_{$action->action}";
+            $method = str_replace('-', '_', $method);
 
-        if (in_array($method, ['branch_branch','branch_create'])) {
-            die;
-        }
-
-        if (!method_exists($this, $method)) {
-            $error = "Method {$method} needs to be created on Clubhouse Controller.";
-            $this->errorEmail($error, 'missing method error');
-            die;
-        }
-
-        try {
-            if ($this->userLogin()) {
-                $RedmineController = new RedmineController;
-                $this->redmine = $RedmineController->connect();
-
-                $this->$method();
+            if (!method_exists($this, $method)) {
+                $error = "Method {$method} needs to be created on Clubhouse Controller.";
+                $this->errorEmail($error, 'missing method error');
+                die;
             }
-        } catch (\Exception $e) {
-            $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
+
+            try {
+                if ($this->userLogin()) {
+                    $RedmineController = new RedmineController;
+                    $this->redmine = $RedmineController->connect();
+
+                    $this->$method($action);
+                }
+            } catch (\Exception $e) {
+                $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
+            }
         }
     }
 
@@ -270,30 +266,31 @@ class ClubhouseController extends Controller {
     private function userLogin() {
         $clubhouse_user_permissions_id = $this->getUserFromContent();
 
-        $this->writeLog ("-- Searching for user {$clubhouse_user_permissions_id}");
+        if ($clubhouse_user_permissions_id) {
+            $this->writeLog ("-- Searching for user {$clubhouse_user_permissions_id}");
 
-        // Get RedmineClubhouseUser based on clubhouse user permissions id
-        $user = RedmineClubhouseUser::where('clubhouse_user_permissions_id', $clubhouse_user_permissions_id)->first();
+            // Get RedmineClubhouseUser based on clubhouse user permissions id
+            $user = RedmineClubhouseUser::where('clubhouse_user_permissions_id', $clubhouse_user_permissions_id)->first();
 
-        // $this->writeLog($user);
+            // If not found, try by user id
+            if (!$user) {
+                $this->writeLog("Not found based on permissions id, search based on user id");
+                $user = RedmineClubhouseUser::where('clubhouse_user_id', $clubhouse_user_permissions_id)->first();
+            }
 
-        // If not found, try by user id
-        if (!$user) {
-            $this->writeLog("Not found based on permissions id, search based on user id");
-            $user = RedmineClubhouseUser::where('clubhouse_user_id', $clubhouse_user_permissions_id)->first();
+            if (!$user) {
+                $this->writeLog("User '{$clubhouse_user_permissions_id}' not found.");
+                throw new \Exception("User '{$clubhouse_user_permissions_id}' not found. Please re-import clubhouse users.");
+            }
 
-            // $this->writeLog($user);
+            // Get redmine user
+            $user = $this->getRedmineUser($user);
+
+            if (!$user) return false;
+        } else {
+            // Use OMG user by default
+            $user = User::find(33);
         }
-
-        if (!$user) {
-            $this->writeLog("User '{$clubhouse_user_permissions_id}' not found.");
-            throw new \Exception("User '{$clubhouse_user_permissions_id}' not found. Please re-import clubhouse users.");
-        }
-
-        // Get redmine user
-        $user = $this->getRedmineUser($user);
-
-        if (!$user) return false;
 
         // Connect on Redmine using this user
         $request = new Request();
@@ -380,7 +377,7 @@ class ClubhouseController extends Controller {
 
     private function getUserFromContent() {
         if (empty($this->content->member_id)) {
-            throw new \Exception("User (member_id) not found on json content: ".print_r($this->content, true));
+            return false;
         }
 
         return $this->content->member_id;
@@ -721,9 +718,12 @@ class ClubhouseController extends Controller {
     /**
      * WEBHOOK: Creates the story as a issue on Redmine.
      */
-    private function story_create() {
+    private function story_create($action) {
+        // Trigger sync task on Toggl
+        // $TogglController = new TogglController;
+        // $TogglController->clubhouse_story_sync($this->content);
 
-        $storyId = $this->content->actions[0]->id;
+        $storyId = $action->id;
 
         // Check if story has been created
         $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
@@ -754,10 +754,10 @@ class ClubhouseController extends Controller {
      * WEBHOOK: Creates the story as a issue on Redmine.
      * This method works for stories and epics (they are treated as a stories after created)
      */
-    private function story_update() {
+    private function story_update($action) {
 
-        $storyId = $this->content->actions[0]->id;
-        $changesOnStory = $this->content->actions[0]->changes;
+        $storyId = $action->id;
+        $changesOnStory = $action->changes;
 
         // Checks if the story/ticket exists.
         $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
@@ -876,7 +876,7 @@ class ClubhouseController extends Controller {
     /**
      * WEBHOOK: Creates the task as a child issue on Redmine.
      */
-    private function story_task_create() {
+    private function story_task_create($action) {
 
         $storyId = $this->content->actions[1]->id;
         $taskId  = $this->content->actions[0]->id;
@@ -909,11 +909,11 @@ class ClubhouseController extends Controller {
     /**
      * WEBHOOK: Updates the issue on Redmine.
      */
-    private function story_task_update() {
+    private function story_task_update($action) {
 
-        $storyId       = $this->content->actions[0]->story_id;
-        $taskId        = $this->content->actions[0]->id;
-        $changesOnTask = $this->content->actions[0]->changes;
+        $storyId       = $action->story_id;
+        $taskId        = $action->id;
+        $changesOnTask = $action->changes;
 
         // Checks if the story/ticket exists.
         $redmineClubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
