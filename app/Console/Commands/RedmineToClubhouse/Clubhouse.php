@@ -99,7 +99,7 @@ trait Clubhouse {
 
 			$this->saveClubhouseChange($RedmineJournalEntry->getID(), $clubhouse_comment['id']);
 
-			$this->writeLog('-- Comment sent to Clubhouse: ' . $journal_entry['id']);
+			$this->writeLog('-- Comment sent to Clubhouse: ' . $RedmineJournalEntry->getID());
 		} else {
 			$this->writeLog('-- Comment NOT sent to Clubhouse due to Debug Mode');
 			return;
