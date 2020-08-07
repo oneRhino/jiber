@@ -38,34 +38,46 @@ class TogglWorkspaceController extends TogglController
     /**
      * List workspaces saved on system
      */
-    public function index()
+    public function index($omg = false)
     {
-        $workspaces = TogglWorkspace::getAllByUserID(Auth::user()->id);
+        if($omg){
+            $workspaces = TogglWorkspace::getAllByUserID(null);
+        }
+        else{
+            $workspaces = TogglWorkspace::getAllByUserID(Auth::user()->id);
+        }
 
         return view('toggl_workspace.index', [
             'workspaces' => $workspaces,
+            'omg' => $omg
         ]);
     }
 
     /**
      * Import workspaces from Toggl
      */
-    public function import(Request $request)
+    public function import(Request $request, $omg = false)
     {
-        $toggl_client = $this->toggl_connect();
+        $toggl_client = $this->toggl_connect($omg);
 
         $workspaces = $toggl_client->getWorkspaces(array());
 
         if ($workspaces) {
             foreach ($workspaces as $_workspace) {
+                $user = Auth::user()->id;
+                if($omg){
+                    $user = null;
+                }
                 $workspace = TogglWorkspace::where(array(
                     'toggl_id' => $_workspace['id'], 
-                    'user_id'  => Auth::user()->id,
+                    'user_id'  => $user,
                 ))->get()->first();
 
                 if (!$workspace) {
                     $workspace           = new TogglWorkspace();
-                    $workspace->user_id  = Auth::user()->id;
+                    if(!$omg){
+                        $workspace->user_id  = Auth::user()->id;
+                    }
                     $workspace->toggl_id = $_workspace['id'];
                 }
 

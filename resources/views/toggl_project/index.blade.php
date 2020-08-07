@@ -1,10 +1,14 @@
 @extends('layouts.toggl')
 
-@section('import_button_action', action('TogglProjectController@import'))
+@section('import_button_action', $omg ? route('omg.toggl.projects.import') : route('user.toggl.projects.import'))
 @section('import_button_label', 'Projects')
 
+@if ($omg)
+@section('import_clubhouse_action', route('clubhouse.projects.import'))
+@endif
+
 @section('table')
-	<h1>Toggl Projects</h1>
+	<h1>{{$omg ? 'OMG ' : ''}}Toggl Projects</h1>
 
 	@if (count($projects) > 0)
 		<div class="panel panel-default">

@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
-use Mikkelson\Clubhouse;
+use Nshonda\Clubhouse;
 
 use App\Http\Requests;
 use App\ClubhouseProject;
+use Illuminate\Support\Facades\Log;
 
 class ClubhouseProjectsController extends Controller
 {
@@ -22,6 +23,7 @@ class ClubhouseProjectsController extends Controller
         $newClubhouseProjects = 0;
 
         foreach ($projectsAsArray as $project) {
+
 
             // Ignore ARCHIVED projects.
             if ($project['archived']) {

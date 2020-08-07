@@ -56,11 +56,16 @@ class TogglController extends Controller
     /**
      * Connect into Toggl API
      */
-    public function toggl_connect()
+    public function toggl_connect($omg)
     {
-        $setting = Setting::find(Auth::user()->id);
-        $token   = $setting->toggl;
-        $client  = TogglClient::factory(array('api_key' => $token));
+        if($omg){
+
+        }
+        else{
+            $setting = Setting::find(Auth::user()->id);
+            $token   = $setting->toggl;
+            $client  = TogglClient::factory(array('api_key' => $token));
+        }
 
         return $client;
     }
@@ -94,7 +99,7 @@ class TogglController extends Controller
     /**
      * Import everything - workspaces, clients, projects and tasks
      */
-    public function import(Request $request)
+    public function import(Request $request, $omg = false)
     {
         app('App\Http\Controllers\TogglWorkspaceController')->import($request);
         app('App\Http\Controllers\TogglClientController')   ->import($request);

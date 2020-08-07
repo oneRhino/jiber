@@ -52,13 +52,22 @@
                         </ul>
                     </li>
                     <li>
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Toggl <span class="caret"></span></a>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">User's Toggl <span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li><a href="{{ action('TogglWorkspaceController@index') }}">Workspaces</a></li>
-                            <li><a href="{{ action('TogglClientController@index') }}">Clients</a></li>
-                            <li><a href="{{ action('TogglProjectController@index') }}">Projects</a></li>
-                            <li><a href="{{ action('TogglTaskController@index') }}">Tasks</a></li>
-                            <li><a href="{{ action('TogglReportController@index') }}">Reports</a></li>
+                            <li><a href="{{ route('user.toggl.workspaces') }}">Workspaces</a></li>
+                            <li><a href="{{ route('user.toggl.clients') }}">Clients</a></li>
+                            <li><a href="{{ route('user.toggl.projects') }}">Projects</a></li>
+                            <li><a href="{{ route('user.toggl.tasks') }}">Tasks</a></li>
+                            <li><a href="{{ route('user.toggl.reports') }}">Reports</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">OMG's Toggl <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{{ route('omg.toggl.workspaces') }}">Workspaces</a></li>
+                            <li><a href="{{ route('omg.toggl.clients') }}">Clients</a></li>
+                            <li><a href="{{ route('omg.toggl.projects') }}">Projects</a></li>
+                            <li><a href="{{ route('omg.toggl.tasks') }}">Tasks</a></li>
                         </ul>
                     </li>
                 </ul>

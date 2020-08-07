@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
-use Mikkelson\Clubhouse;
+use Nshonda\Clubhouse;
 
 use App\Http\Requests;
 use App\{ClubhouseStatus, ClubhouseWorkflow};

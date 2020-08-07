@@ -39,22 +39,28 @@ class TogglClientController extends TogglController
     /**
      * List clients saved on system
      */
-    public function index()
+    public function index($omg = false)
     {
-        $clients = TogglClient::getAllByUserID(Auth::user()->id);
+        if($omg){
+            $clients = TogglClient::getAllByUserID(null);
+        }
+        else{
+            $clients = TogglClient::getAllByUserID(Auth::user()->id);
+        }
 
         return view('toggl_client.index', [
             'clients' => $clients,
+            'omg' => $omg
         ]);
     }
 
     /**
      * Import clients from Toggl
      */
-    public function import(Request $request)
+    public function import(Request $request, $omg = false)
     {
         // Connect into Toggl
-        $toggl_client = $this->toggl_connect();
+        $toggl_client = $this->toggl_connect($omg);
 
         // Get all clients from Toggl
         $clients = $toggl_client->getClients(array());
@@ -67,10 +73,15 @@ class TogglClientController extends TogglController
                 if (!$client) {
                     $client           = new TogglClient();
                     $client->toggl_id = $_client['id'];
+                    if(!$omg){
                     $client->user_id  = Auth::user()->id;
+                    }
                 }
-
-                $client->workspace_id = TogglWorkspace::getByTogglID($_client['wid'], Auth::user()->id)->id;
+                $user = Auth::user()->id;
+                if($omg){
+                    $user = null;
+                }
+                $client->workspace_id = TogglWorkspace::getByTogglID($_client['wid'], $user)->id;
                 $client->name         = $_client['name'];
                 $client->save();
             }

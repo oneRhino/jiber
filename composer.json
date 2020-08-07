@@ -16,7 +16,7 @@
         "kbsali/redmine-api": "^1.5",
         "laravel/framework": "5.5.*",
         "laravel/tinker": "~1.0",
-        "mikkelson/clubhouse-php": "^1.0"
+        "nshonda/clubhouse-php": "^1.0"
     },
     "require-dev": {
         "filp/whoops": "~2.0",
@@ -25,6 +25,12 @@
         "phpunit/phpunit": "~6.0",
         "symfony/thanks": "^1.0"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url":  "git@github.com:nshonda/clubhouse-php.git"
+        }
+    ],
     "autoload": {
         "classmap": [
             "database/seeds",

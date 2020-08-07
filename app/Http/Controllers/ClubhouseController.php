@@ -32,7 +32,7 @@ use App\{ClubhouseComment, ClubhouseEpic, ClubhouseStory, ClubhouseTask};
 use App\{RedmineClubhouseChange, RedmineClubhouseProject, RedmineClubhouseUser};
 use App\{RedmineJiraUser, RedmineProject, RedmineStatus, RedmineTracker};
 use App\{Setting, User};
-use Mikkelson\Clubhouse;
+use Nshonda\Clubhouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, Config};
 use Log;

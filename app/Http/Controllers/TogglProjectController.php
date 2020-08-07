@@ -40,21 +40,27 @@ class TogglProjectController extends TogglController
     /**
      * List projects saved on system
      */
-    public function index()
+    public function index($omg = false)
     {
-        $projects = TogglProject::getAllByUserID(Auth::user()->id);
+        if($omg){
+            $projects = TogglProject::getAllByUserID(null);
+        }
+        else{
+            $projects = TogglProject::getAllByUserID(Auth::user()->id);
+        }
 
         return view('toggl_project.index', [
             'projects' => $projects,
+            'omg' => $omg
         ]);
     }
 
     /**
      * Import projects from Toggl
      */
-    public function import(Request $request)
+    public function import(Request $request, $omg = false)
     {
-        $toggl_client = $this->toggl_connect();
+        $toggl_client = $this->toggl_connect($omg);
 
         $workspaces = TogglWorkspace::getAllByUserID(Auth::user()->id);
 
@@ -67,13 +73,18 @@ class TogglProjectController extends TogglController
 
                     if (!$project) {
                         $project           = new TogglProject();
-                        $project->user_id  = Auth::user()->id;
+                        if(!$omg){
+                            $project->user_id  = Auth::user()->id;
+                        }
                         $project->toggl_id = $_project['id'];
                     }
-
-                    $project->workspace_id = TogglWorkspace::getByTogglID($_project['wid'], Auth::user()->id)->id;
+                    $user = Auth::user()->id;
+                    if($omg){
+                        $user = null;
+                    }
+                    $project->workspace_id = TogglWorkspace::getByTogglID($_project['wid'], $user)->id;
                     if (isset($_project['cid'])) {
-                        $project->client_id = TogglClient::getByTogglID($_project['cid'], Auth::user()->id)->id;
+                        $project->client_id = TogglClient::getByTogglID($_project['cid'], $user)->id;
                     }
                     $project->active = $_project['active'];
                     $project->name   = $_project['name'];

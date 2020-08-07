@@ -1,10 +1,10 @@
 @extends('layouts.toggl')
 
-@section('import_button_action', action('TogglClientController@import'))
+@section('import_button_action', $omg ? route('omg.toggl.clients.import') : route('user.toggl.clients.import'))
 @section('import_button_label', 'Clients')
 
 @section('table')
-	<h1>Toggl Clients</h1>
+<h1>{{$omg ? 'OMG ' : ''}}Toggl Clients</h1>
 
 	@if (count($clients) > 0)
 		<div class="panel panel-default">

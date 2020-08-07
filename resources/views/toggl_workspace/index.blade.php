@@ -1,10 +1,10 @@
 @extends('layouts.toggl')
 
-@section('import_button_action', action('TogglWorkspaceController@import'))
+@section('import_button_action', $omg ? route('omg.toggl.workspaces.import') : route('user.toggl.workspaces.import'))
 @section('import_button_label', 'Workspaces')
 
 @section('table')
-	<h1>Toggl Workspaces</h1>
+	<h1>{{$omg ? 'OMG ' : ''}}Toggl Workspaces</h1>
 
 	@if (count($workspaces) > 0)
 		<div class="panel panel-default">

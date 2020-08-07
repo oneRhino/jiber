@@ -23,25 +23,43 @@ Route::match(['get', 'post'], 'settings', [
 ]);
 
 // Toggl routes
-Route::get('/toggl/import'            , ['middleware' => 'auth', 'uses' => 'TogglController@import']);
+Route::get('/toggl/import'            , ['as' => 'user.toggl.import','middleware' => 'auth', 'uses' => 'TogglController@import']);
 
-Route::get('/toggl/workspaces'        , ['middleware' => 'auth', 'uses' => 'TogglWorkspaceController@index']);
-Route::get('/toggl/workspaces/import' , ['middleware' => 'auth', 'uses' => 'TogglWorkspaceController@import']);
+Route::get('/toggl/workspaces'        , ['as' => 'user.toggl.workspaces','middleware' => 'auth', 'uses' => 'TogglWorkspaceController@index']);
+Route::get('/toggl/workspaces/import' , ['as' => 'user.toggl.workspaces.import','middleware' => 'auth', 'uses' => 'TogglWorkspaceController@import']);
 
-Route::get('/toggl/clients'           , ['middleware' => 'auth', 'uses' => 'TogglClientController@index']);
-Route::get('/toggl/clients/import'    , ['middleware' => 'auth', 'uses' => 'TogglClientController@import']);
+Route::get('/toggl/clients'           , ['as' => 'user.toggl.clients','middleware' => 'auth', 'uses' => 'TogglClientController@index']);
+Route::get('/toggl/clients/import'    , ['as' => 'user.toggl.clients.import','middleware' => 'auth', 'uses' => 'TogglClientController@import']);
 
-Route::get('/toggl/projects'          , ['middleware' => 'auth', 'uses' => 'TogglProjectController@index']);
-Route::get('/toggl/projects/import'   , ['middleware' => 'auth', 'uses' => 'TogglProjectController@import']);
+Route::get('/toggl/projects'          , ['as' => 'user.toggl.projects','middleware' => 'auth', 'uses' => 'TogglProjectController@index']);
+Route::get('/toggl/projects/import'   , ['as' => 'user.toggl.projects.import','middleware' => 'auth', 'uses' => 'TogglProjectController@import']);
 
-Route::get('/toggl/tasks'             , ['middleware' => 'auth', 'uses' => 'TogglTaskController@index']);
-Route::get('/toggl/tasks/import'      , ['middleware' => 'auth', 'uses' => 'TogglTaskController@import']);
+Route::get('/toggl/tasks'             , ['as' => 'user.toggl.tasks','middleware' => 'auth', 'uses' => 'TogglTaskController@index']);
+Route::get('/toggl/tasks/import'      , ['as' => 'user.toggl.tasks.import','middleware' => 'auth', 'uses' => 'TogglTaskController@import']);
 
-Route::get   ('/toggl/reports'        , ['middleware' => 'auth', 'uses' => 'TogglReportController@index']);
-Route::get   ('/toggl/report/{report}', ['middleware' => 'auth', 'uses' => 'TogglReportController@show']);
-Route::post  ('/toggl/report/save'    , ['middleware' => 'auth', 'uses' => 'TogglReportController@save']);
-Route::delete('/toggl/report/{report}', ['middleware' => 'auth', 'uses' => 'TogglReportController@delete']);
+Route::get   ('/toggl/reports'        , ['as' => 'user.toggl.reports','middleware' => 'auth', 'uses' => 'TogglReportController@index']);
+Route::get   ('/toggl/report/{report}', ['as' => 'user.toggl.reports.show','middleware' => 'auth', 'uses' => 'TogglReportController@show']);
+Route::post  ('/toggl/report/save'    , ['as' => 'user.toggl.reports.save','middleware' => 'auth', 'uses' => 'TogglReportController@save']);
+Route::delete('/toggl/report/{report}', ['as' => 'user.toggl.reports.delete','middleware' => 'auth', 'uses' => 'TogglReportController@delete']);
 
+// OMG Toggl routes
+Route::prefix('omg')->group(function () {
+    Route::get('/toggl/import'            , ['as' => 'omg.toggl.import','middleware' => 'auth', 'uses' => 'TogglController@import'])->defaults('omg', true);
+;
+    Route::get('/toggl/workspaces'        , ['as' => 'omg.toggl.workspaces','middleware' => 'auth', 'uses' => 'TogglWorkspaceController@index'])->defaults('omg', true);
+;
+    Route::get('/toggl/workspaces/import' , ['as' => 'omg.toggl.workspaces.import','middleware' => 'auth', 'uses' => 'TogglWorkspaceController@import'])->defaults('omg', true);
+;
+
+    Route::get('/toggl/clients'           , ['as' => 'omg.toggl.clients','middleware' => 'auth', 'uses' => 'TogglClientController@index'])->defaults('omg', true);
+    Route::get('/toggl/clients/import'    , ['as' => 'omg.toggl.clients.import','middleware' => 'auth', 'uses' => 'TogglClientController@import'])->defaults('omg', true);
+
+    Route::get('/toggl/projects'          , ['as' => 'omg.toggl.projects','middleware' => 'auth', 'uses' => 'TogglProjectController@index'])->defaults('omg', true);
+    Route::get('/toggl/projects/import'   , ['as' => 'omg.toggl.projects.import','middleware' => 'auth', 'uses' => 'TogglProjectController@import'])->defaults('omg', true);
+
+    Route::get('/toggl/tasks'             , ['as' => 'omg.toggl.tasks','middleware' => 'auth', 'uses' => 'TogglTaskController@index'])->defaults('omg', true);
+    Route::get('/toggl/tasks/import'      , ['as' => 'omg.toggl.tasks.import','middleware' => 'auth', 'uses' => 'TogglTaskController@import'])->defaults('omg', true);
+});
 // Redmine routes
 Route::get   ('/redmine/reports'        , ['middleware' => 'auth', 'uses' => 'RedmineReportController@index']);
 Route::get   ('/redmine/report/{report}', ['middleware' => 'auth', 'uses' => 'RedmineReportController@show']);
@@ -60,7 +78,7 @@ Route::group(['middleware' => 'auth'], function() {
 });
 
 Route::get('/redmine/projects/import', ['middleware' => 'auth', 'uses' => 'RedmineProjectsController@import']);
-Route::get('/clubhouse/projects/import', ['middleware' => 'auth', 'uses' => 'ClubhouseProjectsController@import']);
+Route::get('/clubhouse/projects/import', ['as' => 'clubhouse.projects.import', 'middleware' => 'auth', 'uses' => 'ClubhouseProjectsController@import']);
 
 Route::group(['middleware' => 'auth'], function() {
     Route::resource('/redmine/projects', 'RedmineProjectsController', ['parameters' => [

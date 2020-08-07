@@ -1,10 +1,10 @@
 @extends('layouts.toggl')
 
-@section('import_button_action', action('TogglTaskController@import'))
+@section('import_button_action', $omg ? route('omg.toggl.tasks.import') : route('user.toggl.tasks.import'))
 @section('import_button_label', 'Tasks')
 
 @section('table')
-	<h1>Toggl Tasks</h1>
+	<h1>{{$omg ? 'OMG ' : ''}}Toggl Tasks</h1>
 
 	@if (count($tasks) > 0)
 		<div class="panel panel-default">
