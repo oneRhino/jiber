@@ -774,6 +774,14 @@ class ClubhouseController extends Controller {
         }
 
         $storyObj = $this->getStory($storyId);
+
+        if (empty($storyObj['project_id'])) {
+            $msg = "-- Empty project ID: Story ID {$storyId}; Story data ".print_r($storyObj, true);
+            $this->writeLog($msg);
+            $this->errorEmail($msg);
+            die($msg);
+        }
+
         $projectId = $storyObj['project_id'];
         $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
             ->where('third_party_project_id', $projectId)
