@@ -193,11 +193,19 @@ class RedmineTicket extends Model
 	private function getClubhouseUserIDByRedmineName($redmine_name):string {
 		$redmine_clubhouse_user = RedmineClubhouseUser::where('redmine_names', 'like', "%{$redmine_name}%")->first();
 
+		if (!$redmine_clubhouse_user) {
+			throw new Exception("Redmine/Clubhouse User {$redmine_name} not found.");
+		}
+
 		return $redmine_clubhouse_user->clubhouse_user_id;
 	}
 
 	private function getClubhousePermissionsIDByRedmineName($redmine_name):string {
 		$redmine_clubhouse_user = RedmineClubhouseUser::where('redmine_names', 'like', "%{$redmine_name}%")->first();
+
+		if (!$redmine_clubhouse_user) {
+			throw new Exception("Redmine/Clubhouse User {$redmine_name} not found.");
+		}
 
 		return $redmine_clubhouse_user->clubhouse_user_permissions_id;
 	}
