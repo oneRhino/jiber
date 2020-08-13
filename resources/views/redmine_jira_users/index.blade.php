@@ -7,7 +7,7 @@
 
         <div class="panel panel-default">
             <div class="panel-heading">
-                <a href="{{ action('RedmineJiraUsersController@import') }}" class="btn btn-default"><i class="glyphicon glyphicon-import"></i> Import/Merge Users from Redmine</a>
+                <a href="{{ action('RedmineJiraUsersController@import') }}" class="btn btn-default"><i class="glyphicon glyphicon-import"></i> Import/Merge Redmine Users</a>
             </div>
         </div>
 
