@@ -68,7 +68,7 @@ class TogglTaskController extends TogglController
         $workspaces = TogglWorkspace::getAllByUserID($user);
 
         foreach ($workspaces as $_workspace) {
-            $tasks = $toggl_client->GetWorkspaceTasks(['id' => $_workspace->toggl_id, 'active' => 'both']);
+            $tasks = $toggl_client->getWorkspaceTasks(array('id' => (int)$_workspace->toggl_id, 'active' => 'both'));
 
             if ($tasks) {
                 foreach ($tasks as $_task) {

@@ -60,12 +60,12 @@ class TogglController extends Controller
     {
         if($omg){
             $token = Config::get('toggl.omg_api_key');
-            $client  = TogglClient::factory(array('api_key' => $token, 'debug' => true));
+            $client  = TogglClient::factory(array('api_key' => $token));
         }
         else{
             $setting = Setting::find(Auth::user()->id);
             $token   = $setting->toggl;
-            $client  = TogglClient::factory(array('api_key' => $token, 'debug' => true));
+            $client  = TogglClient::factory(array('api_key' => $token));
         }
 
         return $client;
