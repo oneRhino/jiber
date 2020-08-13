@@ -845,6 +845,9 @@ class ClubhouseController extends Controller {
         */
 
         if ($updatesAsIssueUpdateArray) {
+            $this->writeLog("Changes to be sent to redmine:");
+            $this->writeLog(print_r($updatesAsIssueUpdateArray, true));
+
             $redmineTicketId = $clubhouseStoryObj->redmine_ticket_id;
             $redmineTicket = $this->redmine->issue->update($redmineTicketId, $updatesAsIssueUpdateArray);
             $this->setAllRedmineChangesAsSent($redmineTicketId, $storyId);
