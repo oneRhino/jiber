@@ -786,6 +786,10 @@ class ClubhouseController extends Controller {
         foreach ($changesOnStory as $key => $changeOnStory) {
 
             switch ($key) {
+                case "name":
+                    $updatesAsIssueUpdateArray['subject'] = $changeOnStory->new;
+                    break;
+
                 case "description":
                     $newDescription = $changeOnStory->new;
                     $newDescription .= "\n\n* Clubhouse URL: {$this->clubhouseBaseUrl}/story/{$storyId}";
