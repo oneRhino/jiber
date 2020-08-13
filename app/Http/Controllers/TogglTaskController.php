@@ -68,7 +68,7 @@ class TogglTaskController extends TogglController
         $workspaces = TogglWorkspace::getAllByUserID($user);
 
         foreach ($workspaces as $_workspace) {
-            $tasks = $toggl_client->GetWorkspaceTasks(array('id' => (int)$_workspace->toggl_id, 'active' => 'both'));
+            $tasks = $toggl_client->GetWorkspaceTasks(['id' => $_workspace->toggl_id, 'active' => 'both']);
 
             if ($tasks) {
                 foreach ($tasks as $_task) {
@@ -104,5 +104,23 @@ class TogglTaskController extends TogglController
         $request->session()->flash('alert-success', 'All tasks have been successfully imported!');
 
         return back()->withInput();
+    }
+
+    public function createTaskFromClubhouseAction($content, $omg = false){
+        $toggl_client = $this->toggl_connect($omg);
+        $task = $toggl_client->createTask(['task'=> $content]);
+        $request = new Request();
+        $this->import($request, $omg);
+        $togglTask = TogglTask::where('toggl_id', $task->id)->first();
+        return $togglTask;
+    }
+
+    public function updateTask($id, $content, $omg = false){
+        $toggl_client = $this->toggl_connect($omg);
+        $task = $toggl_client->updateTask(['id' => $id, 'task'=> $content]);
+        $request = new Request();
+        $this->import($request, $omg);
+        $togglTask = TogglTask::where('toggl_id', $task->id)->first();
+        return $togglTask;
     }
 }

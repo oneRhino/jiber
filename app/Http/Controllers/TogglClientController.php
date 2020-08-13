@@ -61,6 +61,10 @@ class TogglClientController extends TogglController
     {
         // Connect into Toggl
         $toggl_client = $this->toggl_connect($omg);
+        $user = Auth::user()->id;
+        if($omg){
+            $user = null;
+        }
 
         // Get all clients from Toggl
         $clients = $toggl_client->getClients(array());
@@ -68,18 +72,14 @@ class TogglClientController extends TogglController
         if ($clients) {
             foreach ($clients as $_client) {
                 // Check if client already exists - if so, only update information
-                $client = TogglClient::getByTogglID($_client['id'], Auth::user()->id);
+                $client = TogglClient::getByTogglID($_client['id'], $user);
 
                 if (!$client) {
                     $client           = new TogglClient();
                     $client->toggl_id = $_client['id'];
                     if(!$omg){
-                    $client->user_id  = Auth::user()->id;
+                    $client->user_id  = $client;
                     }
-                }
-                $user = Auth::user()->id;
-                if($omg){
-                    $user = null;
                 }
                 $client->workspace_id = TogglWorkspace::getByTogglID($_client['wid'], $user)->id;
                 $client->name         = $_client['name'];

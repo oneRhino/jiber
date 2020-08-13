@@ -56,6 +56,8 @@ Route::prefix('omg')->group(function () {
 
     Route::get('/toggl/projects'          , ['as' => 'omg.toggl.projects','middleware' => 'auth', 'uses' => 'TogglProjectController@index'])->defaults('omg', true);
     Route::get('/toggl/projects/import'   , ['as' => 'omg.toggl.projects.import','middleware' => 'auth', 'uses' => 'TogglProjectController@import'])->defaults('omg', true);
+    Route::get('/toggl/projects/edit/{project}'   , ['as' => 'omg.toggl.projects.edit','middleware' => 'auth', 'uses' => 'TogglProjectController@edit'])->defaults('omg', true);
+    Route::post('/toggl/projects/save/{project}'   , ['as' => 'omg.toggl.projects.save','middleware' => 'auth', 'uses' => 'TogglProjectController@save'])->defaults('omg', true);
 
     Route::get('/toggl/tasks'             , ['as' => 'omg.toggl.tasks','middleware' => 'auth', 'uses' => 'TogglTaskController@index'])->defaults('omg', true);
     Route::get('/toggl/tasks/import'      , ['as' => 'omg.toggl.tasks.import','middleware' => 'auth', 'uses' => 'TogglTaskController@import'])->defaults('omg', true);

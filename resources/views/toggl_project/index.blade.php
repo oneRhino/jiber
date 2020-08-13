@@ -24,7 +24,13 @@
 						<th>Workspace</th>
 						<th>Client</th>
 						<th>Name</th>
+						@if ($omg)
+						<th>Clubhouse Project</th>
+						@endif
 						<th class="text-center">Active</th>
+						@if ($omg)
+						<th data-orderable="false"></th>
+						@endif
 					</thead>
 
 					<tbody>
@@ -33,7 +39,13 @@
 								<td>{{ $_project->workspace_name }}</td>
 								<td>{{ $_project->client_name }}</td>
 								<td>{{ $_project->name }}</td>
+								@if ($omg)
+								<td>{{ $_project->clubhouse_name ? $_project->clubhouse_name : 'No project related' }}</td>
+								@endif
 								<td class="text-center">{{ $_project->active ? 'Yes' : 'No' }}</td>
+								@if ($omg)
+								<td><a href={{ route('omg.toggl.projects.edit', ['project' => $_project->id]) }}>Edit</a></td>
+								@endif
 							</tr>
 						@endforeach
 					</tbody>

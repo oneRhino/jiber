@@ -30,7 +30,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{Auth, Config};
 use Illuminate\Routing\Redirector;
 use AJT\Toggl\TogglClient;
 use AJT\Toggl\ReportsClient;
@@ -56,15 +56,16 @@ class TogglController extends Controller
     /**
      * Connect into Toggl API
      */
-    public function toggl_connect($omg)
+    public function toggl_connect($omg = false)
     {
         if($omg){
-
+            $token = Config::get('toggl.omg_api_key');
+            $client  = TogglClient::factory(array('api_key' => $token, 'debug' => true));
         }
         else{
             $setting = Setting::find(Auth::user()->id);
             $token   = $setting->toggl;
-            $client  = TogglClient::factory(array('api_key' => $token));
+            $client  = TogglClient::factory(array('api_key' => $token, 'debug' => true));
         }
 
         return $client;

@@ -28,9 +28,11 @@
 
 namespace App\Http\Controllers;
 
-use App\{ClubhouseComment, ClubhouseEpic, ClubhouseStory, ClubhouseTask};
+use App\{ClubhouseComment, ClubhouseEpic, ClubhouseStory, ClubhouseTask, ClubhouseProject, ClubhouseStatus};
 use App\{RedmineClubhouseChange, RedmineClubhouseProject, RedmineClubhouseUser};
 use App\{RedmineJiraUser, RedmineProject, RedmineStatus, RedmineTracker};
+use App\TogglProject;
+use App\Http\Controllers\TogglTaskController;
 use App\{Setting, User};
 use Nshonda\Clubhouse;
 use Illuminate\Http\Request;
@@ -43,7 +45,6 @@ class ClubhouseController extends Controller {
      * Used by webhook, to hold redmine link object
      */
     private $redmine;
-
     /**
      * Content being processed by webhook
      */
@@ -498,7 +499,7 @@ class ClubhouseController extends Controller {
 
         try {
             $clubhouseDetails = $this->getStory($storyId);
-
+            $this->writeLog(print_r($clubhouseDetails, true));
             $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
                 ->where('third_party_project_id', $clubhouseDetails['project_id'])
                 ->first();
@@ -532,10 +533,9 @@ class ClubhouseController extends Controller {
                 $redmineCreateIssueObj['due_date'] = $this->getRedmineDueDate($clubhouseDetails['deadline']);
             }
 
-            $this->writeLog("redmineCreateIssueObj");
-            $this->writeLog($redmineCreateIssueObj);
 
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
+            $toggleApiResponse = $this->createTogglTask();
 
             if (! $redmineApiResponse) {
                 $this->writeLog("Missing API Response from Redmine");
@@ -543,7 +543,7 @@ class ClubhouseController extends Controller {
                 $this->errorEmail("Missing API Response from Redmine", print_r($redmineApiResponse, true));
             }
 
-            $this->createClubhouseStory($redmineApiResponse->id, $storyId);
+            $this->createClubhouseStory($redmineApiResponse->id, $toggleApiResponse->id, $storyId);
 
             $this->writeLog ("-- Missing story {$storyId} has been created on Redmine.");
 
@@ -618,6 +618,7 @@ class ClubhouseController extends Controller {
             $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
+    
 
     /**
      * Create a missing sub ticket on Redmine.
@@ -716,12 +717,132 @@ class ClubhouseController extends Controller {
     }
 
     /**
+     * Create a task on Toggl.
+     */
+    private function createTogglTask() {
+
+        try {
+            $clubhouseDetails = $this->content->actions[0];
+            if(isset($clubhouseDetails->project_id)){
+                $clubhouseProjectId = $clubhouseDetails->project_id;
+                $clubhouseProject = ClubhouseProject::where('clubhouse_id', $clubhouseDetails->project_id)->first();
+                $togglProjectObj = $clubhouseProject ? $clubhouseProject->togglProject : null;
+
+                if (!$togglProjectObj) {
+                    $this->writeLog ("Clubhouse project {$clubhouseDetails->project_id} is not mapped to any Toggl project.");
+                    die ("Clubhouse project {$clubhouseDetails->project_id} is not mapped to any Toggl project.");
+                }
+
+                $clubhouseDetailsAsArray = json_decode(json_encode($clubhouseDetails), TRUE);
+                $storyOwnerId = $this->getOwnerFromStory ($clubhouseDetailsAsArray);
+
+                $togglCreateTaskObj                     = array ();
+                $togglCreateTaskObj['pid']              = $togglProjectObj->toggl_id;
+                $togglCreateTaskObj['name']          = $clubhouseDetails->name;
+                if( isset($clubhouseDetails->estimate) )
+                {
+                    $togglCreateTaskObj['estimated_seconds'] = $this->convertClubhouseEstimateToToggl($clubhouseDetails->estimate);
+                }
+                $togglController = new TogglTaskController();
+                $togglApiResponse = $togglController->createTaskFromClubhouseAction($togglCreateTaskObj, true);
+                $this->writeLog ("-- Toggl task.");
+                return $togglApiResponse;
+            }
+            else{
+                $clubhouseDetails = $this->getStory($clubhouseDetails->id);
+                $clubhouseProject = ClubhouseProject::where('clubhouse_id', $clubhouseDetails['project_id'])->first();
+                $togglProjectObj = $clubhouseProject ? $clubhouseProject->togglProject : null;
+
+                if (!$togglProjectObj) {
+                    $this->writeLog ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
+                    die ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
+                }
+
+                $storyOwnerId = $this->getOwnerFromStory($clubhouseDetails);
+
+                $togglCreateTaskObj                     = array ();
+                $togglCreateTaskObj['pid']              = $togglProjectObj->toggl_id;
+                $togglCreateTaskObj['name']          = $clubhouseDetails['name'];
+                if( array_key_exists('estimate', $clubhouseDetails) )
+                {
+                    $togglCreateTaskObj['estimated_seconds'] = $this->convertClubhouseEstimateToToggl($clubhouseDetails['estimate']);
+                }
+                $togglController = new TogglTaskController();
+                $togglApiResponse = $togglController->createTaskFromClubhouseAction($togglCreateTaskObj, true);
+                $this->writeLog ("-- Toggl task.");
+                return $togglApiResponse;
+            }
+
+        } catch (\Exeption $e) {
+            $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
+        }
+    }
+
+    /**
+     * Update a task on Toggl.
+     */
+    private function updateTogglTask($clubhouseStoryObj, $content) {
+        $clubhouseDetails = $this->content->actions[0];
+        try {
+            $clubhouseDetails = $this->getStory($clubhouseDetails->id);
+            $clubhouseProject = ClubhouseProject::where('clubhouse_id', $clubhouseDetails['project_id'])->first();
+            $togglProjectObj = $clubhouseProject ? $clubhouseProject->togglProject : null;
+
+            if (!$togglProjectObj) {
+                $this->writeLog ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
+                die ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
+            }
+            $togglTaskId = $clubhouseStoryObj->toggl_task_id;
+            if($togglTaskId){
+                $togglApiResponse = $togglController->updateTask($togglTaskId, $content, true);
+            }
+            else{
+                $storyOwnerId = $this->getOwnerFromStory ($clubhouseDetails);
+
+                $togglCreateTaskObj                     = array ();
+                $togglCreateTaskObj['pid']              = $togglProjectObj->toggl_id;
+                $togglCreateTaskObj['name']          = $clubhouseDetails['name'];
+                if( array_key_exists('estimate', $clubhouseDetails) )
+                {
+                    $togglCreateTaskObj['estimated_seconds'] = $this->convertClubhouseEstimateToToggl($clubhouseDetails['estimate']);
+                }
+                $togglController = new TogglTaskController();
+                $togglApiResponse = $togglController->createTaskFromClubhouseAction($togglCreateTaskObj, true);
+                $clubhouseStoryObj->toggl_task_id = $togglApiResponse->id;
+                $clubhouseStoryObj->save();
+            }
+
+        } catch (\Exeption $e) {
+            $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
+        }
+    }
+
+    private function convertClubhouseEstimateToToggl($estimate){
+        $value = 0;
+        if(strlen($estimate) >= 1){
+            switch($estimate){
+                case 0: 
+            $value = 1800; break;
+                case 1: 
+                $value = 3600; break;
+                case 2: 
+                $value = 7200; break;
+                case 4: 
+                $value = 14400; break;
+                case 8: 
+                $value = 28800; break;
+            }
+        }
+        return $value;
+    }
+
+
+    /**
      * WEBHOOK: Creates the story as a issue on Redmine.
      */
     private function story_create($action) {
+
         // Trigger sync task on Toggl
-        // $TogglController = new TogglController;
-        // $TogglController->clubhouse_story_sync($this->content);
 
         $storyId = $action->id;
 
@@ -732,9 +853,10 @@ class ClubhouseController extends Controller {
             die ("-- Story {$storyId} already created on Redmine.");
         }
 
+        $toggleApiResponse = $this->createTogglTask();
         $redmineApiResponse = $this->createRedmineTicket();
 
-        $this->createClubhouseStory($redmineApiResponse->id, $storyId);
+        $this->createClubhouseStory($redmineApiResponse->id, $toggleApiResponse->id, $storyId);
 
         // Check if story has epics related to it and create them on Redmine as tickets.
         $storyReferences = $this->content->references;
@@ -780,6 +902,7 @@ class ClubhouseController extends Controller {
             ->first();
 
         $updatesAsIssueUpdateArray = array();
+        $updatesAsTaskUpdateArray = array();
         $listOfFollowersToAdd = array();
         $listOfFollowersToRemove = array();
 
@@ -797,6 +920,7 @@ class ClubhouseController extends Controller {
 
                 case "workflow_state_id":
                     $updatesAsIssueUpdateArray['status'] = $this->getRedmineStatus($changeOnStory->new);
+                    $updatesAsTaskUpdateArray['active'] = $this->getTogglStatus($changeOnStory->new);
                     break;
 
                 case "story_type":
@@ -815,6 +939,12 @@ class ClubhouseController extends Controller {
                         $updatesAsIssueUpdateArray['assigned_to_id'] = $redmine_user;
                     }
 
+                    break;
+                case "name":
+                    $updatesAsTaskUpdateArray['name'] = $changeOnStory->new;
+                    break;
+                case "estimate":
+                    $updatesAsTaskUpdateArray['estimated_seconds'] = $this->convertClubhouseEstimateToToggl($changeOnStory->new);
                     break;
 
                 // case "follower_ids":
@@ -851,6 +981,9 @@ class ClubhouseController extends Controller {
         }
 
         $this->writeLog ("-- Story {$storyId} was updated on Redmine.");
+        if ($updatesAsTaskUpdateArray) {
+            $this->updateTogglTask($clubhouseStoryObj, $updatesAsTaskUpdateArray);
+        }
         die ("-- Story {$storyId} was updated on Redmine.");
     }
 
@@ -866,9 +999,10 @@ class ClubhouseController extends Controller {
         $clubhouseTaskObj->save();
     }
 
-    private function createClubhouseStory($redmine_ticket_id, $story_id) {
+    private function createClubhouseStory($redmine_ticket_id, $toggl_task_id = null, $story_id) {
         $clubhouseStoryObj = new ClubhouseStory();
         $clubhouseStoryObj->redmine_ticket_id = $redmine_ticket_id;
+        $clubhouseStoryObj->toggle_task_id = $toggl_task_id;
         $clubhouseStoryObj->story_id          = $story_id;
         $clubhouseStoryObj->save();
     }
@@ -900,7 +1034,7 @@ class ClubhouseController extends Controller {
         $redmineApiResponse = $this->createRedmineSubTicket();
 
         $this->createClubhouseTask($redmineApiResponse->id, $taskId);
-        $this->createClubhouseStory($redmineApiResponse->id, $taskId);
+        $this->createClubhouseStory($redmineApiResponse->id, null, $taskId);
 
         $this->writeLog ("-- Task {$taskId} has been created on Redmine as a child ticket.");
         die ("-- Task {$taskId} has been created on Redmine as a child ticket.");
@@ -930,7 +1064,7 @@ class ClubhouseController extends Controller {
             $this->writeLog ("-- Task {$taskId} not created on Redmine. Creating...");
             $redmineApiResponse = $this->createMissingRedmineSubTicket($taskId);
 
-            $this->createClubhouseStory($redmineApiResponse->id, $taskId);
+            $this->createClubhouseStory($redmineApiResponse->id, null, $taskId);
 
             $this->writeLog ("-- Task {$taskId} created on Redmine.");
 
@@ -1110,7 +1244,6 @@ class ClubhouseController extends Controller {
             $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
         });
     }
-
     private function writeLog($message) {
         if (is_array($message)) {
             $message = print_r($message, true);
@@ -1153,6 +1286,16 @@ class ClubhouseController extends Controller {
         }
 
         return $redmine_status->redmine_name;
+    }
+
+    private function getTogglStatus(string $workflow_state_id):string {
+        $status = ClubhouseStatus::where('clubhouse_id', $workflow_state_id)->first();
+
+        if (!$status) {
+            throw new \Exception("Redmine Status related to Workflow State ID {$workflow_state_id} not found.");
+        }
+
+        return $status->type === 'done' ? false : true;
     }
 
     private function getRedmineTracker(string $story_type):string {
