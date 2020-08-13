@@ -36,7 +36,8 @@ class RedmineJiraUsersController extends Controller
     public function update(RedmineJiraUser $user, Request $request)
     {
         // Save user
-        $user->jira_name    = $request->jira_name;
+        $user->jira_name = $request->jira_name;
+        $user->jira_code = $request->jira_code;
         $user->save();
 
         $request->session()->flash('alert-success', 'User updated successfully!');
