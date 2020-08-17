@@ -107,9 +107,15 @@ class RedmineTicket extends Model
 			'story_type'        => $this->getClubhouseStoryType(),
 			'description'       => $this->getDescription(),
 			'requested_by_id'   => $this->getClubhouseAuthorID(),
-			'owner_ids'         => [$this->getClubhouseAssignedToIDs()],
 			'workflow_state_id' => $this->getClubhouseWorkflowStateID(),
 		];
+
+		// Only if ticket has a assignee
+		$assignee = $this->getClubhouseAssignedToIDs();
+
+		if ($assignee) {
+			$clubhouse_ticket['owner_ids'] = [$assignee];
+		}
 
 		// Only send deadline if set
 		$deadline = $this->getClubhouseDeadline();
