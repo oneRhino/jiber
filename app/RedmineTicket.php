@@ -143,7 +143,7 @@ class RedmineTicket extends Model
 	}
 
 	public function getClubhouseFormattedSubject():string {
-		$subject = "({$this->getAuthorName()}) {$this->getSubject()}";
+		$subject = $this->getSubject();
 
 		return $subject;
 	}
