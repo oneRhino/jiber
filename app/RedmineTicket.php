@@ -103,7 +103,7 @@ class RedmineTicket extends Model
 	public function getClubhouseTicketArray():array {
 		$clubhouse_ticket = [
 			'project_id'        => $this->getClubhouseProjectID(),
-			'name'              => $this->getClubhouseFormattedSubject(),
+			'name'              => $this->getSubject(),
 			'story_type'        => $this->getClubhouseStoryType(),
 			'description'       => $this->getDescription(),
 			'requested_by_id'   => $this->getClubhouseAuthorID(),
@@ -140,12 +140,6 @@ class RedmineTicket extends Model
 
 	private function getClubhouseProjectID():string {
 		return $this->RedmineProject->third_party_project_id;
-	}
-
-	public function getClubhouseFormattedSubject():string {
-		$subject = $this->getSubject();
-
-		return $subject;
 	}
 
 	public function getClubhouseStoryType():string {

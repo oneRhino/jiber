@@ -218,11 +218,14 @@ class ClubhouseController extends Controller {
                 die;
             }
 
+
             try {
                 if ($this->userLogin()) {
                     $RedmineController = new RedmineController;
                     $this->redmine = $RedmineController->connect();
 
+                    $this->writeLog("-- Calling {$method} method");
+                    $this->writeLog(print_r($action, true));
                     $this->$method($action);
                 }
             } catch (\Exception $e) {
@@ -610,6 +613,9 @@ class ClubhouseController extends Controller {
                 $redmineCreateIssueObj['due_date'] = $this->getRedmineDueDate($clubhouseDetails->deadline);
             }
 
+            $this->writeLog("-- Sending data to Redmine, to create ticket");
+            $this->writeLog(print_r($redmineCreateIssueObj, true));
+
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
 
             return $redmineApiResponse;
@@ -719,10 +725,6 @@ class ClubhouseController extends Controller {
      * WEBHOOK: Creates the story as a issue on Redmine.
      */
     private function story_create($action) {
-        // Trigger sync task on Toggl
-        // $TogglController = new TogglController;
-        // $TogglController->clubhouse_story_sync($this->content);
-
         $storyId = $action->id;
 
         // Check if story has been created
@@ -732,7 +734,12 @@ class ClubhouseController extends Controller {
             die ("-- Story {$storyId} already created on Redmine.");
         }
 
+        $this->writeLog("-- Story {$storyId} not created on Redmine.");
+
         $redmineApiResponse = $this->createRedmineTicket();
+
+        $this->writeLog("-- Redmine response:");
+        $this->writeLog(print_r($redmineApiResponse, true));
 
         $this->createClubhouseStory($redmineApiResponse->id, $storyId);
 
