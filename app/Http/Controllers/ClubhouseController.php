@@ -179,11 +179,15 @@ class ClubhouseController extends Controller {
         $json_content = $request->getContent();
 
         // On some calls, there is no content, so we'll ignore
-        if (empty($json_content)) die;
+        if (empty($json_content)) {
+            $this->writeLog('-- No JSON Content, ignore.');
+            die;
+        }
 
         $this->content = json_decode($json_content);
         if (!$this->content || json_last_error() !== JSON_ERROR_NONE) {
             if ($json_content) {
+                $this->writeLog('-- Invalid JSON Content, ignore.');
                 $this->invalidJSON($json_content);
                 die;
             }
@@ -192,10 +196,16 @@ class ClubhouseController extends Controller {
         // Run through all actions
         foreach ($this->content->actions as $action) {
             // Ignore "branch" actions
-            if ($action->entity_type == 'branch' || $action->action == 'branch') continue;
+            if ($action->entity_type == 'branch' || $action->action == 'branch') {
+                $this->writeLog('-- Branch call, ignore.');
+                continue;
+            }
 
             // Ignore pull request actions
-            if ($action->entity_type == 'pull-request' || $action->action == 'pull-request') continue;
+            if ($action->entity_type == 'pull-request' || $action->action == 'pull-request') {
+                $this->writeLog('-- Pull request call, ignore.');
+                continue;
+            }
 
             // Ignore updates from onerhinodev user (to avoid duplicates)
             if (!empty($this->content->member_id)) {
@@ -203,7 +213,7 @@ class ClubhouseController extends Controller {
                 $ignoredUserId = RedmineClubhouseUser::where('clubhouse_name', 'onerhinodev')->first();
 
                 if ($authorId == $ignoredUserId->clubhouse_user_permissions_id) {
-                    $this->writeLog ("-- Update from -onerhinodev- user, ignoring it.");
+                    $this->writeLog ("-- Update from -onerhinodev- user, ignore.");
                     die ("-- Update from -onerhinodev- user, ignoring it.");
                 }
             }
@@ -217,7 +227,6 @@ class ClubhouseController extends Controller {
                 $this->errorEmail($error, 'missing method error');
                 die;
             }
-
 
             try {
                 if ($this->userLogin()) {
@@ -286,6 +295,8 @@ class ClubhouseController extends Controller {
                 throw new \Exception("User '{$clubhouse_user_permissions_id}' not found. Please re-import clubhouse users.");
             }
 
+            $this->writeLog ("-- User found, get Redmine User");
+
             // Get redmine user
             $user = $this->getRedmineUser($user);
 
@@ -296,6 +307,7 @@ class ClubhouseController extends Controller {
         }
 
         // Connect on Redmine using this user
+        $this->writeLog ("-- Login");
         $request = new Request();
         $request->merge(['user' => $user]);
         $request->setUserResolver(function () use ($user) {
@@ -331,12 +343,14 @@ class ClubhouseController extends Controller {
             $redmine_user = 'admin';
         }
 
+        $this->writeLog ("-- Use Redmine '{$redmine_user}' user");
+
         // Get user settings
         $settings = Setting::where('redmine_user', $redmine_user)->first();
 
         if (!$settings) {
-			return false;
-            //throw new \Exception("Settings not found for {$redmine_user}.");
+            $this->writeLog ("-- Settings not found for Redmine '{$redmine_user}' user");
+            throw new \Exception("Settings not found for {$redmine_user}.");
         }
 
         $user = User::find($settings->id);
