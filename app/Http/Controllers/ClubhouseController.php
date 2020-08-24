@@ -516,6 +516,13 @@ class ClubhouseController extends Controller {
         try {
             $clubhouseDetails = $this->getStory($storyId);
 
+            if (empty($clubhouseDetails['project_id'])) {
+                $msg = "Clubhouse project not found inside story details: {$storyId}" . print_r($clubhouseDetails, true);
+                $this->writeLog($msg);
+                $this->errorEmail($msg);
+                die($msg);
+            }
+
             $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
                 ->where('third_party_project_id', $clubhouseDetails['project_id'])
                 ->first();
