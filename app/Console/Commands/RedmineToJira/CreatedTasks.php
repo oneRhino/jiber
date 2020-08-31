@@ -175,7 +175,8 @@ class CreatedTasks extends Command
 
             // If we weren't able to login, continue to next ticket
             if (!$Jira) {
-                $this->writeLog("Not able to login as {$_ticket['author']['name']}");
+                $this->writeLog("Not able to login on Jira as {$_ticket['author']['name']}");
+                $this->writeLog(print_r($_ticket, true));
                 continue;
             }
 
