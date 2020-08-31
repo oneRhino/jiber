@@ -173,6 +173,12 @@ class CreatedTasks extends Command
             // Connect into Jira
             $Jira = $JiraController->connect($request);
 
+            // If we weren't able to login, continue to next ticket
+            if (!$Jira) {
+                $this->writeLog("Not able to login as {$_ticket['author']['name']}");
+                continue;
+            }
+
             // Get Tracker/Type
             $tracker = RedmineTracker::where('redmine_name', $_ticket['tracker']['name'])->first();
 
