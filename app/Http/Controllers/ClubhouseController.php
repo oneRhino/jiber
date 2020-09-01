@@ -730,53 +730,31 @@ class ClubhouseController extends Controller {
 
                 if (!$togglProjectObj) {
                     $this->writeLog ("Clubhouse project {$clubhouseDetails->project_id} is not mapped to any Toggl project.");
-                    die ("Clubhouse project {$clubhouseDetails->project_id} is not mapped to any Toggl project.");
                 }
 
                 $clubhouseDetailsAsArray = json_decode(json_encode($clubhouseDetails), TRUE);
-                $storyOwnerId = $this->getOwnerFromStory ($clubhouseDetailsAsArray);
-
-                $togglCreateTaskObj                     = array ();
-                $togglCreateTaskObj['pid']              = $togglProjectObj->toggl_id;
-                $togglCreateTaskObj['name']          = $clubhouseDetails->name;
-                if( isset($clubhouseDetails->estimate) )
-                {
-                    $togglCreateTaskObj['estimated_seconds'] = $this->convertClubhouseEstimateToToggl($clubhouseDetails->estimate);
-                }
-                $togglController = new TogglTaskController();
-                $togglApiResponse = $togglController->createTaskFromClubhouseAction($togglCreateTaskObj, true);
-                $this->writeLog ("-- Toggl task.");
-                return $togglApiResponse;
             }
             else{
                 $clubhouseDetails = $this->getStory($clubhouseDetails->id);
+                $clubhouseDetails = json_decode(json_encode($clubhouseDetails), FALSE);
                 $clubhouseProject = ClubhouseProject::where('clubhouse_id', $clubhouseDetails['project_id'])->first();
                 $togglProjectObj = $clubhouseProject ? $clubhouseProject->togglProject : null;
 
                 if (!$togglProjectObj) {
                     $this->writeLog ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
-                    die ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
                 }
-
-                $storyOwnerId = $this->getOwnerFromStory($clubhouseDetails);
-
-                $togglCreateTaskObj                     = array ();
-                $togglCreateTaskObj['pid']              = $togglProjectObj->toggl_id;
-                $togglCreateTaskObj['name']          = $clubhouseDetails['name'];
-                if( array_key_exists('estimate', $clubhouseDetails) )
-                {
-                    $togglCreateTaskObj['estimated_seconds'] = $this->convertClubhouseEstimateToToggl($clubhouseDetails['estimate']);
-                }
+            }
+                $togglCreateTaskObj = $this->generateTogglTaskObj($togglProjectObj, $clubhouseDetails);
                 $togglController = new TogglTaskController();
                 $togglApiResponse = $togglController->createTaskFromClubhouseAction($togglCreateTaskObj, true);
                 $this->writeLog ("-- Toggl task.");
                 return $togglApiResponse;
-            }
 
         } catch (\Exeption $e) {
             $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
+    
 
     /**
      * Update a task on Toggl.
@@ -790,22 +768,13 @@ class ClubhouseController extends Controller {
 
             if (!$togglProjectObj) {
                 $this->writeLog ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
-                die ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
             }
             $togglTaskId = $clubhouseStoryObj->toggl_task_id;
             if($togglTaskId){
                 $togglApiResponse = $togglController->updateTask($togglTaskId, $content, true);
             }
             else{
-                $storyOwnerId = $this->getOwnerFromStory ($clubhouseDetails);
-
-                $togglCreateTaskObj                     = array ();
-                $togglCreateTaskObj['pid']              = $togglProjectObj->toggl_id;
-                $togglCreateTaskObj['name']          = $clubhouseDetails['name'];
-                if( array_key_exists('estimate', $clubhouseDetails) )
-                {
-                    $togglCreateTaskObj['estimated_seconds'] = $this->convertClubhouseEstimateToToggl($clubhouseDetails['estimate']);
-                }
+                $togglCreateTaskObj = $this->generateTogglTaskObj($togglProjectObj, $clubhouseDetails);
                 $togglController = new TogglTaskController();
                 $togglApiResponse = $togglController->createTaskFromClubhouseAction($togglCreateTaskObj, true);
                 $clubhouseStoryObj->toggl_task_id = $togglApiResponse->id;
@@ -815,6 +784,18 @@ class ClubhouseController extends Controller {
         } catch (\Exeption $e) {
             $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
+    }
+
+    private function generateTogglTaskObj($togglProjectObj, $clubhouseDetails){
+        $togglCreateTaskObj                     = array ();
+        $togglCreateTaskObj['pid']              = $togglProjectObj->toggl_id;
+        $togglCreateTaskObj['name']          = $clubhouseDetails['name'];
+        if( array_key_exists('estimate', $clubhouseDetails) )
+            {
+                $togglCreateTaskObj['estimated_seconds'] = $this->convertClubhouseEstimateToToggl($clubhouseDetails['estimate']);
+            }
+        return $togglCreateTaskObj;
+
     }
 
     private function convertClubhouseEstimateToToggl($estimate){
