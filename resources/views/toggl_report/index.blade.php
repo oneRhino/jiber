@@ -8,7 +8,7 @@
             @if (count($workspaces) > 0)
                 <div class="panel panel-default">
                     <div class="panel-body">
-                        <form action="{{ $omg ? route('omg.toggl.reports.save') : route('user.toggl.reports.save') }}" method="post">
+                        <form action="{{ route('user.toggl.reports.save') }}" method="post">
                             {{ csrf_field() }}
 
                             <fieldset class="form-group">
