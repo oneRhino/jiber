@@ -730,6 +730,7 @@ class ClubhouseController extends Controller {
 
                 if (!$togglProjectObj) {
                     $this->writeLog ("Clubhouse project {$clubhouseDetails->project_id} is not mapped to any Toggl project.");
+                    return null;
                 }
 
                 $clubhouseDetailsAsArray = json_decode(json_encode($clubhouseDetails), TRUE);
@@ -742,6 +743,7 @@ class ClubhouseController extends Controller {
 
                 if (!$togglProjectObj) {
                     $this->writeLog ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
+                    return null;
                 }
             }
                 $togglCreateTaskObj = $this->generateTogglTaskObj($togglProjectObj, $clubhouseDetails);
@@ -768,6 +770,7 @@ class ClubhouseController extends Controller {
 
             if (!$togglProjectObj) {
                 $this->writeLog ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
+                return null;
             }
             $togglTaskId = $clubhouseStoryObj->toggl_task_id;
             if($togglTaskId){
