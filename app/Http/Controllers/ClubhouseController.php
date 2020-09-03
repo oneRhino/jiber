@@ -565,6 +565,7 @@ class ClubhouseController extends Controller {
                 $this->writeLog("Missing API Response from Redmine");
                 $this->writeLog($redmineApiResponse);
                 $this->errorEmail("Missing API Response from Redmine", print_r($redmineApiResponse, true));
+                throw new \Exception("Missing API Response from Redmine");
             }
 
             $this->createClubhouseStory($redmineApiResponse->id, $storyId);
