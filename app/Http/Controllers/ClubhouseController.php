@@ -1069,6 +1069,11 @@ class ClubhouseController extends Controller {
         try {
             $redmineTicketId = $redmineClubhouseStoryObj->redmine_ticket_id;
 
+            // Check if it's a reaction, if so, ignore
+            if (!empty($contentActions[0]->changes->reactions)) {
+                return;
+            }
+
             $commentBody = "Clubhouse: h3. Comment Update: \n\n";
             $commentBody .= "h4. OLD Body: \n\n";
             $commentBody .= $contentActions[0]->changes->text->old;
