@@ -567,8 +567,12 @@ class ClubhouseController extends Controller {
                 $this->errorEmail("Missing API Response from Redmine", print_r($redmineApiResponse, true));
                 throw new \Exception("Missing API Response from Redmine");
             }
-
-            $this->createClubhouseStory($redmineApiResponse->id, $toggleApiResponse->id, $storyId);
+            if($toggleApiResponse){
+                $this->createClubhouseStory($redmineApiResponse->id, $toggleApiResponse->id, $storyId);
+            }
+            else{
+                $this->createClubhouseStory($redmineApiResponse->id, null, $storyId);
+            }
 
             $this->writeLog ("-- Missing story {$storyId} has been created on Redmine.");
 
@@ -873,7 +877,12 @@ class ClubhouseController extends Controller {
         $this->writeLog("-- Redmine response:");
         $this->writeLog(print_r($redmineApiResponse, true));
 
-        $this->createClubhouseStory($redmineApiResponse->id, $toggleApiResponse->id, $storyId);
+        if($toggleApiResponse){
+            $this->createClubhouseStory($redmineApiResponse->id, $toggleApiResponse->id, $storyId);
+        }
+        else{
+            $this->createClubhouseStory($redmineApiResponse->id, null, $storyId);
+        }
 
         // Check if story has epics related to it and create them on Redmine as tickets.
         $storyReferences = $this->content->references;
