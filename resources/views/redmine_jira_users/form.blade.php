@@ -21,6 +21,11 @@
                             <input type="text" name="jira_name" id="jira_name" class="form-control" @if($user)value="{{ $user->jira_name }}"@endif>
                         </fieldset>
 
+                        <fieldset class="form-group">
+                            <label for="jira_code">Jira Code</label>
+                            <input type="text" name="jira_code" id="jira_code" class="form-control" @if($user)value="{{ $user->jira_code }}"@endif>
+                        </fieldset>
+
                         <button type="submit" class="btn btn-primary">Save</button>
                     </form>
                 </div>

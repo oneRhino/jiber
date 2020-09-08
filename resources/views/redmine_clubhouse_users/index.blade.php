@@ -4,10 +4,12 @@
   <div class="container">
     <div class="col-sm-offset-2 col-sm-8">
 	    <h1>Redmine/Clubhouse Users</h1>
-        
+
         <div class="panel panel-default">
             <div class="panel-heading">
-                <a href="{{ action('RedmineClubhouseUsersController@import') }}" class="btn btn-default"><i class="glyphicon glyphicon-import"></i> Get Clubhouse Users</a>
+                <a href="{{ action('RedmineClubhouseUsersController@import') }}" class="btn btn-default"><i class="glyphicon glyphicon-import"></i> Import/Merge Clubhouse Users</a>
+
+                <a href="{{ action('RedmineJiraUsersController@import') }}" class="btn btn-default"><i class="glyphicon glyphicon-import"></i> Import/Merge Redmine Users</a>
             </div>
         </div>
 

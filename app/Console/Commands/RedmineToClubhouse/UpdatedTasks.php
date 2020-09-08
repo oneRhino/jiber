@@ -100,16 +100,16 @@ class UpdatedTasks extends Command
 
 					// $this->writeLog($_Journal);
 
-					// Send ticket comments to Clubhouse, even if they were already sent.
-					if ($_Journal->getNotes()) {
-						// $this->writeLog("- Has notes");
-						$this->sendClubhouseStoryComment($RedmineTicket, $_Journal);
-					}
-
 					// Check if change was already sent to Clubhouse.
 					if ($_Journal->isSentToClubhouse()) {
 						// $this->writeLog('-- Change already sent to Clubhouse: ' . $_Journal->getID() . ', CONTINUE');
 						continue;
+					}
+
+					// Send ticket comments to Clubhouse
+					if ($_Journal->getNotes()) {
+						// $this->writeLog("- Has notes");
+						$this->sendClubhouseStoryComment($RedmineTicket, $_Journal);
 					}
 
 					// $this->writeLog("- Not sent yet");

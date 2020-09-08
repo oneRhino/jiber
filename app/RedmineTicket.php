@@ -103,13 +103,19 @@ class RedmineTicket extends Model
 	public function getClubhouseTicketArray():array {
 		$clubhouse_ticket = [
 			'project_id'        => $this->getClubhouseProjectID(),
-			'name'              => $this->getClubhouseFormattedSubject(),
+			'name'              => $this->getSubject(),
 			'story_type'        => $this->getClubhouseStoryType(),
 			'description'       => $this->getDescription(),
 			'requested_by_id'   => $this->getClubhouseAuthorID(),
-			'owner_ids'         => [$this->getClubhouseAssignedToIDs()],
 			'workflow_state_id' => $this->getClubhouseWorkflowStateID(),
 		];
+
+		// Only if ticket has a assignee
+		$assignee = $this->getClubhouseAssignedToIDs();
+
+		if ($assignee) {
+			$clubhouse_ticket['owner_ids'] = [$assignee];
+		}
 
 		// Only send deadline if set
 		$deadline = $this->getClubhouseDeadline();
@@ -134,12 +140,6 @@ class RedmineTicket extends Model
 
 	private function getClubhouseProjectID():string {
 		return $this->RedmineProject->third_party_project_id;
-	}
-
-	public function getClubhouseFormattedSubject():string {
-		$subject = "({$this->getAuthorName()}) {$this->getSubject()}";
-
-		return $subject;
 	}
 
 	public function getClubhouseStoryType():string {
@@ -193,11 +193,19 @@ class RedmineTicket extends Model
 	private function getClubhouseUserIDByRedmineName($redmine_name):string {
 		$redmine_clubhouse_user = RedmineClubhouseUser::where('redmine_names', 'like', "%{$redmine_name}%")->first();
 
+		if (!$redmine_clubhouse_user) {
+			throw new Exception("Redmine/Clubhouse User {$redmine_name} not found.");
+		}
+
 		return $redmine_clubhouse_user->clubhouse_user_id;
 	}
 
 	private function getClubhousePermissionsIDByRedmineName($redmine_name):string {
 		$redmine_clubhouse_user = RedmineClubhouseUser::where('redmine_names', 'like', "%{$redmine_name}%")->first();
+
+		if (!$redmine_clubhouse_user) {
+			throw new Exception("Redmine/Clubhouse User {$redmine_name} not found.");
+		}
 
 		return $redmine_clubhouse_user->clubhouse_user_permissions_id;
 	}

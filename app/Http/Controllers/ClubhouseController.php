@@ -180,11 +180,15 @@ class ClubhouseController extends Controller {
         $json_content = $request->getContent();
 
         // On some calls, there is no content, so we'll ignore
-        if (empty($json_content)) die;
+        if (empty($json_content)) {
+            $this->writeLog('-- No JSON Content, ignore.');
+            die;
+        }
 
         $this->content = json_decode($json_content);
         if (!$this->content || json_last_error() !== JSON_ERROR_NONE) {
             if ($json_content) {
+                $this->writeLog('-- Invalid JSON Content, ignore.');
                 $this->invalidJSON($json_content);
                 die;
             }
@@ -193,10 +197,16 @@ class ClubhouseController extends Controller {
         // Run through all actions
         foreach ($this->content->actions as $action) {
             // Ignore "branch" actions
-            if ($action->entity_type == 'branch' || $action->action == 'branch') continue;
+            if ($action->entity_type == 'branch' || $action->action == 'branch') {
+                $this->writeLog('-- Branch call, ignore.');
+                continue;
+            }
 
             // Ignore pull request actions
-            if ($action->entity_type == 'pull-request' || $action->action == 'pull-request') continue;
+            if ($action->entity_type == 'pull-request' || $action->action == 'pull-request') {
+                $this->writeLog('-- Pull request call, ignore.');
+                continue;
+            }
 
             // Ignore updates from onerhinodev user (to avoid duplicates)
             if (!empty($this->content->member_id)) {
@@ -204,7 +214,7 @@ class ClubhouseController extends Controller {
                 $ignoredUserId = RedmineClubhouseUser::where('clubhouse_name', 'onerhinodev')->first();
 
                 if ($authorId == $ignoredUserId->clubhouse_user_permissions_id) {
-                    $this->writeLog ("-- Update from -onerhinodev- user, ignoring it.");
+                    $this->writeLog ("-- Update from -onerhinodev- user, ignore.");
                     die ("-- Update from -onerhinodev- user, ignoring it.");
                 }
             }
@@ -224,6 +234,8 @@ class ClubhouseController extends Controller {
                     $RedmineController = new RedmineController;
                     $this->redmine = $RedmineController->connect();
 
+                    $this->writeLog("-- Calling {$method} method");
+                    $this->writeLog(print_r($action, true));
                     $this->$method($action);
                 }
             } catch (\Exception $e) {
@@ -284,6 +296,8 @@ class ClubhouseController extends Controller {
                 throw new \Exception("User '{$clubhouse_user_permissions_id}' not found. Please re-import clubhouse users.");
             }
 
+            $this->writeLog ("-- User found, get Redmine User");
+
             // Get redmine user
             $user = $this->getRedmineUser($user);
 
@@ -294,6 +308,7 @@ class ClubhouseController extends Controller {
         }
 
         // Connect on Redmine using this user
+        $this->writeLog ("-- Login");
         $request = new Request();
         $request->merge(['user' => $user]);
         $request->setUserResolver(function () use ($user) {
@@ -329,12 +344,14 @@ class ClubhouseController extends Controller {
             $redmine_user = 'admin';
         }
 
+        $this->writeLog ("-- Use Redmine '{$redmine_user}' user");
+
         // Get user settings
         $settings = Setting::where('redmine_user', $redmine_user)->first();
 
         if (!$settings) {
-			return false;
-            //throw new \Exception("Settings not found for {$redmine_user}.");
+            $this->writeLog ("-- Settings not found for Redmine '{$redmine_user}' user");
+            throw new \Exception("Settings not found for {$redmine_user}.");
         }
 
         $user = User::find($settings->id);
@@ -499,7 +516,14 @@ class ClubhouseController extends Controller {
 
         try {
             $clubhouseDetails = $this->getStory($storyId);
-            $this->writeLog(print_r($clubhouseDetails, true));
+
+            if (empty($clubhouseDetails['project_id'])) {
+                $msg = "Clubhouse project not found inside story details: {$storyId}" . print_r($clubhouseDetails, true);
+                $this->writeLog($msg);
+                $this->errorEmail($msg);
+                die($msg);
+            }
+
             $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
                 ->where('third_party_project_id', $clubhouseDetails['project_id'])
                 ->first();
@@ -541,6 +565,7 @@ class ClubhouseController extends Controller {
                 $this->writeLog("Missing API Response from Redmine");
                 $this->writeLog($redmineApiResponse);
                 $this->errorEmail("Missing API Response from Redmine", print_r($redmineApiResponse, true));
+                throw new \Exception("Missing API Response from Redmine");
             }
 
             $this->createClubhouseStory($redmineApiResponse->id, $toggleApiResponse->id, $storyId);
@@ -610,6 +635,9 @@ class ClubhouseController extends Controller {
                 $redmineCreateIssueObj['due_date'] = $this->getRedmineDueDate($clubhouseDetails->deadline);
             }
 
+            $this->writeLog("-- Sending data to Redmine, to create ticket");
+            $this->writeLog(print_r($redmineCreateIssueObj, true));
+
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
 
             return $redmineApiResponse;
@@ -618,7 +646,7 @@ class ClubhouseController extends Controller {
             $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
-    
+
 
     /**
      * Create a missing sub ticket on Redmine.
@@ -756,7 +784,7 @@ class ClubhouseController extends Controller {
             $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
     }
-    
+
 
     /**
      * Update a task on Toggl.
@@ -805,15 +833,15 @@ class ClubhouseController extends Controller {
         $value = 0;
         if(strlen($estimate) >= 1){
             switch($estimate){
-                case 0: 
+                case 0:
             $value = 1800; break;
-                case 1: 
+                case 1:
                 $value = 3600; break;
-                case 2: 
+                case 2:
                 $value = 7200; break;
-                case 4: 
+                case 4:
                 $value = 14400; break;
-                case 8: 
+                case 8:
                 $value = 28800; break;
             }
         }
@@ -837,8 +865,13 @@ class ClubhouseController extends Controller {
             die ("-- Story {$storyId} already created on Redmine.");
         }
 
+        $this->writeLog("-- Story {$storyId} not created on Redmine.");
+
         $toggleApiResponse = $this->createTogglTask();
         $redmineApiResponse = $this->createRedmineTicket();
+
+        $this->writeLog("-- Redmine response:");
+        $this->writeLog(print_r($redmineApiResponse, true));
 
         $this->createClubhouseStory($redmineApiResponse->id, $toggleApiResponse->id, $storyId);
 
@@ -880,6 +913,14 @@ class ClubhouseController extends Controller {
         }
 
         $storyObj = $this->getStory($storyId);
+
+        if (empty($storyObj['project_id'])) {
+            $msg = "-- Empty project ID: Story ID {$storyId}; Story data ".print_r($storyObj, true);
+            $this->writeLog($msg);
+            $this->errorEmail($msg);
+            die($msg);
+        }
+
         $projectId = $storyObj['project_id'];
         $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
             ->where('third_party_project_id', $projectId)
@@ -893,6 +934,10 @@ class ClubhouseController extends Controller {
         foreach ($changesOnStory as $key => $changeOnStory) {
 
             switch ($key) {
+                case "name":
+                    $updatesAsIssueUpdateArray['subject'] = $changeOnStory->new;
+                    break;
+
                 case "description":
                     $newDescription = $changeOnStory->new;
                     $newDescription .= "\n\n* Clubhouse URL: {$this->clubhouseBaseUrl}/story/{$storyId}";
@@ -959,6 +1004,9 @@ class ClubhouseController extends Controller {
         */
 
         if ($updatesAsIssueUpdateArray) {
+            $this->writeLog("Changes to be sent to redmine:");
+            $this->writeLog(print_r($updatesAsIssueUpdateArray, true));
+
             $redmineTicketId = $clubhouseStoryObj->redmine_ticket_id;
             $redmineTicket = $this->redmine->issue->update($redmineTicketId, $updatesAsIssueUpdateArray);
             $this->setAllRedmineChangesAsSent($redmineTicketId, $storyId);
@@ -1142,6 +1190,11 @@ class ClubhouseController extends Controller {
 
         try {
             $redmineTicketId = $redmineClubhouseStoryObj->redmine_ticket_id;
+
+            // Check if it's a reaction, if so, ignore
+            if (!empty($contentActions[0]->changes->reactions)) {
+                return;
+            }
 
             $commentBody = "Clubhouse: h3. Comment Update: \n\n";
             $commentBody .= "h4. OLD Body: \n\n";

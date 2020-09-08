@@ -94,12 +94,12 @@ trait Clubhouse {
 			// Check if comment was successfully sent
 			if (!array_key_exists('id', $clubhouse_comment)) {
 				$this->writeLog("-- Story {$ClubhouseStory->story_id} was not found on Clubhouse, comment not sent: " . $RedmineJournalEntry->getID());
-				throw new Exception("-- Story {$ClubhouseStory->story_id} was not found on Clubhouse, comment not sent: " . $RedmineJournalEntry->getID());
+				throw new \Exception("-- Story {$ClubhouseStory->story_id} was not found on Clubhouse, comment not sent: " . $RedmineJournalEntry->getID());
 			}
 
 			$this->saveClubhouseChange($RedmineJournalEntry->getID(), $clubhouse_comment['id']);
 
-			$this->writeLog('-- Comment sent to Clubhouse: ' . $journal_entry['id']);
+			$this->writeLog('-- Comment sent to Clubhouse: ' . $RedmineJournalEntry->getID());
 		} else {
 			$this->writeLog('-- Comment NOT sent to Clubhouse due to Debug Mode');
 			return;

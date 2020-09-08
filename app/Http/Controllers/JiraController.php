@@ -604,6 +604,17 @@ class JiraController extends Controller
                 if (isset($content->comment->author->accountId)) {
                     $redmine_jira_user = RedmineJiraUser::where('jira_code', $content->comment->author->accountId)->first();
 
+                    if (!$redmine_jira_user) {
+                        Log::error('-- ERROR - User not found on Jiber ('.$content->comment->author->accountId.')');
+                        $errors = [
+                            'User not found:',
+                            'app/Http/Controllers/JiraController.php:605',
+                            print_r($content->comment->author, true)
+                        ];
+                        $this->errorEmail($errors);
+                        die;
+                    }
+
                     $user = Setting::where('jira', $redmine_jira_user->jira_name);
                 } elseif (isset($content->comment->author->key)) {
                     $user = Setting::where('jira', $content->comment->author->key)->first();
