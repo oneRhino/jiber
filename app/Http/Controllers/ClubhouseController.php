@@ -765,11 +765,10 @@ class ClubhouseController extends Controller {
                     return null;
                 }
 
-                $clubhouseDetailsAsArray = json_decode(json_encode($clubhouseDetails), TRUE);
+                $clubhouseDetailsAsArray = (array) $clubhouseDetails;
             }
             else{
                 $clubhouseDetails = (array) $this->getStory($clubhouseDetails->id);
-                $clubhouseDetails = json_decode(json_encode($clubhouseDetails), FALSE);
                 $clubhouseProject = ClubhouseProject::where('clubhouse_id', $clubhouseDetails['project_id'])->first();
                 $togglProjectObj = $clubhouseProject ? $clubhouseProject->togglProject : null;
 
