@@ -515,7 +515,7 @@ class ClubhouseController extends Controller {
     private function createMissingRedmineTicket ($storyId) {
 
         try {
-            $clubhouseDetails = $this->getStory($storyId);
+            $clubhouseDetails = (array) $this->getStory($storyId);
 
             if (empty($clubhouseDetails['project_id'])) {
                 $msg = "Clubhouse project not found inside story details: {$storyId}" . print_r($clubhouseDetails, true);
@@ -661,7 +661,7 @@ class ClubhouseController extends Controller {
             $clubhouseDetails = $this->content->actions[0];
             $storyId = $this->content->actions[0]->story_id;
 
-            $storyDetails = $this->getStory($storyId);
+            $storyDetails = (array) $this->getStory($storyId);
 
             $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
             $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
@@ -711,7 +711,7 @@ class ClubhouseController extends Controller {
             $clubhouseDetails = $this->content->actions[0];
             $storyId = $this->content->actions[1]->id;
 
-            $storyDetails = $this->getStory($storyId);
+            $storyDetails =(array) $this->getStory($storyId);
 
             $clubhouseStoryObj = ClubhouseStory::where('story_id', $storyId)->first();
             $redmineProjectObj = RedmineProject::where('third_party', 'clubhouse')
@@ -768,7 +768,7 @@ class ClubhouseController extends Controller {
                 $clubhouseDetailsAsArray = json_decode(json_encode($clubhouseDetails), TRUE);
             }
             else{
-                $clubhouseDetails = $this->getStory($clubhouseDetails->id);
+                $clubhouseDetails = (array) $this->getStory($clubhouseDetails->id);
                 $clubhouseDetails = json_decode(json_encode($clubhouseDetails), FALSE);
                 $clubhouseProject = ClubhouseProject::where('clubhouse_id', $clubhouseDetails['project_id'])->first();
                 $togglProjectObj = $clubhouseProject ? $clubhouseProject->togglProject : null;
@@ -796,7 +796,7 @@ class ClubhouseController extends Controller {
     private function updateTogglTask($clubhouseStoryObj, $content) {
         $clubhouseDetails = $this->content->actions[0];
         try {
-            $clubhouseDetails = $this->getStory($clubhouseDetails->id);
+            $clubhouseDetails = (array) $this->getStory($clubhouseDetails->id);
             $this->writeLog("Clubhouse Story Details:");
             $this->writeLog(print_r($clubhouseDetails, true));
             $clubhouseProject = ClubhouseProject::where('clubhouse_id', $clubhouseDetails['project_id'])->first();
@@ -926,7 +926,7 @@ class ClubhouseController extends Controller {
             }
         }
 
-        $storyObj = $this->getStory($storyId);
+        $storyObj = (array) $this->getStory($storyId);
 
         if (empty($storyObj['project_id'])) {
             $msg = "-- Empty project ID: Story ID {$storyId}; Story data ".print_r($storyObj, true);
