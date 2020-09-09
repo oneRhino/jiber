@@ -570,14 +570,14 @@ class JiraController extends Controller
 
         // Check if project is supported by Jiber
         if (empty($_GET['project'])) {
-            Log::debug('-- ERROR - Project not found (GET)');
+            Log::debug('-- ERROR - Project not found (Empty GET parameter)');
             die;
         }
 
         $project = RedmineProject::where('third_party_project_name', $_GET['project'])->where('third_party', 'jira')->first();
 
         if (!$project) {
-            Log::debug('-- ERROR - Project not found');
+            Log::debug('-- ERROR - Project '.$_GET['project'].' not found');
             die;
         }
         Log::debug('- Project Found');
