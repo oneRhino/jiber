@@ -1288,7 +1288,7 @@ class ClubhouseController extends Controller {
         Mail::send('emails.error', ['errors' => $errors], function ($m) use($subject) {
             $m->from('jiber@onerhino.com', 'Jiber');
             // $m->cc(['a.bastos@onerhino.com', 'pablo@onerhino.com', 'billy@onerhino.com']);
-            $m->cc(['j.cortela@onerhino.com']);
+            $m->cc(['natali.h@onerhino.com']);
             $m->to('thaissa@onerhino.com', 'Thaissa Mendes')->subject($subject);
         });
     }
