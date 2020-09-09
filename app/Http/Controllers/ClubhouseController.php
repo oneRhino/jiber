@@ -793,6 +793,8 @@ class ClubhouseController extends Controller {
         $clubhouseDetails = $this->content->actions[0];
         try {
             $clubhouseDetails = $this->getStory($clubhouseDetails->id);
+            $this->writeLog("Clubhouse Story Details:");
+            $this->writeLog(print_r($clubhouseDetails, true));
             $clubhouseProject = ClubhouseProject::where('clubhouse_id', $clubhouseDetails['project_id'])->first();
             $togglProjectObj = $clubhouseProject ? $clubhouseProject->togglProject : null;
 
