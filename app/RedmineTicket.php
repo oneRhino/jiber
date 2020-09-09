@@ -165,7 +165,7 @@ class RedmineTicket extends Model
 		$clubhouse_status_ids = $this->getStatus()->clubhouse_ids;
 
 		if (!$clubhouse_status_ids) {
-			throw new Exception("Status {$this->getStatus()->redmine_name} not linked to a Clubhouse Status");
+			throw new \Exception("Status {$this->getStatus()->redmine_name} not linked to a Clubhouse Status");
 		}
 
 		// Then, get clubhouse workflow id, based on project id
@@ -194,7 +194,7 @@ class RedmineTicket extends Model
 		$redmine_clubhouse_user = RedmineClubhouseUser::where('redmine_names', 'like', "%{$redmine_name}%")->first();
 
 		if (!$redmine_clubhouse_user) {
-			throw new Exception("Redmine/Clubhouse User {$redmine_name} not found.");
+			throw new \Exception("Redmine/Clubhouse User {$redmine_name} not found.");
 		}
 
 		return $redmine_clubhouse_user->clubhouse_user_id;
@@ -204,7 +204,7 @@ class RedmineTicket extends Model
 		$redmine_clubhouse_user = RedmineClubhouseUser::where('redmine_names', 'like', "%{$redmine_name}%")->first();
 
 		if (!$redmine_clubhouse_user) {
-			throw new Exception("Redmine/Clubhouse User {$redmine_name} not found.");
+			throw new \Exception("Redmine/Clubhouse User {$redmine_name} not found.");
 		}
 
 		return $redmine_clubhouse_user->clubhouse_user_permissions_id;
@@ -216,7 +216,7 @@ class RedmineTicket extends Model
 		$clubhouse_workflow = ClubhouseWorkflow::where('project_ids', 'like', '%'.$project_id.'%')->first();
 
 		if (!$clubhouse_workflow) {
-			throw new Exception("Clubhouse Project {$project_id} not found on Clubhouse Workflows. Please re-import Clubhouse Statuses.");
+			throw new \Exception("Clubhouse Project {$project_id} not found on Clubhouse Workflows. Please re-import Clubhouse Statuses.");
 		}
 
 		return $clubhouse_workflow->clubhouse_id;
