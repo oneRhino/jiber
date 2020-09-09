@@ -111,6 +111,10 @@ class ClubhouseController extends Controller {
 
         $projectsAsArray = $clubhouseApi->get($apiUri);
 
+        if (!empty($projectsAsArray['message']) && $projectsAsArray['message'] == 'Resource not found.') {
+            throw new \Exception("Clubhouse story {$storyId} not found.");
+        }
+
         return $projectsAsArray;
     }
 
