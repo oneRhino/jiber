@@ -823,16 +823,19 @@ class ClubhouseController extends Controller {
         }
     }
 
-    private function generateTogglTaskObj($togglProjectObj, $clubhouseDetails){
-        $togglCreateTaskObj                     = array ();
-        $togglCreateTaskObj['pid']              = $togglProjectObj->toggl_id;
-        $togglCreateTaskObj['name']          = $clubhouseDetails['name'];
-        if( array_key_exists('estimate', $clubhouseDetails) )
-            {
-                $togglCreateTaskObj['estimated_seconds'] = $this->convertClubhouseEstimateToToggl($clubhouseDetails['estimate']);
-            }
-        return $togglCreateTaskObj;
+    private function generateTogglTaskObj($togglProjectObj, $clubhouseDetails) {
+        $clubhouseDetails = (array) $clubhouseDetails;
 
+        $togglCreateTaskObj         = array ();
+        $togglCreateTaskObj['pid']  = $togglProjectObj->toggl_id;
+        $togglCreateTaskObj['name'] = $clubhouseDetails['name'];
+
+        if( array_key_exists('estimate', $clubhouseDetails) )
+        {
+            $togglCreateTaskObj['estimated_seconds'] = $this->convertClubhouseEstimateToToggl($clubhouseDetails['estimate']);
+        }
+
+        return $togglCreateTaskObj;
     }
 
     private function convertClubhouseEstimateToToggl($estimate){
