@@ -563,7 +563,7 @@ class ClubhouseController extends Controller {
 
 
             $redmineApiResponse = $this->redmine->issue->create($redmineCreateIssueObj);
-            // $toggleApiResponse = $this->createTogglTask();
+            $toggleApiResponse = $this->createTogglTask();
 
             if (! $redmineApiResponse) {
                 $this->writeLog("Missing API Response from Redmine");
@@ -571,12 +571,12 @@ class ClubhouseController extends Controller {
                 $this->errorEmail("Missing API Response from Redmine", print_r($redmineApiResponse, true));
                 throw new \Exception("Missing API Response from Redmine");
             }
-            // if($toggleApiResponse){
-            //     $this->createClubhouseStory($redmineApiResponse->id, $toggleApiResponse->id, $storyId);
-            // }
-            // else{
+            if($toggleApiResponse){
+                $this->createClubhouseStory($redmineApiResponse->id, $toggleApiResponse->id, $storyId);
+            }
+            else{
                 $this->createClubhouseStory($redmineApiResponse->id, null, $storyId);
-            // }
+            }
 
             $this->writeLog ("-- Missing story {$storyId} has been created on Redmine.");
 
