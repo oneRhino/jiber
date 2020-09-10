@@ -634,6 +634,12 @@ class ClubhouseController extends Controller {
             $redmineCreateIssueObj['assigned_to_id']   = $this->getRedmineAssignToUser($storyOwnerId);
             $redmineCreateIssueObj['description']      = $clubhouseDetails->description;
             $redmineCreateIssueObj['watcher_user_ids'] = [1, 105, 89]; // Billy, Alejandro, Pablo
+            $redmineCreateIssueObj['custom_fields']    = [
+                'custom_value' => [
+                    'id'    => Config::get('redmine.jira_id'),
+                    'value' => $clubhouseDetails->id,
+                ]
+            ];
             $redmineCreateIssueObj['description']     .= "\n\n* Clubhouse URL: {$this->clubhouseBaseUrl}/story/{$clubhouseDetails->id}";
             if ($redmineProjectObj->content) {
                 $redmineCreateIssueObj['description'] .= "\n\n" . $redmineProjectObj->content;
