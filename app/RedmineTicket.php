@@ -91,6 +91,10 @@ class RedmineTicket extends Model
 		return $this->journals;
 	}
 
+	public function getCHID():string {
+		return $this->ch_id;
+	}
+
 	public function getRelatedClubhouseStory() {
 		return ClubhouseStory::where('redmine_ticket_id', $this->getID())->first();
 	}

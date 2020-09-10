@@ -79,11 +79,11 @@ trait Redmine {
 
 	private function saveJiraIDAndDescription(RedmineTicket $ticket) {
 		$data = array(
-			'description' => htmlentities($ticket->description, ENT_XML1),
+			'description' => htmlentities($ticket->getDescription(), ENT_XML1),
 			'custom_fields' => array(
 				'custom_value' => array(
 					'id'    => Config::get('redmine.jira_id'),
-					'value' => $ticket->ch_id
+					'value' => $ticket->getCHID()
 				)
 			)
 		);
