@@ -76,4 +76,18 @@ trait Redmine {
 		$ticket_details = $this->redmine->issue->show($ticket_id, $args);
 		return $ticket_details['issue']['journals'];
 	}
+
+	private function saveJiraIDAndDescription(RedmineTicket $ticket) {
+		$data = array(
+			'description' => htmlentities($ticket->description, ENT_XML1),
+			'custom_fields' => array(
+				'custom_value' => array(
+					'id'    => Config::get('redmine.jira_id'),
+					'value' => $ticket->ch_id
+				)
+			)
+		);
+
+		$this->redmine->issue->update($ticket->getID(), $data);
+	}
 }

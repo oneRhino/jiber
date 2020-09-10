@@ -23,6 +23,7 @@ class RedmineTicket extends Model
 	private $description;
 	private $status;
 	private $journals        = [];
+	private $ch_id;
 	private $RedmineProject;
 
 	/**
@@ -138,16 +139,8 @@ class RedmineTicket extends Model
 		$ClubhouseStory->save();
 	}
 
-	private function getClubhouseProjectID():string {
-		return $this->RedmineProject->third_party_project_id;
-	}
-
 	public function getClubhouseStoryType():string {
 		return $this->getTracker()->clubhouse_name;
-	}
-
-	private function getClubhouseAuthorID():string {
-		return $this->getClubhousePermissionsIDByRedmineName($this->getAuthorName());
 	}
 
 	public function getClubhouseAssignedToIDs() {
@@ -188,6 +181,31 @@ class RedmineTicket extends Model
 		$due_date->modify('+1 day');
 
 		return date_format($due_date, 'Y-m-d');
+	}
+
+	public function addExtraDataToDescription($ch_id) {
+		$this->ch_id = $ch_id;
+
+		$this->addProjectContentToDescription();
+		$this->addClubhouseURLToDescription();
+	}
+
+	private function addProjectContentToDescription() {
+		if ($RedmineProject->content) {
+			$this->description .= "\n" . $RedmineProject->content;
+		}
+	}
+
+	private function addClubhouseURLToDescription() {
+		$this->description .= "\n* Clubhouse URL: https://app.clubhouse.io/flypilot/story/{$this->ch_id}";
+	}
+
+	private function getClubhouseProjectID():string {
+		return $this->RedmineProject->third_party_project_id;
+	}
+
+	private function getClubhouseAuthorID():string {
+		return $this->getClubhousePermissionsIDByRedmineName($this->getAuthorName());
 	}
 
 	private function getClubhouseUserIDByRedmineName($redmine_name):string {
