@@ -87,6 +87,8 @@ trait Redmine {
 				)
 			)
 		);
+		$this->writeLog("Send extra data to ticket {$ticket->getID()}:");
+		$this->writeLog(print_r($data, true));
 
 		$this->redmine->issue->update($ticket->getID(), $data);
 	}
