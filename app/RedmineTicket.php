@@ -191,8 +191,8 @@ class RedmineTicket extends Model
 	}
 
 	private function addProjectContentToDescription() {
-		if ($RedmineProject->content) {
-			$this->description .= "\n" . $RedmineProject->content;
+		if ($this->RedmineProject->content) {
+			$this->description .= "\n" . $this->RedmineProject->content;
 		}
 	}
 
