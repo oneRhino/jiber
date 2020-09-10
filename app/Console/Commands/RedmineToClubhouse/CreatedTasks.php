@@ -107,6 +107,10 @@ class CreatedTasks extends Command
 					$ticket->linkWithClubhouseStory($clubhouse_created['id']);
 
 					$this->writeLog("-- Task {$ticket->getId()} saved on database.");
+
+					$ticket->addExtraDataToDescription($clubhouse_created['id']);
+
+					$this->saveJiraIDAndDescription($ticket);
 				}
 
 			} catch (\Exeption $e) {
