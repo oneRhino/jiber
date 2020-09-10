@@ -4,7 +4,7 @@ namespace App\Console\Commands\RedmineToClubhouse;
 
 use App\{RedmineProject, RedmineTicket, User};
 use App\Http\Controllers\RedmineController;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{Auth, Config};
 use Illuminate\Http\Request;
 
 trait Redmine {
