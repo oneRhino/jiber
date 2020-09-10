@@ -106,11 +106,60 @@ class TogglTaskController extends TogglController
         return back()->withInput();
     }
 
+
+    /**
+     * Import tasks from Toggl
+     */
+    public function importWithoutMessage($omg = false)
+    {
+        $toggl_client = $this->toggl_connect($omg);
+        $user = Auth::user()->id;
+        if($omg){
+            $user = null;
+        }
+        $workspaces = TogglWorkspace::getAllByUserID($user);
+
+        foreach ($workspaces as $_workspace) {
+            $tasks = $toggl_client->getWorkspaceTasks(array('id' => (int)$_workspace->toggl_id, 'active' => 'both'));
+
+            if ($tasks) {
+                foreach ($tasks as $_task) {
+                    $task      =      TogglTask::getByTogglID($_task['id'] , $user);
+                    $workspace = TogglWorkspace::getByTogglID($_task['wid'], $user);
+                    $project   =   TogglProject::getByTogglID($_task['pid'], $user);
+
+                    if (!$workspace || !$project) {
+                        continue;
+                    }
+
+                    if (!$task) {
+                        $task           = new TogglTask();
+                        $task->user_id  = $user;
+                        $task->toggl_id = $_task['id'];
+                    }
+
+                    $task->workspace_id = $workspace->id;
+                    $task->project_id   = $project->id;
+                    $task->active       = $_task['active'];
+                    $task->estimated    = $_task['estimated_seconds'];
+                    if (isset($_task['tracked_seconds'])) {
+                        $task->tracked  = $_task['tracked_seconds'];
+                    }
+                    $task->name         = $_task['name'];
+                    $task->save();
+                }
+            }
+
+            sleep(1); // Toggl only allows 1 request per second
+        }
+
+        return back()->withInput();
+    }
+
     public function createTaskFromClubhouseAction($content, $omg = false){
         $toggl_client = $this->toggl_connect($omg);
         $task = $toggl_client->createTask(['task'=> $content]);
-        $request = new Request();
-        $this->import($request, $omg);
+        $this->importWithoutMessage($omg);
         $togglTask = TogglTask::where('toggl_id', $task->id)->first();
         return $togglTask;
     }
@@ -118,8 +167,7 @@ class TogglTaskController extends TogglController
     public function updateTask($id, $content, $omg = false){
         $toggl_client = $this->toggl_connect($omg);
         $task = $toggl_client->updateTask(['id' => $id, 'task'=> $content]);
-        $request = new Request();
-        $this->import($request, $omg);
+        $this->importWithoutMessage($omg);
         $togglTask = TogglTask::where('toggl_id', $task->id)->first();
         return $togglTask;
     }

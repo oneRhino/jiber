@@ -837,7 +837,7 @@ class ClubhouseController extends Controller {
 
         $togglCreateTaskObj         = array ();
         $togglCreateTaskObj['pid']  = $togglProjectObj->toggl_id;
-        $togglCreateTaskObj['name'] = $clubhouseDetails['name'];
+        $togglCreateTaskObj['name'] = $clubhouseDetails['id'] . ' - ' . $clubhouseDetails['name'];
 
         if( array_key_exists('estimate', $clubhouseDetails) )
         {
