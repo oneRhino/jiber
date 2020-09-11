@@ -158,11 +158,13 @@ class TogglTaskController extends TogglController
 
     public function createTaskFromClubhouseAction($content, $omg = false){
         $toggl_client = $this->toggl_connect($omg);
-        $task = $toggl_client->createTask(['task'=> $content]);
-        $this->importWithoutMessage($omg);
-        $togglTask = null;
-        if($task){
-            $togglTask = TogglTask::where('toggl_id', $task->id)->first();
+        $togglTask = TogglTask::where('name', $content['name'])->first();
+        if(!$togglTask){
+            $task = $toggl_client->createTask(['task'=> $content]);
+            $this->importWithoutMessage($omg);
+            if($task){
+                $togglTask = TogglTask::where('toggl_id', $task->id)->first();
+            }
         }
         return $togglTask;
     }
@@ -170,9 +172,8 @@ class TogglTaskController extends TogglController
     public function updateTask($id, $content, $omg = false){
         $toggl_client = $this->toggl_connect($omg);
         $task = $toggl_client->updateTask(['id' => $id, 'task'=> $content]);
-        $this->importWithoutMessage($omg);
-        $togglTask = null;
-        if($task){
+        $togglTask = TogglTask::where('name', $content['name'])->first();
+        if(!$togglTask && $task){
             $togglTask = TogglTask::where('toggl_id', $task->id)->first();
         }
         return $togglTask;
