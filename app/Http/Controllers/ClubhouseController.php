@@ -802,10 +802,9 @@ class ClubhouseController extends Controller {
     /**
      * Update a task on Toggl.
      */
-    private function updateTogglTask($clubhouseStoryObj, $content) {
-        $clubhouseDetails = $this->content->actions[0];
+    private function updateTogglTask($clubhouseStoryObj, $content, $action) {
         try {
-            $clubhouseDetails = (array) $this->getStory($clubhouseDetails->id);
+            $clubhouseDetails = (array) $this->getStory($action->id);
             $this->writeLog("Clubhouse Story Details:");
             $this->writeLog(print_r($clubhouseDetails, true));
             $clubhouseProject = ClubhouseProject::where('clubhouse_id', $clubhouseDetails['project_id'])->first();
@@ -917,7 +916,6 @@ class ClubhouseController extends Controller {
      * This method works for stories and epics (they are treated as a stories after created)
      */
     private function story_update($action) {
-
         $storyId = $action->id;
         $changesOnStory = $action->changes;
 
@@ -1037,7 +1035,7 @@ class ClubhouseController extends Controller {
 
         $this->writeLog ("-- Story {$storyId} was updated on Redmine.");
         if ($updatesAsTaskUpdateArray) {
-            $this->updateTogglTask($clubhouseStoryObj, $updatesAsTaskUpdateArray);
+            $this->updateTogglTask($clubhouseStoryObj, $updatesAsTaskUpdateArray, $action);
         }
         die ("-- Story {$storyId} was updated on Redmine.");
     }
@@ -1066,7 +1064,6 @@ class ClubhouseController extends Controller {
      * WEBHOOK: Creates the task as a child issue on Redmine.
      */
     private function story_task_create($action) {
-
         $storyId = $this->content->actions[1]->id;
         $taskId  = $this->content->actions[0]->id;
 
