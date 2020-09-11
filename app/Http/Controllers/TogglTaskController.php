@@ -160,7 +160,10 @@ class TogglTaskController extends TogglController
         $toggl_client = $this->toggl_connect($omg);
         $task = $toggl_client->createTask(['task'=> $content]);
         $this->importWithoutMessage($omg);
-        $togglTask = TogglTask::where('toggl_id', $task->id)->first();
+        $togglTask = null;
+        if($task){
+            $togglTask = TogglTask::where('toggl_id', $task->id)->first();
+        }
         return $togglTask;
     }
 
@@ -168,7 +171,10 @@ class TogglTaskController extends TogglController
         $toggl_client = $this->toggl_connect($omg);
         $task = $toggl_client->updateTask(['id' => $id, 'task'=> $content]);
         $this->importWithoutMessage($omg);
-        $togglTask = TogglTask::where('toggl_id', $task->id)->first();
+        $togglTask = null;
+        if($task){
+            $togglTask = TogglTask::where('toggl_id', $task->id)->first();
+        }
         return $togglTask;
     }
 }
