@@ -815,12 +815,12 @@ class ClubhouseController extends Controller {
                 return null;
             }
             $togglTaskId = $clubhouseStoryObj->toggl_task_id;
+            $togglController = new TogglTaskController();
             if($togglTaskId){
                 $togglApiResponse = $togglController->updateTask($togglTaskId, $content, true);
             }
             else{
                 $togglCreateTaskObj = $this->generateTogglTaskObj($togglProjectObj, $clubhouseDetails);
-                $togglController = new TogglTaskController();
                 $togglApiResponse = $togglController->createTaskFromClubhouseAction($togglCreateTaskObj, true);
                 $clubhouseStoryObj->toggl_task_id = $togglApiResponse->id;
                 $clubhouseStoryObj->save();
