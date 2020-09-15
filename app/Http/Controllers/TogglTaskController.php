@@ -163,7 +163,7 @@ class TogglTaskController extends TogglController
             $task = $toggl_client->createTask(['task'=> $content]);
             $this->importWithoutMessage($omg);
             if($task){
-                $togglTask = TogglTask::where('toggl_id', $task->id)->first();
+                $togglTask = TogglTask::where('toggl_id', $task['id'])->first();
             }
         }
         return $togglTask;
@@ -174,7 +174,7 @@ class TogglTaskController extends TogglController
         $task = $toggl_client->updateTask(['id' => $id, 'task'=> $content]);
         $togglTask = TogglTask::where('name', $content['name'])->first();
         if(!$togglTask && $task){
-            $togglTask = TogglTask::where('toggl_id', $task->id)->first();
+            $togglTask = TogglTask::where('toggl_id', $task['id'])->first();
         }
         return $togglTask;
     }
