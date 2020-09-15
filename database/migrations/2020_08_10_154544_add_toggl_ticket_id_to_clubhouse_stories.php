@@ -14,9 +14,9 @@ class AddTogglTicketIdToClubhouseStories extends Migration
     public function up()
     {
         Schema::table('clubhouse_stories', function (Blueprint $table) {
-            $table->integer('toggle_task_id')->nullable()->unsigned();
+            $table->integer('toggl_task_id')->nullable()->unsigned();
             //Remove the following line if disable foreign key
-            $table->foreign('toggle_task_id')->references('id')->on('toggl_tasks');
+            $table->foreign('toggl_task_id')->references('id')->on('toggl_tasks');
         });
     }
 
@@ -28,8 +28,8 @@ class AddTogglTicketIdToClubhouseStories extends Migration
     public function down()
     {
         Schema::table('clubhouse_stories', function (Blueprint $table) {
-            $table->dropForeign(['clubhouse_stories_toggle_task_id_foreign']);
-            $table->dropColumn('toggle_task_id');
+            $table->dropForeign(['clubhouse_stories_toggl_task_id_foreign']);
+            $table->dropColumn('toggl_task_id');
         });
     }
 }

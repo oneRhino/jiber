@@ -1055,7 +1055,7 @@ class ClubhouseController extends Controller {
     private function createClubhouseStory($redmine_ticket_id, $toggl_task_id = null, $story_id) {
         $clubhouseStoryObj = new ClubhouseStory();
         $clubhouseStoryObj->redmine_ticket_id = $redmine_ticket_id;
-        $clubhouseStoryObj->toggle_task_id = $toggl_task_id;
+        $clubhouseStoryObj->toggl_task_id = $toggl_task_id;
         $clubhouseStoryObj->story_id          = $story_id;
         $clubhouseStoryObj->save();
     }
