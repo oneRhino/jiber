@@ -822,7 +822,9 @@ class ClubhouseController extends Controller {
             else{
                 $togglCreateTaskObj = $this->generateTogglTaskObj($togglProjectObj, $clubhouseDetails);
                 $togglApiResponse = $togglController->createTaskFromClubhouseAction($togglCreateTaskObj, true);
-                $clubhouseStoryObj->toggl_task_id = $togglApiResponse->id;
+                if($togglApiResponse){
+                    $clubhouseStoryObj->toggl_task_id = $togglApiResponse->id;
+                }
                 $clubhouseStoryObj->save();
             }
 
