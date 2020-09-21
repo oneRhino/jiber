@@ -153,9 +153,9 @@ class TogglReportController extends TogglController
                 $toggl_entry             = new TogglTimeEntry();
                 $toggl_entry->id         = $entry->id;
                 $toggl_entry->toggl_id   = $_data['id'];
-                $toggl_entry->client_id  = $client->id;
-                $toggl_entry->project_id = ($project ? $project->id : null);
-                $toggl_entry->task_id    = ($task ? $task->id : null);
+                $toggl_entry->client_id  = $client->id ?? null;
+                $toggl_entry->project_id = $project->id ?? null;
+                $toggl_entry->task_id    = $task->id ?? null;
                 $toggl_entry->save();
             }
         }
