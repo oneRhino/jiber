@@ -198,17 +198,16 @@ class ClubhouseController extends Controller {
             }
         }
 
+        $ignored_actions = ['branch', 'pull-request', 'reaction'];
+
         // Run through all actions
         foreach ($this->content->actions as $action) {
-            // Ignore "branch" actions
-            if ($action->entity_type == 'branch' || $action->action == 'branch') {
-                $this->writeLog('-- Branch call, ignore.');
-                continue;
-            }
-
-            // Ignore pull request actions
-            if ($action->entity_type == 'pull-request' || $action->action == 'pull-request') {
-                $this->writeLog('-- Pull request call, ignore.');
+            // Some actions should be ignored
+            if (
+                in_array($action->entity_type, $ignored_actions) ||
+                in_array($action->action, $ignored_actions)
+            ) {
+                $this->writeLog("-- {$action->entity_type} {$action->action} call, ignored.");
                 continue;
             }
 
