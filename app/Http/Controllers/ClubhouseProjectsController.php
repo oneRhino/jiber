@@ -23,8 +23,6 @@ class ClubhouseProjectsController extends Controller
         $newClubhouseProjects = 0;
 
         foreach ($projectsAsArray as $project) {
-
-
             // Ignore ARCHIVED projects.
             if ($project['archived']) {
                 continue;
@@ -36,6 +34,8 @@ class ClubhouseProjectsController extends Controller
                 $newClubhouseProjects++;
                 $projectObj = new ClubhouseProject();
                 $projectObj->clubhouse_id = $project['id'];
+                $projectObj->clubhouse_name = $project['name'];
+            } else {
                 $projectObj->clubhouse_name = $project['name'];
             }
 
