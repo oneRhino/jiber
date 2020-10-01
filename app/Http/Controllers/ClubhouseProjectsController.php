@@ -42,6 +42,9 @@ class ClubhouseProjectsController extends Controller
             $projectObj->save();
         }
 
+        // Import statuses too
+        (new ClubhouseStatusesController)->import($request);
+
         $request->session()->flash('alert-success', "All projects have been imported successfully! New Clubhouse projects: {$newClubhouseProjects}");
 
         return back()->withInput();
