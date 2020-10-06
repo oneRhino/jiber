@@ -1346,7 +1346,7 @@ class ClubhouseController extends Controller {
         return $redmine_status->redmine_name;
     }
 
-    private function getTogglStatus(string $workflow_state_id):string {
+    private function getTogglStatus(string $workflow_state_id):bool {
         $status = ClubhouseStatus::where('clubhouse_id', $workflow_state_id)->first();
 
         if (!$status) {
