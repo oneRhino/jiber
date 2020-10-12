@@ -804,8 +804,8 @@ class ClubhouseController extends Controller {
     private function updateTogglTask($clubhouseStoryObj, $content, $action) {
         try {
             $clubhouseDetails = (array) $this->getStory($action->id);
-            $this->writeLog("Clubhouse Story Details:");
-            $this->writeLog(print_r($clubhouseDetails, true));
+            // $this->writeLog("Clubhouse Story Details:");
+            // $this->writeLog(print_r($clubhouseDetails, true));
             $clubhouseProject = ClubhouseProject::where('clubhouse_id', $clubhouseDetails['project_id'])->first();
             $togglProjectObj = $clubhouseProject ? $clubhouseProject->togglProject : null;
 
@@ -1010,7 +1010,7 @@ class ClubhouseController extends Controller {
         $this->writeLog ("-- Story {$storyId} was updated on Redmine.");
 
         if ($updatesAsTaskUpdateArray) {
-            $this->writeLog("Changes to be sent to redmine:");
+            $this->writeLog("Changes to be sent to Toggl:");
             $this->writeLog(print_r($updatesAsTaskUpdateArray, true));
             $this->updateTogglTask($clubhouseStoryObj, $updatesAsTaskUpdateArray, $action);
             $this->writeLog ("-- Story {$storyId} was updated on Toggl.");
