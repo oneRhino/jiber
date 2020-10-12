@@ -958,7 +958,7 @@ class ClubhouseController extends Controller {
             switch ($key) {
                 case "name":
                     $updatesAsIssueUpdateArray['subject'] = $changeOnStory->new;
-                    $updatesAsTaskUpdateArray['name'] = $changeOnStory->new;
+                    $updatesAsTaskUpdateArray['name'] = $storyId . ' - ' . $changeOnStory->new;
                     break;
 
                 case "description":
