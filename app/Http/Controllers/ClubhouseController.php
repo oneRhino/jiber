@@ -958,6 +958,7 @@ class ClubhouseController extends Controller {
             switch ($key) {
                 case "name":
                     $updatesAsIssueUpdateArray['subject'] = $changeOnStory->new;
+                    $updatesAsTaskUpdateArray['name'] = $changeOnStory->new;
                     break;
 
                 case "description":
@@ -991,39 +992,12 @@ class ClubhouseController extends Controller {
                     }
 
                     break;
-                case "name":
-                    $updatesAsTaskUpdateArray['name'] = $changeOnStory->new;
-                    break;
+
                 case "estimate":
                     $updatesAsTaskUpdateArray['estimated_seconds'] = $this->convertClubhouseEstimateToToggl($changeOnStory->new);
                     break;
-
-                // case "follower_ids":
-                //     if (isset($changeOnStory->adds)) {
-                //         foreach ($changeOnStory->adds as $followerId) {
-                //             $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
-                //             $listOfFollowersToAdd = json_decode($followersRedmineIds->redmine_names, TRUE);
-                //         }
-                //     }
-                //     if (isset($changeOnStory->removes)) {
-                //         foreach ($changeOnStory->removes as $followerId) {
-                //             $followersRedmineIds = RedmineClubhouseUser::where('clubhouse_user_id', $followerId)->first();
-                //             $listOfFollowersToRemove = json_decode($followersRedmineIds->redmine_names, TRUE);
-                //         }
-                //     }
-                //     break;
             }
         }
-
-        /* NOTE: Not in use so far, API returns FALSE, don't know why yet.
-        // Add follow users to ticket
-        if ($listOfFollowersToAdd)
-            $this->addFollowersToIssue ($clubhouseStoryObj->redmine_ticket_id, $listOfFollowersToAdd);
-
-        // Remove follow users from ticket
-        if ($listOfFollowersToRemove)
-            $this->removeFollowersFromIssue ($clubhouseStoryObj->redmine_ticket_id, $listOfFollowersToRemove);
-        */
 
         if ($updatesAsIssueUpdateArray) {
             $this->writeLog("Changes to be sent to redmine:");
@@ -1033,12 +1007,16 @@ class ClubhouseController extends Controller {
             $redmineTicket = $this->redmine->issue->update($redmineTicketId, $updatesAsIssueUpdateArray);
             $this->setAllRedmineChangesAsSent($redmineTicketId, $storyId);
         }
-
         $this->writeLog ("-- Story {$storyId} was updated on Redmine.");
+
         if ($updatesAsTaskUpdateArray) {
+            $this->writeLog("Changes to be sent to redmine:");
+            $this->writeLog(print_r($updatesAsTaskUpdateArray, true));
             $this->updateTogglTask($clubhouseStoryObj, $updatesAsTaskUpdateArray, $action);
+            $this->writeLog ("-- Story {$storyId} was updated on Toggl.");
         }
-        die ("-- Story {$storyId} was updated on Redmine.");
+
+        die;
     }
 
     private function story_delete() {
