@@ -813,7 +813,7 @@ class ClubhouseController extends Controller {
                 $this->writeLog ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
                 return null;
             }
-            $togglTaskId = $clubhouseStoryObj->toggl_task_id;
+            $togglTaskId = $clubhouseStoryObj->toggl_task->toggl_id;
             $togglController = new TogglTaskController();
             if($togglTaskId){
                 $togglApiResponse = $togglController->updateTask($togglTaskId, $content, true);
