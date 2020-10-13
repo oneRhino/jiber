@@ -813,20 +813,25 @@ class ClubhouseController extends Controller {
                 $this->writeLog ("Clubhouse project {$clubhouseDetails['project_id']} is not mapped to any Toggl project.");
                 return null;
             }
-            $togglTaskId = $clubhouseStoryObj->toggl_task->toggl_id;
-            $togglController = new TogglTaskController();
-            if($togglTaskId){
-                $togglApiResponse = $togglController->updateTask($togglTaskId, $content, true);
-            }
-            else{
-                $togglCreateTaskObj = $this->generateTogglTaskObj($togglProjectObj, $clubhouseDetails);
-                $togglApiResponse = $togglController->createTaskFromClubhouseAction($togglCreateTaskObj, true);
-                if($togglApiResponse){
-                    $clubhouseStoryObj->toggl_task_id = $togglApiResponse->id;
-                }
-                $clubhouseStoryObj->save();
+
+            if ($clubhouseStoryObj->toggl_task) {
+                $togglTaskId = $clubhouseStoryObj->toggl_task->toggl_id;
+
+                $togglController = new TogglTaskController();
             }
 
+            if (!empty($togglTaskId)) {
+                $togglApiResponse = $togglController->updateTask($togglTaskId, $content, true);
+            } else {
+                $togglCreateTaskObj = $this->generateTogglTaskObj($togglProjectObj, $clubhouseDetails);
+                $togglApiResponse = $togglController->createTaskFromClubhouseAction($togglCreateTaskObj, true);
+            }
+
+            if (!empty($togglApiResponse)) {
+                $clubhouseStoryObj->toggl_task_id = $togglApiResponse->id;
+            }
+
+            $clubhouseStoryObj->save();
         } catch (\Exeption $e) {
             $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
