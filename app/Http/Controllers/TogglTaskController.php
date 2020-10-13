@@ -171,11 +171,17 @@ class TogglTaskController extends TogglController
 
     public function updateTask($id, $content, $omg = false){
         $toggl_client = $this->toggl_connect($omg);
+
         $task = $toggl_client->updateTask(['id' => $id, 'task'=> $content]);
-        $togglTask = TogglTask::where('name', $content['name'])->first();
-        if(!$togglTask && $task){
+
+        if (!empty($content['name'])) {
+            $togglTask = TogglTask::where('name', $content['name'])->first();
+        }
+
+        if (empty($togglTask) && $task && !empty($task['id'])) {
             $togglTask = TogglTask::where('toggl_id', $task['id'])->first();
         }
-        return $togglTask;
+
+        return $togglTask ?? false;
     }
 }
