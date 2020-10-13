@@ -821,17 +821,22 @@ class ClubhouseController extends Controller {
             }
 
             if (!empty($togglTaskId)) {
+                $this->writeLog("Update Toggl Task {$togglTaskId}");
                 $togglApiResponse = $togglController->updateTask($togglTaskId, $content, true);
             } else {
+                $this->writeLog("Create Toggl Task");
                 $togglCreateTaskObj = $this->generateTogglTaskObj($togglProjectObj, $clubhouseDetails);
+                $this->writeLog(print_r($togglCreateTaskObj, true));
                 $togglApiResponse = $togglController->createTaskFromClubhouseAction($togglCreateTaskObj, true);
+                $this->writeLog("Toggl API Response:");
+                $this->writeLog(print_r($togglApiResponse, true));
             }
 
             if (!empty($togglApiResponse)) {
+                $this->writeLog("Update CH Story Object, set Toggl Task ID: {$togglApiResponse->id}");
                 $clubhouseStoryObj->toggl_task_id = $togglApiResponse->id;
+                $clubhouseStoryObj->save();
             }
-
-            $clubhouseStoryObj->save();
         } catch (\Exeption $e) {
             $this->errorEmail($e->getMessage() . '<br>Trace: ' . $e->getTraceAsString());
         }
