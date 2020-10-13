@@ -816,9 +816,9 @@ class ClubhouseController extends Controller {
 
             if ($clubhouseStoryObj->toggl_task) {
                 $togglTaskId = $clubhouseStoryObj->toggl_task->toggl_id;
-
-                $togglController = new TogglTaskController();
             }
+
+            $togglController = new TogglTaskController();
 
             if (!empty($togglTaskId)) {
                 $this->writeLog("Update Toggl Task {$togglTaskId}");
