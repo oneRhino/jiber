@@ -181,7 +181,7 @@ class UpdatedTasks extends Command
                                 if (empty($_detail['new_value'])) {
                                     $this->writeLog("Missing new_value parameter from details:");
                                     $this->writeLog(print_r($_detail, true));
-                                    breeak;
+                                    break;
                                 }
 
                                 $this->jiraAssignee($created_on, $created_by, $_detail['new_value']);
