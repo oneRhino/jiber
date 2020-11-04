@@ -95,8 +95,16 @@ class TogglProjectController extends TogglController
                     $project->workspace_id = $workspace->id;
 
                     if (isset($_project['cid'])) {
-                        $project->client_id = TogglClient::getByTogglID($_project['cid'], $user)->id;
+                        // Check if client exists
+                        $client = TogglClient::getByTogglID($_project['cid'], $user);
+
+                        if (!$client) {
+                            continue;
+                        }
+
+                        $project->client_id = $client->id;
                     }
+
                     $project->active = $_project['active'];
                     $project->name   = $_project['name'];
                     $project->save();
