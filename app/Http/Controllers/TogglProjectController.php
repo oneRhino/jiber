@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright 2016 Thaissa Mendes
  *
@@ -43,10 +42,9 @@ class TogglProjectController extends TogglController
      */
     public function index($omg = false)
     {
-        if($omg){
+        if ($omg) {
             $projects = TogglProject::getAllByUserID(null);
-        }
-        else{
+        } else {
             $projects = TogglProject::getAllByUserID(Auth::user()->id);
         }
 
@@ -63,17 +61,29 @@ class TogglProjectController extends TogglController
     {
         $toggl_client = $this->toggl_connect($omg);
         $user = Auth::user()->id;
-        if($omg){
+        if ($omg) {
             $user = null;
         }
 
         $workspaces = TogglWorkspace::getAllByUserID($user);
 
         foreach ($workspaces as $_workspace) {
-            $projects = $toggl_client->GetWorkspaceProjects(array('id' => (int)$_workspace->toggl_id, 'active' => 'both'));
+            $projects = $toggl_client->GetWorkspaceProjects(
+                array(
+                    'id'     => (int)$_workspace->toggl_id,
+                    'active' => 'both'
+                )
+            );
 
             if ($projects) {
                 foreach ($projects as $_project) {
+                    // Check if workspace exists, otherwise ignore client
+                    $workspace = TogglWorkspace::getByTogglID($_project['wid'], $user);
+
+                    if (!$workspace) {
+                        continue;
+                    }
+
                     $project = TogglProject::getByTogglID($_project['id'], $user);
 
                     if (!$project) {
@@ -81,7 +91,9 @@ class TogglProjectController extends TogglController
                         $project->user_id  = $user;
                         $project->toggl_id = $_project['id'];
                     }
-                    $project->workspace_id = TogglWorkspace::getByTogglID($_project['wid'], $user)->id;
+
+                    $project->workspace_id = $workspace->id;
+
                     if (isset($_project['cid'])) {
                         $project->client_id = TogglClient::getByTogglID($_project['cid'], $user)->id;
                     }
@@ -117,19 +129,18 @@ class TogglProjectController extends TogglController
      */
     public function save(TogglProject $project, Request $request, $omg = false)
     {
-        if($request->clubhouse_project !== '0'){
+        if ($request->clubhouse_project !== '0') {
             $clubhouse_project = ClubhouseProject::find($request->clubhouse_project);
             $project->clubhouse_id = $clubhouse_project->id;
             $project->save();
-        }
-        else{
+        } else {
             $project->clubhouse_id = null;
             $project->save();
         }
-        if($omg){
+
+        if ($omg) {
             return redirect()->route('omg.toggl.projects');
-        }
-        else{
+        } else {
             return redirect()->route('user.toggl.projects');
         }
     }

@@ -41,10 +41,9 @@ class TogglClientController extends TogglController
      */
     public function index($omg = false)
     {
-        if($omg){
+        if ($omg) {
             $clients = TogglClient::getAllByUserID(null);
-        }
-        else{
+        } else {
             $clients = TogglClient::getAllByUserID(Auth::user()->id);
         }
 
@@ -62,7 +61,7 @@ class TogglClientController extends TogglController
         // Connect into Toggl
         $toggl_client = $this->toggl_connect($omg);
         $user = Auth::user()->id;
-        if($omg){
+        if ($omg) {
             $user = null;
         }
 
@@ -71,17 +70,25 @@ class TogglClientController extends TogglController
 
         if ($clients) {
             foreach ($clients as $_client) {
+                // Check if workspace exists, otherwise ignore client
+                $workspace = TogglWorkspace::getByTogglID($_client['wid'], $user);
+
+                if (!$workspace) {
+                    continue;
+                }
+
                 // Check if client already exists - if so, only update information
                 $client = TogglClient::getByTogglID($_client['id'], $user);
 
                 if (!$client) {
                     $client           = new TogglClient();
                     $client->toggl_id = $_client['id'];
-                    if(!$omg){
-                    $client->user_id  = $client;
+                    if (!$omg) {
+                        $client->user_id  = $client;
                     }
                 }
-                $client->workspace_id = TogglWorkspace::getByTogglID($_client['wid'], $user)->id;
+
+                $client->workspace_id = $workspace->id;
                 $client->name         = $_client['name'];
                 $client->save();
             }
