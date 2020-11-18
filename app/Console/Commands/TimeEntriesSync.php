@@ -111,6 +111,11 @@ class TimeEntriesSync extends Command
 
                 $report = $RedmineController->save($request, false);
 
+                if (!$report) {
+                    // No redmine report found, skip to next user
+                    continue;
+                }
+
                 // Send all time entries to jira
                 $sent = $RedmineController->sendAllToJira($report, $request);
 

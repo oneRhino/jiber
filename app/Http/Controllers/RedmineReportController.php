@@ -63,6 +63,10 @@ class RedmineReportController extends RedmineController
         // Get Redmine Entries
         $redmine_entries = $this->getRedmineEntries($start_date, $end_date, $filter_user);
 
+        if (!$redmine_entries) {
+            return;
+        }
+
         // Save Report
         $report              = new Report();
         $report->user_id     = Auth::user()->id;

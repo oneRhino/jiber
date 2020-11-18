@@ -225,8 +225,13 @@ class RedmineController extends Controller
 
         $redmine_entries = $redmine->time_entry->all($args);
 
+        if (!$redmine_entries) {
+            return;
+        }
+
         // Redmine has a 100 entries per page limit, so, we need to paginate
         $pages = ceil($redmine_entries['total_count'] / $redmine_entries['limit']);
+
         if ($pages > 1) {
             for ($page=1; $page<$pages; $page++) {
                 $args['offset']                  = $page * $args['limit'];
