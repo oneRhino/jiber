@@ -124,7 +124,7 @@ class UpdatedTasks extends Command
 
 						switch ($_detail['name']) {
 							case 'subject':
-								$changeArray = ['name' => $RedmineTicket->getClubhouseFormattedSubject()];
+								$changeArray = ['name' => $RedmineTicket->getSubject()];
 								$this->updateClubhouseStory($RedmineTicket, $_Journal, $changeArray);
 								break;
 
