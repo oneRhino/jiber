@@ -225,7 +225,7 @@ class RedmineController extends Controller
 
         $redmine_entries = $redmine->time_entry->all($args);
 
-        if (!$redmine_entries) {
+        if (!$redmine_entries || empty($redmine_entries['total_count'])) {
             return;
         }
 
