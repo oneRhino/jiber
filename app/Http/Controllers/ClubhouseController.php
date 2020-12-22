@@ -1049,9 +1049,15 @@ class ClubhouseController extends Controller {
     }
 
     private function createClubhouseStory($redmine_ticket_id, $toggl_task_id = null, $story_id) {
-        $clubhouseStoryObj = new ClubhouseStory();
+		// Check if story record already exists on Jiber
+		$clubhouseStoryObj = ClubhouseStory::where('story_id', $story_id)->first();
+
+		if (!$clubhouseStoryObj) {
+			$clubhouseStoryObj = new ClubhouseStory();
+		}
+
         $clubhouseStoryObj->redmine_ticket_id = $redmine_ticket_id;
-        $clubhouseStoryObj->toggl_task_id = $toggl_task_id;
+        $clubhouseStoryObj->toggl_task_id     = $toggl_task_id;
         $clubhouseStoryObj->story_id          = $story_id;
         $clubhouseStoryObj->save();
     }
