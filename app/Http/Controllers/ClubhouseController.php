@@ -944,6 +944,13 @@ class ClubhouseController extends Controller {
             }
         }
 
+		// Check if a redmine ticket id is related to this clubhouse story
+		if (!$clubhouseStoryObj->redmine_ticket_id) {
+			$this->writeLog ("-- Story/Epic {$storyId} not created on Redmine. Creating...");
+			$this->createMissingRedmineTicket($storyId);
+			die ("-- Story/Epic {$storyId} created on Redmine.");
+		}
+
         $storyObj = (array) $this->getStory($storyId);
 
         if (empty($storyObj['project_id'])) {
