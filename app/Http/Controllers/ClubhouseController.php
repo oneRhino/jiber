@@ -539,7 +539,7 @@ class ClubhouseController extends Controller {
             $storyOwnerId = $this->getOwnerFromStory ($clubhouseDetails);
 
             $redmineCreateIssueObj = array ();
-            $redmineCreateIssueObj['project_id']       = $redmineProjectObj->project_name;
+            $redmineCreateIssueObj['project_id']       = $redmineProjectObj->project_id;
             $redmineCreateIssueObj['subject']          = $clubhouseDetails['name'];
             $redmineCreateIssueObj['assigned_to_id']   = $this->getRedmineAssignToUser($storyOwnerId);
             $redmineCreateIssueObj['description']      = $clubhouseDetails['description'];
@@ -626,7 +626,7 @@ class ClubhouseController extends Controller {
             $storyOwnerId = $this->getOwnerFromStory ($clubhouseDetailsAsArray);
 
             $redmineCreateIssueObj                     = array ();
-            $redmineCreateIssueObj['project_id']       = $redmineProjectObj->project_name;
+            $redmineCreateIssueObj['project_id']       = $redmineProjectObj->project_id;
             $redmineCreateIssueObj['status']           = $this->getRedmineStatus($clubhouseDetails->workflow_state_id);
             $redmineCreateIssueObj['tracker']          = $this->getRedmineTracker($clubhouseDetails->story_type);
             $redmineCreateIssueObj['subject']          = $clubhouseDetails->name;
