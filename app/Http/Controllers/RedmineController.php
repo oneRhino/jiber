@@ -129,6 +129,10 @@ class RedmineController extends Controller
                     continue;
                 }
 
+				if (!$redmine_entries['time_entries']) {
+                        continue;
+                }
+
                 // Get Redmine time entries
                 foreach ($redmine_entries['time_entries'] as $_redmine) {
                     // Ignore issues that are different than current,
