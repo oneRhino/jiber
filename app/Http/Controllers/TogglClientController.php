@@ -84,7 +84,7 @@ class TogglClientController extends TogglController
                     $client           = new TogglClient();
                     $client->toggl_id = $_client['id'];
                     if (!$omg) {
-                        $client->user_id  = $client;
+                        $client->user_id = $user;
                     }
                 }
 
