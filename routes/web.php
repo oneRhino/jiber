@@ -42,6 +42,9 @@ Route::get   ('/toggl/report/{report}', ['as' => 'user.toggl.reports.show','midd
 Route::post  ('/toggl/report/save'    , ['as' => 'user.toggl.reports.save','middleware' => 'auth', 'uses' => 'TogglReportController@save']);
 Route::delete('/toggl/report/{report}', ['as' => 'user.toggl.reports.delete','middleware' => 'auth', 'uses' => 'TogglReportController@delete']);
 
+Route::get   ('/toggl/show/{report}'  , ['as' => 'user.toggl.reports.show','middleware' => 'auth', 'uses' => 'TogglController@show']);
+Route::post  ('/toggl/send'           , ['middleware' => 'auth', 'uses' => 'TogglController@send']);
+
 // OMG Toggl routes
 Route::prefix('omg')->group(function () {
     Route::get('/toggl/import'            , ['as' => 'omg.toggl.import','middleware' => 'auth', 'uses' => 'TogglController@import'])->defaults('omg', true);

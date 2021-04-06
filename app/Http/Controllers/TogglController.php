@@ -34,7 +34,8 @@ use Illuminate\Support\Facades\{Auth, Config};
 use Illuminate\Routing\Redirector;
 use AJT\Toggl\TogglClient;
 use AJT\Toggl\ReportsClient;
-use App\Setting;
+use App\{Setting, Report, TimeEntry};
+use DateTime;
 
 class TogglController extends Controller
 {
@@ -110,5 +111,172 @@ class TogglController extends Controller
         $request->session()->flash('alert-success', 'All your Toggl data have been imported successfully!');
 
         return redirect()->action('TogglWorkspaceController@index');
+    }
+
+    /**
+     * Show report time entries
+     */
+    public function show(Report $report, Request $request)
+    {
+        if ($report->user_id != Auth::user()->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        set_time_limit(0);
+
+        $toggl_entries = $this->getTogglEntries($report->start_date, $report->end_date);
+
+        // Get all time entries from Report, but only those
+        // that have Redmine field filled
+        $redmine_entries = $report->getTimeEntries();
+        $entries       = array();
+
+        // First create arrays and fill with Redmine information
+        foreach ($redmine_entries as $_entry) {
+            // Ignore entries without Jira ID
+            if (!$_entry->jira_issue_id) {
+                continue;
+            }
+
+            // Create default arrays
+            if (!isset($entries[$_entry->date])) {
+                $entries[$_entry->date] = array(
+                    'toggl_total' => 0,
+                    'third_total' => 0,
+                );
+            }
+
+            if (!isset($entries[$_entry->date][$_entry->redmine_issue_id])) {
+                $entries[$_entry->date][$_entry->redmine_issue_id] = array(
+                    'toggl_entries' => array(),
+                    'toggl_total'   => 0,
+                    'third_total'   => 0,
+                    'third_entries' => array(),
+                );
+            }
+
+            // Fill arrays
+            $entries[$_entry->date][$_entry->redmine_issue_id]['toggl_entries'][] = $_entry;
+            $entries[$_entry->date][$_entry->redmine_issue_id]['toggl_total']    += $_entry->round_decimal_duration;
+            $entries[$_entry->date]['toggl_total']                               += $_entry->round_decimal_duration;
+        }
+
+        // Then, through all Redmine's entries, add Toggl's entries
+        foreach ($entries as $_date => $_entries) {
+            foreach ($_entries as $_issue_id => $_entries) {
+                // Get Toggl time entries
+                foreach ($toggl_entries['data'] as $_toggl) {
+                    // Ignore issues that are different than current,
+                    // and with date different than current
+                    $formatted_date = new DateTime($_toggl['end']);
+
+                    if ($formatted_date->format('Y-m-d') != $_date) {
+                        continue;
+                    }
+
+                    preg_match('/#([0-9]+)/', $_toggl['description'], $matches);
+                    $_redmine_issue_id_found = $matches[1] ?? false;
+
+                    if ($_redmine_issue_id_found != $_issue_id) {
+                        continue;
+                    }
+
+                    $_toggl['comments']  = $_toggl['description'] ?? $_toggl['task'];
+                    $_toggl['time']      = number_format((float)$_toggl['dur'] / 3600000, 2, '.', '');
+
+                    $entries[$_date][$_issue_id]['third_entries'][] = $_toggl;
+                    $entries[$_date][$_issue_id]['third_total']    += number_format((float)$_toggl['time'], 2, '.', '');;
+                    $entries[$_date]['third_total']                += number_format((float)$_toggl['time'], 2, '.', '');;
+                }
+            }
+        }
+
+        // Sort entries based on first key (date), ascending
+        ksort($entries);
+
+        return view('toggl.show', [
+            'entries'   => $entries,
+            'report_id' => $report->id,
+        ]);
+    }
+
+    /**
+     * Send time to Toggl
+     */
+    public function send(Request $request)
+    {
+        if (!$request->task) {
+            $request->session()->flash('alert-success', 'No tasks sent - nothing to do.');
+            return back();
+        }
+
+        // Connect into Toggl
+        $client = $this->toggl_connect();
+
+        // Get worspace ID
+        $settings = Setting::where(['toggl_redmine_sync' => true, 'id' => Auth::user()->id])->first();
+        $workspace_id = unserialize($settings->toggl_redmine_data)['workspace'];
+
+        foreach ($request->task as $_entry_id) {
+            $_entry = TimeEntry::find($_entry_id);
+
+            if (!$_entry || $_entry->user_id != Auth::user()->id || !$_entry->redmine_issue_id) {
+                continue;
+            }
+            $_data = [
+                'time_entry' => [
+                    'description'   => $_entry['description'],
+                    'wid'           => (int)$workspace_id,
+                    'billable'      => true,
+                    'duration'      => $_entry['duration'] / 1000,
+                    'start'         => date('c', strtotime($_entry['date_time'])),
+                    'created_with'  => 'curl'
+                ]
+            ];
+
+            $_create = $client->createTimeEntry($_data);
+            $response = $_create->toArray();
+        }
+
+        // Remove report from session, so when we show previous page again, it's updated
+        if ($request->isMethod('post') && isset($response['data']['id'])) {
+            $request->session()->flash('alert-success', 'All tasks have been sent successfully to Toggl!');
+        }
+
+        return back()->withInput();
+    }
+
+    /**
+     * Get Toggl report entries
+     */
+    public function getTogglEntries($start_date, $end_date)
+    {
+        // Get user logged in
+        $user = Auth::user();
+
+        // Connect to Toggl
+        $togglClient = $this->toggl_connect();
+
+        // Get current user Toggl info
+        $current_user = $togglClient->GetCurrentUser();
+
+        // Connect to Toggl Report API
+        $reportClient = $this->reports_connect();
+
+        // Get worspace ID
+        $settings = Setting::where(['toggl_redmine_sync' => true, 'id' => $user->id])->first();
+        $workspace_id = unserialize($settings->toggl_redmine_data)['workspace'];
+
+        // Get all Toggl's entries for this user, on these dates
+        $args = array(
+            'user_agent' => (string)$user->email,
+            'workspace_id' => (int)$workspace_id,
+            'user_ids' => $current_user['data']['id'],
+            'since' => $start_date,
+            'until' => $end_date,
+        );
+
+        $toggl_entries = $reportClient->details($args);
+        return $toggl_entries;
     }
 }

@@ -176,4 +176,27 @@ class RedmineReportController extends RedmineController
 
         return false;
     }
+
+    public function sendAllToToggl($report_id, $request) {
+        $report = Report::find($report_id);
+
+        if (!$report)
+            abort(403, 'Report not found.');
+
+        $request->task      = array();
+        $request->report_id = $report_id;
+
+        foreach ($report->redmine_entries as $_entry) {
+            if ($_entry->jira_issue_id)
+                $request->task[] = $_entry->id;
+        }
+
+        if ($request->task) {
+            $redmine = new TogglController();
+            $redmine->send($request);
+            return true;
+        }
+
+        return false;
+    }
 }

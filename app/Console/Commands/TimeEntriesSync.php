@@ -19,7 +19,7 @@ class TimeEntriesSync extends Command
      * @var string
      */
     protected $signature = 'time-entries:sync {method} {date=current} {user=all}
-                            method : Toggl-Redmine or Redmine-Jira
+                            method : Toggl-Redmine, Redmine-Toggl, or Redmine-Jira
                             date : For which date(s) should system sync. Ex: "2017-04-11" or "2017-04-01|2017-04-15" or "yesterday". Default is current server date.';
 
     /**
@@ -27,7 +27,7 @@ class TimeEntriesSync extends Command
      *
      * @var string
      */
-    protected $description = 'Daily Sync between Toggl/Redmine and Redmine/Jira';
+    protected $description = 'Daily Sync between Toggl/Redmine, Redmine/Toggl, and Redmine/Jira';
 
     /**
      * Create a new command instance.
@@ -63,6 +63,9 @@ class TimeEntriesSync extends Command
         switch ($this->argument('method')) {
             case 'Toggl-Redmine':
                 $this->toggl_redmine($date, $this->argument('user'));
+                break;
+            case 'Redmine-Toggl':
+                $this->redmine_toggl($date);
                 break;
             case 'Redmine-Jira':
                 $this->redmine_jira($date, $this->argument('user'));
@@ -197,6 +200,67 @@ class TimeEntriesSync extends Command
                     Mail::send('emails.toggl_redmine_report', $data, function ($m) use ($_user) {
                         $m->from('noreply@tmisoft.com', 'Jiber');
                         $m->to($_user->email, $_user->name)->subject('Toggl-to-Redmine Daily Report');
+                    });
+                }
+            }
+        }
+    }
+
+    private function redmine_toggl($date) {
+        // Get all OneRhino hours from all users that set Toggl/Redmine sync as ON
+        $settings = Setting::where('redmine_toggl_sync', true)->get();
+
+        if ($settings) {
+            foreach ($settings as $_settings) {
+                // Get user info
+                $_user = $_settings->user;
+                $settings = unserialize($_settings->toggl_redmine_data);
+
+                if (!$settings) continue;
+
+                // Set user as logged-in user
+                $request = new Request();
+                $request->merge(['user' => $_user, 'filter_user' => true]);
+                $request->setUserResolver(function () use ($_user) {
+                    return $_user;
+                });
+
+                Auth::setUser($_user);
+
+                // Create a report for the requested date(s)
+                $RedmineController = new RedmineReportController($request);
+
+                if (is_array($date)) {
+                    $request->date = $date[0].' - '.$date[1];
+                } else {
+                    $request->date = $date.' - '.$date;
+                }
+
+                $request->workspace = $settings['workspace'];
+                $request->clients   = $settings['clients'];
+                $request->projects  = $settings['projects'];
+
+                $report = $RedmineController->save($request, false);
+
+                // Send all time entries to redmine
+                $sent = $RedmineController->sendAllToToggl($report, $request);
+
+                if ($sent) {
+                    $report = Report::find($report);
+
+                    if (is_array($date))
+                        $_date = date('F j, Y', strtotime($date[0])).' to '.date('F j, Y', strtotime($date[1]));
+                    else
+                        $_date = date('F j, Y', strtotime($date));
+
+                    $data = array(
+                        'entries' => $report->getTimeEntries(),
+                        'date'    => $_date,
+                    );
+
+                    Mail::send('emails.toggl_redmine_report', $data, function ($m) use ($_user) {
+                        $m->from('noreply@tmisoft.com', 'Jiber');
+                        $m->to($_user->email, $_user->name)->subject('Redmine-to-Toggl Daily Report');
                     });
                 }
             }
