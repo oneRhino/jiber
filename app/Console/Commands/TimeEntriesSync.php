@@ -9,6 +9,7 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
+use Log;
 use Mail;
 
 class TimeEntriesSync extends Command
@@ -218,6 +219,8 @@ class TimeEntriesSync extends Command
 
                 if (!$settings) continue;
 
+                Log::debug('Syncing entries for: ' . $_user->name);
+
                 // Set user as logged-in user
                 $request = new Request();
                 $request->merge(['user' => $_user, 'filter_user' => true]);
@@ -240,12 +243,19 @@ class TimeEntriesSync extends Command
                 $request->clients   = $settings['clients'];
                 $request->projects  = $settings['projects'];
 
+                Log::debug('Creating Redmine report for date: ' . $request->date);
+
                 $report = $RedmineController->save($request, false);
+
+                Log::debug('Redmine report created');
+                Log::debug('Sending all entries to Toggl');
 
                 // Send all time entries to redmine
                 $sent = $RedmineController->sendAllToToggl($report, $request);
 
                 if ($sent) {
+                    Log::debug('Entries sent');
+
                     $report = Report::find($report);
 
                     if (is_array($date))
@@ -263,7 +273,13 @@ class TimeEntriesSync extends Command
                         $m->to($_user->email, $_user->name)->subject('Redmine-to-Toggl Daily Report');
                     });
                 }
+                else {
+                    Log::debug('Entries failed to be sent');
+                }
             }
+        }
+        else {
+            Log::debug('No users enabled for the Redmine to Toggl time entry sync.');
         }
     }
 }

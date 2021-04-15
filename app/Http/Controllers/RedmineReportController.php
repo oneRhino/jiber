@@ -192,8 +192,8 @@ class RedmineReportController extends RedmineController
         }
 
         if ($request->task) {
-            $redmine = new TogglController();
-            $redmine->send($request);
+            $toggl = new TogglController();
+            $toggl->send($request);
             return true;
         }
 
