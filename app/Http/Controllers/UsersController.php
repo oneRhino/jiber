@@ -75,6 +75,7 @@ class UsersController extends Controller
             $setting->basecamp           = $request->basecamp;
             $setting->toggl_redmine_sync = $request->toggl_redmine_sync ?? 0;
             $setting->redmine_jira_sync  = $request->redmine_jira_sync ?? 0;
+            $setting->redmine_toggl_sync = $request->redmine_toggl_sync ?? 0;
             if ($toggl_redmine_data) {
                 $setting->toggl_redmine_data = serialize($toggl_redmine_data);
             }

@@ -32,6 +32,10 @@
                             <label><input type="checkbox" name="toggl_redmine_sync" id="toggl_redmine_sync" value="1" @if ($setting->toggl_redmine_sync) checked="checked" @endif> Enable Toggl/Redmine Daily Sync</label>
                         </div>
 
+                        <div class="checkbox">
+                            <label><input type="checkbox" name="redmine_toggl_sync" id="redmine_toggl_sync" value="1" @if ($setting->redmine_toggl_sync) checked="checked" @endif> Enable Redmine/Togg Daily Sync</label>
+                        </div>
+
                         <div id="toggl_redmine_sync_div" class="panel-body @unless ($setting->toggl_redmine_sync) hidden @endunless">
                             <h4 class="text-center">Please select Workspace, Client(s) and Project(s) (if any)</h4>
 
