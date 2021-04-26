@@ -33,7 +33,7 @@
                         </div>
 
                         <div class="checkbox">
-                            <label><input type="checkbox" name="redmine_toggl_sync" id="redmine_toggl_sync" value="1" @if ($setting->redmine_toggl_sync) checked="checked" @endif> Enable Redmine/Togg Daily Sync</label>
+                            <label><input type="checkbox" name="redmine_toggl_sync" id="redmine_toggl_sync" value="1" @if ($setting->redmine_toggl_sync) checked="checked" @endif> Enable Redmine/Toggl Daily Sync</label>
                         </div>
 
                         <div id="toggl_redmine_sync_div" class="panel-body @unless ($setting->toggl_redmine_sync) hidden @endunless">
