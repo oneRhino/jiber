@@ -214,8 +214,14 @@ class TogglController extends Controller
         $client = $this->toggl_connect();
 
         // Get worspace ID
-        $settings = Setting::where(['toggl_redmine_sync' => true, 'id' => Auth::user()->id])->first();
+        $settings = Setting::where('id', Auth::user()->id)->first();
         $workspace_id = unserialize($settings->toggl_redmine_data)['workspace'];
+
+        $toggl_tasks = $client->getWorkspaceTasks([
+            'id' => (int)$workspace_id
+        ]);
+
+        $task_error = 0;
 
         foreach ($request->task as $_entry_id) {
             $_entry = TimeEntry::find($_entry_id);
@@ -223,24 +229,51 @@ class TogglController extends Controller
             if (!$_entry || $_entry->user_id != Auth::user()->id || !$_entry->redmine_issue_id) {
                 continue;
             }
-            $_data = [
-                'time_entry' => [
-                    'description'   => $_entry['description'],
-                    'wid'           => (int)$workspace_id,
-                    'billable'      => true,
-                    'duration'      => $_entry['duration'] / 1000,
-                    'start'         => date('c', strtotime($_entry['date_time'])),
-                    'created_with'  => 'curl'
-                ]
-            ];
 
-            $_create = $client->createTimeEntry($_data);
-            $response = $_create->toArray();
+            $search = $_entry['jira_issue_id'] . ' - ';
+            $tasks = array_filter($toggl_tasks->toArray(), function ($task) use ($search) {
+                if (stripos($task['name'], $search) !== false) {
+                    return true;
+                }
+                return false;
+            });
+
+            $task = reset($tasks);
+
+            if ($task) {
+                $_data = [
+                    'time_entry' => [
+                        'description'   => $_entry['description'],
+                        'wid'           => (int)$workspace_id,
+                        'tid'           => $task['id'],
+                        'billable'      => true,
+                        'duration'      => $_entry['duration'] / 1000,
+                        'start'         => date('c', strtotime($_entry['date_time'])),
+                        'created_with'  => 'curl'
+                    ]
+                ];
+
+                $_create = $client->createTimeEntry($_data);
+                $response = $_create->toArray();
+            }
+            else {
+                $task_error++;
+            }
         }
 
         // Remove report from session, so when we show previous page again, it's updated
         if ($request->isMethod('post') && isset($response['data']['id'])) {
-            $request->session()->flash('alert-success', 'All tasks have been sent successfully to Toggl!');
+            if ($task_error > 0) {
+                if (count($request->task) != $task_error) {
+                    $request->session()->flash('alert-error', 'Some tasks were not found and have not been sent to Toggl!');
+                }
+                else {
+                    $request->session()->flash('alert-error', 'Tasks were not found and have not been sent to Toggl!');
+                }
+            }
+            else {
+                $request->session()->flash('alert-success', 'All tasks have been sent successfully to Toggl!');
+            }
         }
 
         return back()->withInput();
@@ -264,7 +297,7 @@ class TogglController extends Controller
         $reportClient = $this->reports_connect();
 
         // Get worspace ID
-        $settings = Setting::where(['toggl_redmine_sync' => true, 'id' => $user->id])->first();
+        $settings = Setting::where('id', $user->id)->first();
         $workspace_id = unserialize($settings->toggl_redmine_data)['workspace'];
 
         // Get all Toggl's entries for this user, on these dates

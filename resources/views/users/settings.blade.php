@@ -24,16 +24,15 @@
                         @include('users.settings_field', ['boolean' => $jira    , 'name' => 'jira_password', 'label' => 'Jira API Token'    , 'value' => $setting->jira_password ])
                         {{-- @include('users.settings_field', ['boolean' => $basecamp, 'name' => 'basecamp', 'label' => 'Basecamp Username', 'value' => $setting->basecamp ]) --}}
 
-                        <div class="checkbox">
-                            <label><input type="checkbox" name="redmine_jira_sync" id="redmine_jira_sync" value="1" @if ($setting->redmine_jira_sync) checked="checked" @endif> Enable Redmine/Jira Daily Sync</label>
-                        </div>
-
-                        <div class="checkbox">
-                            <label><input type="checkbox" name="toggl_redmine_sync" id="toggl_redmine_sync" value="1" @if ($setting->toggl_redmine_sync) checked="checked" @endif> Enable Toggl/Redmine Daily Sync</label>
-                        </div>
-
-                        <div class="checkbox">
-                            <label><input type="checkbox" name="redmine_toggl_sync" id="redmine_toggl_sync" value="1" @if ($setting->redmine_toggl_sync) checked="checked" @endif> Enable Redmine/Toggl Daily Sync</label>
+                        <div id="daily_sync_div" class="panel-body">
+                            <fieldset class="form-group">
+                                <label for="daily_sync">Select sync type:</label>
+                                <select name="daily_sync" class="form-control" id="daily_sync">
+                                    <option value="">No sync</option>
+                                    <option value="toggl_redmine_sync" @if ($setting->toggl_redmine_sync) selected @endif>Toggl to Redmine</option>
+                                    <option value="redmine_toggl_sync" @if ($setting->redmine_toggl_sync) selected @endif>Redmine to Toggl</option>
+                                </select>
+                            </fieldset>
                         </div>
 
                         <div id="toggl_redmine_sync_div" class="panel-body @unless ($setting->toggl_redmine_sync) hidden @endunless">
@@ -89,8 +88,13 @@
 @section('scripts')
 <script>
 jQuery(document).ready(function($){
-    $('#toggl_redmine_sync').click(function(){
-        $('#toggl_redmine_sync_div').toggleClass('hidden');
+    $('#daily_sync').on('change', function() {
+        if ($('#daily_sync').val() != 'toggl_redmine_sync') {
+            $('#toggl_redmine_sync_div').addClass('hidden');
+        }
+        else {
+            $('#toggl_redmine_sync_div').removeClass('hidden');
+        }
     });
 });
 </script>
