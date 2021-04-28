@@ -28,7 +28,7 @@ class TimeEntriesSync extends Command
      *
      * @var string
      */
-    protected $description = 'Daily Sync between Toggl/Redmine, Redmine/Toggl, and Redmine/Jira';
+    protected $description = 'Daily Sync between Toggl/Redmine, Redmine/Toggl';
 
     /**
      * Create a new command instance.
@@ -68,81 +68,9 @@ class TimeEntriesSync extends Command
             case 'Redmine-Toggl':
                 $this->redmine_toggl($date);
                 break;
-            case 'Redmine-Jira':
-                $this->redmine_jira($date, $this->argument('user'));
-                break;
             default:
                 $this->error('Please select a valid method.');
                 break;
-        }
-    }
-
-    private function redmine_jira($date, $user) {
-        // Get all OneRhino hours from all users that set Redmine/Jira sync as ON
-        if ($user != 'all')
-            $settings = Setting::where('jira', $user)->get();
-        else
-            $settings = Setting::where('redmine_jira_sync', true)->get();
-
-        if ($settings) {
-            foreach ($settings as $_settings) {
-                // Get user info
-                $_user = $_settings->user;
-                $this->info('Running sync for '.$_user->name);
-
-                // Check if user has jira password
-                if (!$_settings->jira_password) continue;
-
-                // Set user as logged-in user
-                $request = new Request();
-                $request->merge(['user' => $_user]);
-                $request->setUserResolver(function () use ($_user) {
-                    return $_user;
-                });
-
-                Auth::setUser($_user);
-
-                // Create a report for the requested date(s)
-                $RedmineController = new RedmineReportController($request);
-
-                if (is_array($date)) {
-                    $request->date = $date[0].' - '.$date[1];
-                } else {
-                    $request->date = $date.' - '.$date;
-                }
-
-                $request->filter_user = true;
-
-                $report = $RedmineController->save($request, false);
-
-                if (!$report) {
-                    // No redmine report found, skip to next user
-                    continue;
-                }
-
-                // Send all time entries to jira
-                $sent = $RedmineController->sendAllToJira($report, $request);
-
-                if ($sent) {
-                    $report = Report::find($report);
-
-                    if (is_array($date))
-                        $_date = date('F j, Y', strtotime($date[0])).' to '.date('F j, Y', strtotime($date[1]));
-                    else
-                        $_date = date('F j, Y', strtotime($date));
-
-                    $data = array(
-                        'entries' => $report->getTimeEntries(),
-                        'date'    => $_date,
-                    );
-
-                    Mail::send('emails.redmine_jira_report', $data, function ($m) use ($_user) {
-                        $m->from('noreply@onerhino.com', 'Jiber');
-                        $m->cc(['thaissa@onerhino.com', 'pablo@onerhino.com', 'william@onerhino.com', 'billy@onerhino.com']);
-                        $m->to($_user->email, $_user->name)->subject('Redmine-to-Jira Daily Report');
-                    });
-                }
-            }
         }
     }
 
