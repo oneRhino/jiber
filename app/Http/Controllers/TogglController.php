@@ -259,6 +259,7 @@ class TogglController extends Controller
             else {
                 $task_error++;
             }
+            sleep(1); // Toggl only allows 1 request per second
         }
 
         // Remove report from session, so when we show previous page again, it's updated
