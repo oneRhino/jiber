@@ -134,7 +134,7 @@ class TogglController extends Controller
         // First create arrays and fill with Redmine information
         foreach ($redmine_entries as $_entry) {
             // Ignore entries without Jira ID
-            if (!$_entry->jira_issue_id) {
+            if (!$_entry->jira_issue_id || strlen($_entry->jira_issue_id) > 10) {
                 continue;
             }
 
