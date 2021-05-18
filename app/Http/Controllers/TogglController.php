@@ -163,7 +163,7 @@ class TogglController extends Controller
 
         // Then, through all Redmine's entries, add Toggl's entries
         foreach ($entries as $_date => $_entries) {
-            foreach ($_entries as $_issue_id => $_entries) {
+            foreach ($_entries as $_issue_id => $_entry) {
                 // Get Toggl time entries
                 foreach ($toggl_entries['data'] as $_toggl) {
                     // Ignore issues that are different than current,
@@ -178,7 +178,22 @@ class TogglController extends Controller
                     $_redmine_issue_id_found = $matches[1] ?? false;
 
                     if ($_redmine_issue_id_found != $_issue_id) {
-                        continue;
+                        $toggl_task = explode(' - ', $_toggl['task']);
+                        $toggl_task_id = reset($toggl_task);
+                        $continue = false;
+                        if (is_array($_entry) && array_key_exists('toggl_entries', $_entry)) {
+                            foreach ($_entry['toggl_entries'] as $redmine_entry) {
+                                if ($redmine_entry->getJiraId() != $toggl_task_id) {
+                                    $continue = true;
+                                }
+                            }
+                            if ($continue) {
+                                continue;
+                            }
+                        }
+                        else {
+                            continue;
+                        }
                     }
 
                     $_toggl['comments']  = $_toggl['description'] ?? $_toggl['task'];

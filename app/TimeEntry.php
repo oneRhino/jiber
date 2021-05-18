@@ -122,6 +122,15 @@ class TimeEntry extends MainModel
     }
 
     /**
+     * Get Jira ID
+     * @return Jira ID or false if none found
+     */
+    public function getJiraId()
+    {
+        return $this->jira_issue_id ?? false;
+    }
+
+    /**
      * Checks if entry is a Redmine entry,
      * based on Redmine field, or comparing client_id
      * with OneRhino client id (from TogglClient)
